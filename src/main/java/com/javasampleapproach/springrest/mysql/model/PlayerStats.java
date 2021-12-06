@@ -17,6 +17,9 @@ public class PlayerStats {
 	private int goalsScored;
 	private int goalsConceded;
 	private List<Integer> totalBilance;
+
+	private int numberOfCLTitles;
+	private int numberOfELTitles;
 	
 	
 	public PlayerStats()
@@ -26,6 +29,8 @@ public class PlayerStats {
 		this.losses = 0;
 		this.goalsConceded = 0;
 		this.goalsScored = 0;
+		this.numberOfCLTitles = 0;
+		this.numberOfELTitles = 0;
 		this.totalBilance = new ArrayList<>();
 	}
 }

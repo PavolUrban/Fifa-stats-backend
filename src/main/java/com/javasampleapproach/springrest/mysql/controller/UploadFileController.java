@@ -2,7 +2,9 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,16 +24,16 @@ public class UploadFileController {
     /*
      * MultipartFile Upload
      */
-    @PostMapping("/api/file/upload")
-    public String uploadMultipartFile(@RequestParam("uploadfile") MultipartFile file) {
+    @PostMapping("/api/file/upload/{teamname}")
+    public String uploadMultipartFile(@PathVariable("teamname") String teamname, @RequestParam("uploadfile") MultipartFile file) {
       try {
     	  System.out.println("Save called UploadFileController");
         // save file to PostgreSQL
-        FileModel filemode = new FileModel(file.getOriginalFilename(), file.getContentType(), file.getBytes());
+        FileModel filemode = new FileModel(file.getOriginalFilename(), file.getContentType(), file.getBytes(), teamname);
         fileRepository.save(filemode);
-        return "File uploaded successfully! -> filename = " + file.getOriginalFilename();
+        return HttpStatus.OK.toString();
     } catch (  Exception e) {
-      return "FAIL! Maybe You had uploaded the file before or the file's size > 500KB";
+      return HttpStatus.BAD_REQUEST.toString();
     }    
     }
 }

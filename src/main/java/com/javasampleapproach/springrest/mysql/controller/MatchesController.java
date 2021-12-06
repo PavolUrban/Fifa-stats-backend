@@ -1,11 +1,14 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import Utils.MyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +18,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.javasampleapproach.springrest.mysql.model.FileModel;
+import com.javasampleapproach.springrest.mysql.model.Goalscorer;
 import com.javasampleapproach.springrest.mysql.model.Matches;
 import com.javasampleapproach.springrest.mysql.model.TeamGlobalStats;
+import com.javasampleapproach.springrest.mysql.repo.FileRepository;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 
 import statsCreator.SingleSeasonStats;
@@ -28,6 +34,9 @@ public class MatchesController {
 	
 	@Autowired
 	MatchesRepository matchesRepository;
+
+	@Autowired
+	FileRepository fileRepository;
 	
 	@GetMapping("/getMatches")
 	public List<Matches> getAllCustomers() {
@@ -156,7 +165,112 @@ public class MatchesController {
 	
 	
 	
+	@GetMapping("/getCustomGroupMatches/{competition}/{season}/{competitionPhase}")
+	public List<Matches> getCustomGroupMatches(@PathVariable("competition") String competition, @PathVariable("season") String season,  @PathVariable("competitionPhase") String competitionPhase) {
+		return matchesRepository.findByCompetitionAndSeasonAndCompetitionPhase(competition, season, competitionPhase);
+	}
 	
 	
+	
+	private List<Integer> convertMapToList(Map<String, Integer> playersStats, String homePlayerOrTeam, String awayPlayerOrTeam)
+	{
+		List<Integer> intValues = new ArrayList<Integer>();
+		
+		intValues.add(playersStats.get(homePlayerOrTeam));
+		intValues.add(playersStats.get("D")); //D stands always for draw
+		intValues.add(playersStats.get(awayPlayerOrTeam));
+		
+		return intValues;
+	}
+	
+	
+	
+	
+	@GetMapping("/getH2HStats/{firstTeam}/{secondTeam}")
+	public Map<String, Object> getCustomGroupMatches(@PathVariable("firstTeam") String firstTeam, @PathVariable("secondTeam") String secondTeam) {
+		
+		List<Matches> finalList = new ArrayList<>();
+		matchesRepository.findByHometeamAndAwayteam(firstTeam, secondTeam).forEach(finalList::add);
+		matchesRepository.findByHometeamAndAwayteam(secondTeam, firstTeam).forEach(finalList::add);
+		
+		finalList.sort(Comparator.comparing(Matches::getSeason).thenComparing(Matches::getCompetitionPhase));
+		
+		
+		Map<String, Object> response = new HashMap<String, Object>();
+		
+		Map<String, Integer> playersStats = new HashMap<String, Integer>();
+		playersStats.put("Pavol Jay", 0);
+		playersStats.put("Kotlik", 0);
+		playersStats.put("D", 0); //TODO nejak zjednotit raz je remiza D inokedy "Draws"
+		
+		PlayersController playersController = new PlayersController();
+		
+		Map<String, Integer> overallStats = new HashMap<String, Integer>();
+		overallStats.put(firstTeam, 0);
+		overallStats.put(secondTeam, 0);
+		overallStats.put("D", 0);
+		
+		
+		
+		
+		for(Matches match : finalList)
+		{
+			//players statistics
+			String winner = playersController.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik");
+			playersStats.put(winner, playersStats.get(winner) + 1);
+			
+			//teams statistics
+			overallStats.put(match.getWinner(), overallStats.get(match.getWinner()) + 1);
+		}
+
+		GlobalStatsController globalStats = new GlobalStatsController();
+		List<Goalscorer> goalscorers = globalStats.getAllGoalscorers(finalList);
+		
+		
+		Map<String, Object> logos = new HashMap<String, Object>();
+		
+		setLogoIfPresented(firstTeam, logos);
+		setLogoIfPresented(secondTeam, logos);
+		
+		response.put("playersStats", convertMapToList(playersStats, "Pavol Jay", "Kotlik"));
+		response.put("matches", finalList);
+		response.put("overallStats",convertMapToList(overallStats,firstTeam, secondTeam));
+		response.put("goalscorers", goalscorers);
+		response.put("logos", logos);
+		
+		
+		return response;
+	}
+	
+
+	public void setLogoIfPresented(String teamName, Map<String, Object> logos)
+	{
+		FileModel logo = fileRepository.findByTeamname(teamName);
+		if(logo !=null)
+			logos.put(teamName, logo);
+	}
+
+
+
+
+
+	@GetMapping("/dataToCreateMatch/{competition}")
+	public Map<String, List<String>> getDataToCreateMatch(@PathVariable("competition") String competition){
+
+		Map<String, List<String>> dataToCreateMatch = new HashMap<>();
+
+		dataToCreateMatch.put("competitionsList", MyUtils.competitionsList);
+		dataToCreateMatch.put("playerNamesList", MyUtils.playerNamesList);
+
+		if(competition.equalsIgnoreCase("CL")){
+			dataToCreateMatch.put("competitionPhasesList", MyUtils.championsLeagueStagesList);
+		}
+		else{
+			dataToCreateMatch.put("competitionPhasesList", MyUtils.europeanLeagueStagesList);
+		}
+
+
+		return  dataToCreateMatch;
+	}
 
 }

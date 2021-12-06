@@ -1,7 +1,5 @@
 package com.javasampleapproach.springrest.mysql.model;
 
-import java.util.Map;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,10 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Goalscorer {
-	private String name;
-	private Integer totalGoalsCount;
-	private Map<String, Integer> goalsByTeams;
-	
-	private FileModel teamLogo;
+public class TitlesCount {
+    private String playerName;
+    private int titlesCountEL = 0;
+    private int titlesCountCL = 0;
 }

@@ -1,21 +1,13 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import com.javasampleapproach.springrest.mysql.model.*;
+import com.javasampleapproach.springrest.mysql.repo.SeasonsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.javasampleapproach.springrest.mysql.model.FileModel;
-import com.javasampleapproach.springrest.mysql.model.Goalscorer;
-import com.javasampleapproach.springrest.mysql.model.Matches;
-import com.javasampleapproach.springrest.mysql.model.Team;
-import com.javasampleapproach.springrest.mysql.model.TopTeam;
 import com.javasampleapproach.springrest.mysql.repo.FileRepository;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
@@ -35,6 +27,9 @@ public class GlobalStatsController {
 
 	@Autowired
 	TeamRepository teamRepository;
+
+	@Autowired
+	SeasonsRepository seasonsRepository;
 	
 	public void updateOrAddPlayerInMap(Map<String,Map<String, Integer>> playerWithGoals, String player, int numberOfGoals, String team)
 	{
@@ -63,6 +58,7 @@ public class GlobalStatsController {
 	
 	public void splitToMinutesAndName(Map<String,Map<String, Integer>> playerWithGoals, String goalScorer, Matches m, String teamname)
 	{	
+		//System.out.println(m);
 		if(MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(m.getSeason())) // on older fifa there are no minutes with goals
 		{
 			int numberOfGoals = 1; //by default
@@ -155,9 +151,23 @@ public class GlobalStatsController {
 	}
 	
 	@GetMapping("/getAllTimeGoalScorers")
-	public	List<Goalscorer> getAllGoalscorers() {
-
+	public List<Goalscorer> getGlobalGoalscorers()
+	{
 		Iterable<Matches> matches = matchesRepository.findAll();
+		List<Goalscorer> goalscorers = getAllGoalscorers(matches);
+		
+		return goalscorers;
+	}
+	
+	
+	public	List<Goalscorer> getAllGoalscorers(Iterable<Matches> matches) {
+
+//		Iterable<Matches> matches = null;
+//		if(customMatches == null)
+//			matches =
+//		else
+//			matches = customMatches;
+			
 		Map<String,Map<String, Integer>> playerWithGoals = new HashMap<String,Map<String, Integer>>();
 		
 		for(Matches m : matches)
@@ -334,6 +344,110 @@ public class GlobalStatsController {
 		topTeams.sort((o1, o2) -> o2.getWins().compareTo(o1.getWins()));
 		
 		return topTeams;
+	}
+
+
+	@GetMapping("/winnersList/{competition}")
+	public List<ChampionsLeagueWinner> getWinnersList(@PathVariable("competition") String competition){
+
+		List<Matches> finalMatches = matchesRepository.findByCompetitionPhaseAndCompetitionOrderBySeason("Final",competition);
+
+		PlayersController pc = new PlayersController();
+
+		List<ChampionsLeagueWinner> winnerList = new ArrayList<>();
+
+
+// TODO use this for CL and EL displayed together
+
+//		Iterable<Seasons> allSeasonList = seasonsRepository.findAll();
+//		allSeasonList.forEach(season-> {
+//			List<Matches> matchesFromCurrentSeason = finalMatches.stream().filter(m->m.getSeason().equalsIgnoreCase(season.getSeason())).collect(Collectors.toList());
+//
+//			ChampionsLeagueWinner clw = new ChampionsLeagueWinner();
+//			clw.setSeason(season.getSeason());
+//
+//			getMatchByCompetition(matchesFromCurrentSeason, "CL", clw);
+//			getMatchByCompetition(matchesFromCurrentSeason,"EL", clw);
+//
+//			winnerList.add(clw);
+//
+//		});
+
+
+			finalMatches.forEach(match ->{
+			ChampionsLeagueWinner clw = new ChampionsLeagueWinner();
+			clw.setPlayerName(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
+			clw.setSeason(match.getSeason());
+			clw.setTeamName(match.getWinner());
+			clw.setTeamLogo(fileRepository.findByTeamname(match.getWinner()));
+
+			winnerList.add(clw);
+		});
+
+//		Collections.sort(winnerList, (ChampionsLeagueWinner w1, ChampionsLeagueWinner w2) ->{
+//			return w1.getSeason().compareToIgnoreCase(w2.getSeason());
+//		});
+
+		return winnerList;
+	}
+
+	//TODO Use this for view with both EL and CL
+//	private void getMatchByCompetition(List<Matches> finalMatches, String competition, ChampionsLeagueWinner clw){
+//		PlayersController pc = new PlayersController();
+//
+//		Matches matchBySeasonAndCompetition
+//				= finalMatches
+//					.stream()
+//					.filter(m -> m.getCompetition().equalsIgnoreCase(competition))
+//					.findAny().orElse(null);
+//
+//		if(matchBySeasonAndCompetition != null){
+//			if(matchBySeasonAndCompetition.getCompetition().equalsIgnoreCase("CL")){
+//				clw.setPlayerNameCL(pc.whoIsWinnerOfMatch(matchBySeasonAndCompetition, "Pavol Jay", "Kotlik"));
+//				clw.setTeamNameCL(matchBySeasonAndCompetition.getWinner());
+//				clw.setTeamLogoCL(fileRepository.findByTeamname(matchBySeasonAndCompetition.getWinner()));
+//			} else {
+//				clw.setPlayerNameEL(pc.whoIsWinnerOfMatch(matchBySeasonAndCompetition, "Pavol Jay", "Kotlik"));
+//				clw.setTeamNameEL(matchBySeasonAndCompetition.getWinner());
+//				clw.setTeamLogoEL(fileRepository.findByTeamname(matchBySeasonAndCompetition.getWinner()));
+//			}
+//		}
+//	}
+
+	@GetMapping("/trophyRoom")
+	public List<TitlesCount> getTrophyRoom(){
+		List<Matches> finalMatches = matchesRepository.findByCompetitionPhase("Final");
+
+		TitlesCount tcPavol = new TitlesCount();
+		tcPavol.setPlayerName("Pavol Jay");
+
+		TitlesCount tcKotlik =  new TitlesCount();
+		tcKotlik.setPlayerName("Kotlik");
+
+		calculateTitlesForPlayerPerCompetition(finalMatches, tcPavol, tcKotlik);
+
+		return Arrays.asList(tcKotlik, tcPavol);
+	}
+
+	private void calculateTitlesForPlayerPerCompetition(List<Matches> finalMatches, TitlesCount tcPavol, TitlesCount tcKotlik){
+		PlayersController pc = new PlayersController();
+
+		finalMatches.forEach(match->{
+			if(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik").equalsIgnoreCase("Pavol Jay")){
+				addTitleInProperCompetition(match, tcPavol);
+			} else {
+				addTitleInProperCompetition(match, tcKotlik);
+			}
+		});
+
+	}
+
+	private void addTitleInProperCompetition(Matches match, TitlesCount tc){
+		if(match.getCompetition().equalsIgnoreCase("CL")){
+			tc.setTitlesCountCL(tc.getTitlesCountCL() + 1);
+		} else {
+			tc.setTitlesCountEL(tc.getTitlesCountEL() + 1);
+		}
 	}
 	
 }

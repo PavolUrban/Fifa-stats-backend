@@ -39,10 +39,11 @@ public class FileModel {
   
   public FileModel(){}
   
-  public FileModel(String name, String mimetype, byte[] pic){
+  public FileModel(String name, String mimetype, byte[] pic, String teamName){
     this.name = name;
     this.mimetype = mimetype;
     this.pic = pic;
+    this.teamname = teamName;
   }
 
 }

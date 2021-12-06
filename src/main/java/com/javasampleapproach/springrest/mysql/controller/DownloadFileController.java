@@ -2,7 +2,9 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +42,7 @@ public class DownloadFileController {
   public FileModel getFile(@PathVariable Long id) {
     Optional<FileModel> fileOptional = fileRepository.findById(id);
     
-    FileModel fm = new FileModel(fileOptional.get().getName(), fileOptional.get().getMimetype(), fileOptional.get().getPic());
+    FileModel fm = new FileModel(fileOptional.get().getName(), fileOptional.get().getMimetype(), fileOptional.get().getPic(), "DownloadFileControler");
       
     
 
@@ -54,7 +56,7 @@ public class DownloadFileController {
 	  
     Optional<FileModel> fileOptional = Optional.ofNullable(fileRepository.findByTeamname(teamname));
     
-    FileModel fm = new FileModel(fileOptional.get().getName(), fileOptional.get().getMimetype(), fileOptional.get().getPic());
+    FileModel fm = new FileModel(fileOptional.get().getName(), fileOptional.get().getMimetype(), fileOptional.get().getPic(), "DownloadFileControler");
       
     
 
@@ -62,6 +64,17 @@ public class DownloadFileController {
     return fm;
   }
   
+  
+  @GetMapping("/api/matchlogos/{teamname1}/{teamname2}")
+  public Map<String, FileModel> getLogosForTeams(@PathVariable String teamname1, @PathVariable String teamname2) {
+	  
+	Map<String, FileModel> teamLogos = new HashMap<String, FileModel>();
+	
+	teamLogos.put(teamname1, fileRepository.findByTeamname(teamname1));
+	teamLogos.put(teamname2, fileRepository.findByTeamname(teamname2));
+
+    return teamLogos;
+  }
   
   
   

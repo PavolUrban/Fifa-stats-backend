@@ -31,8 +31,17 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	//all matches from specified season
 	List<Matches> findBySeason(String season);
 	
+	//all matches from specified season, competition and phase (like GROUP A)
+	List<Matches> findByCompetitionAndSeasonAndCompetitionPhase(String competition, String season,String competitionPhase);
+		
+	List<Matches> findByHometeamAndAwayteam(String hometeam, String awayteam);
 	
 	//all matches by specified team
 	List<Matches> findByHometeamOrAwayteam(String hometeam, String awayteam);
-	
+
+	// all final matches
+	List<Matches> findByCompetitionPhase(String competitionPhase);
+
+	// all final matches by competition
+	List<Matches> findByCompetitionPhaseAndCompetitionOrderBySeason(String competitionPhase, String competition);
 }

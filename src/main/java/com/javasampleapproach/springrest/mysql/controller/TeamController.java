@@ -1,13 +1,14 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,16 @@ public class TeamController {
 	
 	@Autowired
 	FileRepository fileRepository;	
+	
+	@GetMapping("/getAllTeamNames")
+	public List<String> getTeamnames() {
+		List<String> teamNames = new ArrayList<>();
+
+		teamRepository.findAll().forEach(p -> teamNames.add(p.getTeamName()));
+		
+		return teamNames;
+	}
+	
 	
 	@GetMapping("/getTeams")
 	public List<TeamWithLogo> getAllCustomers() {
@@ -114,6 +125,14 @@ public class TeamController {
 		else
 			team.getGoalScorers().get(m.getCompetition()).put(goalscorerName, numberOfGoals);
 		
+		
+		//for total
+		if(team.getGoalScorers().get("Total").containsKey(goalscorerName))
+			team.getGoalScorers().get("Total").put(goalscorerName, team.getGoalScorers().get("Total").get(goalscorerName)+numberOfGoals);
+		
+		else
+			team.getGoalScorers().get("Total").put(goalscorerName, numberOfGoals);
+		
 	}
 	
 	
@@ -139,6 +158,13 @@ public class TeamController {
 		
 		else
 			team.getGoalScorers().get(m.getCompetition()).put(goalscorerName, numberOfGoals);
+		
+		//for total
+		if(team.getGoalScorers().get("Total").containsKey(goalscorerName))
+			team.getGoalScorers().get("Total").put(goalscorerName, team.getGoalScorers().get("Total").get(goalscorerName)+numberOfGoals);
+		
+		else
+			team.getGoalScorers().get("Total").put(goalscorerName, numberOfGoals);
 		
 	}
 	
@@ -189,6 +215,10 @@ public class TeamController {
 
 
 		List<Matches> matches = new ArrayList<>();
+		
+		Set<String> seasonsCL = new LinkedHashSet<>();
+		Set<String> seasonsEL = new LinkedHashSet<>();
+		
 		matches = matchesRepository.getAllMatchesForTeam(teamName);
 		
 		TeamStats team = new TeamStats();
@@ -202,6 +232,7 @@ public class TeamController {
 		team.getMatchesStats().get("CL").put("Draws", 0);
 		team.getMatchesStats().get("CL").put("GoalsScored", 0);
 		team.getMatchesStats().get("CL").put("GoalsConceded", 0);
+		team.getMatchesStats().get("CL").put("Seasons", 0);
 		
 		//matches stats EL
 		team.getMatchesStats().put("EL", new HashMap<String, Integer>());
@@ -210,11 +241,12 @@ public class TeamController {
 		team.getMatchesStats().get("EL").put("Draws", 0);
 		team.getMatchesStats().get("EL").put("GoalsScored", 0);
 		team.getMatchesStats().get("EL").put("GoalsConceded", 0);
-		
+		team.getMatchesStats().get("EL").put("Seasons", 0);
 		
 		//goalscorers
 		team.getGoalScorers().put("CL", new HashMap<String, Integer>());
 		team.getGoalScorers().put("EL", new HashMap<String, Integer>());
+		team.getGoalScorers().put("Total", new HashMap<String, Integer>());
 		
 		team.getYellowCards().put("CL", new HashMap<String, Integer>());
 		team.getYellowCards().put("EL", new HashMap<String, Integer>());
@@ -222,7 +254,8 @@ public class TeamController {
 		team.getRedCards().put("CL", new HashMap<String, Integer>());
 		team.getRedCards().put("EL", new HashMap<String, Integer>());
 		
-		
+
+
 		for(Matches m : matches)
 		{			
 			
@@ -275,8 +308,25 @@ public class TeamController {
 			
 			
 			
+			
+			if(m.getCompetition().equalsIgnoreCase("CL"))
+				seasonsCL.add(m.getSeason());
+			
+			else if(m.getCompetition().equalsIgnoreCase("EL"))
+				seasonsEL.add(m.getSeason());
+			
 		}
 		
+		
+//		System.out.println("Seasons CL");
+//		System.out.println(seasonsCL);
+		
+		team.getMatchesStats().get("CL").put("Seasons", seasonsCL.size());
+		
+		System.out.println("Seasons EL");
+		System.out.println(seasonsEL);
+		
+		team.getMatchesStats().get("EL").put("Seasons", seasonsEL.size());
 		
 		Map<String, Integer> sortedMap = team.getGoalScorers().get("CL").entrySet().stream()
                 .sorted(Entry.comparingByValue())
@@ -288,8 +338,22 @@ public class TeamController {
 		{        System.out.println("Key = " + entry.getKey() + 
                              ", Value = " + entry.getValue()); 
 			} 
+		
 		team.getGoalScorers().put("CL", sortedMap);
 		
+		
+		Map<String, Integer> sortedMap2 = team.getGoalScorers().get("EL").entrySet().stream()
+                .sorted(Entry.comparingByValue())
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+		
+	
+		System.out.println("Here is an EL goalscorers");
+		for (Map.Entry<String,Integer> entry : sortedMap2.entrySet())  
+		{        System.out.println("Key = " + entry.getKey() + 
+                             ", Value = " + entry.getValue()); 
+			} 
+		
+		team.getGoalScorers().put("EL", sortedMap2);
 		
 		FileModel fm = fileRepository.findByTeamname(teamName);
 		
@@ -332,10 +396,14 @@ public class TeamController {
 	}
 	
 	@PostMapping(value = "/create")
-	public Team postCustomer(@RequestBody Team team) {
+	public void postCustomer(@RequestBody Team team) {
 
-		Team newTeam = teamRepository.save(new Team(team.getTeamName(), team.getFirstSeasonCL(), team.getFirstSeasonEL(), team.getCountry()));
-		return newTeam;
+		
+		System.out.println("Ukladam team "+ team.getTeamName()+ " z krajiny " +team.getCountry());
+		Team newTeam =  teamRepository.save(new Team(team.getTeamName(), "2010", "2015", team.getCountry()));
+		
+//		Team newTeam = teamRepository.save(new Team(team.getTeamName(), team.getFirstSeasonCL(), team.getFirstSeasonEL(), team.getCountry()));
+//		return newTeam;
 	}
 	
 	
