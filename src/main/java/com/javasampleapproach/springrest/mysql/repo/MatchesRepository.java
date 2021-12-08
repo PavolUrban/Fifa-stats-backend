@@ -8,8 +8,21 @@ import org.springframework.data.repository.CrudRepository;
 import com.javasampleapproach.springrest.mysql.model.Matches;
 
 public interface MatchesRepository extends CrudRepository<Matches, Long>{
-	
-	@Query("SELECT m FROM Matches m WHERE m.hometeam = ?1 OR m.awayteam = ?1 ORDER BY id DESC") //competition, season, competitionPhase,
+
+
+
+
+
+
+
+	@Query("SELECT m FROM Matches m WHERE m.hometeam = ?1 OR m.awayteam = ?1 " +
+			"ORDER BY SEASON DESC "+
+				", case when competitionphase = 'Final' then 1 " +
+					"when competitionphase = 'Semifinals' then 2 " +
+					"when competitionphase = 'Quarterfinals' then 3 " +
+					"when competitionphase = 'Osemfinals' then 4 " +
+					"else 5 " +
+				"end asc") //competition, season, competitionPhase,
 	List<Matches> getAllMatchesForTeam(String teamname);
 
 	@Query("SELECT m FROM Matches m WHERE m.season = ?1 AND m.competition= ?2 AND m.competitionPhase LIKE 'GROUP%' ORDER BY competitionPhase, id DESC")

@@ -158,7 +158,48 @@ public class GlobalStatsController {
 		
 		return goalscorers;
 	}
-	
+
+	// todo this class contains a lot of duplicate functionality - get rid of it
+	@GetMapping("/getSingleTeamGoalScorers/{teamName}")
+	public List<Goalscorer> getTeamGoalscorers(@PathVariable("teamName") String teamName)
+	{
+		Iterable<Matches> matches = matchesRepository.findByHometeamOrAwayteam(teamName, teamName);;
+		List<Goalscorer> goalscorers = getTeamGoalscorers(matches, teamName);
+
+		return goalscorers;
+	}
+
+	private List<Goalscorer> getTeamGoalscorers(Iterable<Matches> matches, String teamname) {
+
+//		Iterable<Matches> matches = null;
+//		if(customMatches == null)
+//			matches =
+//		else
+//			matches = customMatches;
+
+		Map<String,Map<String, Integer>> playerWithGoals = new HashMap<String,Map<String, Integer>>();
+
+		for(Matches m : matches)
+		{
+			if(m.getGoalscorers() != null)
+			{
+				String[] goalscorers = m.getGoalscorers().split("-");
+
+				if(m.getHometeam().equalsIgnoreCase(teamname)){
+					addGoalsScorers(playerWithGoals, m, goalscorers[0], m.getHometeam()); //home
+				} else {
+					addGoalsScorers(playerWithGoals, m, goalscorers[1], m.getAwayteam()); //away
+				}
+			}
+
+		}
+
+		List<Goalscorer> finalGoalscorers = transforMapToGoalscorersList(playerWithGoals);
+
+		finalGoalscorers.sort((o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
+
+		return finalGoalscorers;
+	}
 	
 	public	List<Goalscorer> getAllGoalscorers(Iterable<Matches> matches) {
 
