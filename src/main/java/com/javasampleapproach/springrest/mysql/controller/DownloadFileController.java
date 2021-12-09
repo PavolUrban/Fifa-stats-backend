@@ -75,6 +75,16 @@ public class DownloadFileController {
 
     return teamLogos;
   }
+
+
+  @GetMapping("/api/getAllLogos")
+  public List<FileModel> getAllLogos() {
+
+    Map<String, FileModel> teamLogos = new HashMap<String, FileModel>();
+    List<FileModel> allLogos = fileRepository.findAll();
+
+    return allLogos;
+  }
   
   
   

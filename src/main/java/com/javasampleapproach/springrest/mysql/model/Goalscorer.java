@@ -13,6 +13,7 @@ public class Goalscorer {
 	private String name;
 	private Integer totalGoalsCount;
 	private Map<String, Integer> goalsByTeams;
+	private int numberOfTeamsPlayerScoredFor;
 	
 	private FileModel teamLogo;
 }

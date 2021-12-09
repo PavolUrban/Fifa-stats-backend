@@ -22,8 +22,11 @@ public class TeamStats {
 
 		//timeOfGoal, numberOfGoalsInThatMinute
 		Map<String, Integer> goalsByMinutesCount;
+		Map<String, Integer> concededGoalsByMinutesCount;
 		private int unknownTimeGoals = 0;
 		List<TimeRangeElement> goalsPerTimeRanges;
+
+		private List<FileModel> oponentsLogos;
 
 
 	FileModel fm;
@@ -37,8 +40,10 @@ public class TeamStats {
 		this.yellowCards = new HashMap<>();
 		this.redCards = new HashMap<>();
 		this.goalsByMinutesCount = new HashMap<>();
+		this.concededGoalsByMinutesCount = new HashMap<>();
 		this.goalsPerTimeRanges = new ArrayList<>();
 		this.finalMatches = new HashMap<>();
+		this.oponentsLogos = new ArrayList<>();
 
 		initializeMatchesStats("CL");
 		initializeMatchesStats("EL");

@@ -30,7 +30,10 @@ public class GlobalStatsController {
 
 	@Autowired
 	SeasonsRepository seasonsRepository;
-	
+
+	//TODO by team, by competition,  by season
+
+
 	public void updateOrAddPlayerInMap(Map<String,Map<String, Integer>> playerWithGoals, String player, int numberOfGoals, String team)
 	{
 		if(playerWithGoals.containsKey(player))
@@ -121,14 +124,13 @@ public class GlobalStatsController {
 		}
 	}
 	
-	
+	// pozor ak budem zjednocovat, pocita sa tu aj za kolko timov dal hrac gol
 	public List<Goalscorer> transforMapToGoalscorersList(Map<String,Map<String, Integer>> playersWithGoalsByTeams)
 	{
 		List<Goalscorer> listOfGoalscorers = new ArrayList<Goalscorer>();
-		
+
 
 		for(String player : playersWithGoalsByTeams.keySet()) {
-		    
 			Goalscorer goalscorer = new Goalscorer();
 			
 			Map<String,Integer> playerGoals = playersWithGoalsByTeams.get(player);
@@ -142,6 +144,7 @@ public class GlobalStatsController {
 		    }
 		    goalscorer.setName(player);
 		    goalscorer.setGoalsByTeams(playerGoals);
+			goalscorer.setNumberOfTeamsPlayerScoredFor(playerGoals.size());
 		    goalscorer.setTotalGoalsCount(goalsTotal);
 		    
 		    listOfGoalscorers.add(goalscorer);
@@ -149,7 +152,8 @@ public class GlobalStatsController {
 	  
 		return listOfGoalscorers;
 	}
-	
+
+	// todo remove this soon
 	@GetMapping("/getAllTimeGoalScorers")
 	public List<Goalscorer> getGlobalGoalscorers()
 	{
@@ -159,25 +163,55 @@ public class GlobalStatsController {
 		return goalscorers;
 	}
 
+	@GetMapping("/getAllGoalScorers")
+	public Map<String, List<Goalscorer>> getAllGoalscorers()
+	{
+		Map<String, List<Goalscorer>> allGoalscorersByCompetition = new HashMap<>();
+		List<Matches> matches = new ArrayList<>();
+
+		matchesRepository.findAll().iterator().forEachRemaining(matches::add);
+		List<Goalscorer> goalscorers = getAllGoalscorers(matches);
+		allGoalscorersByCompetition.put("Total", goalscorers);
+
+		getGoalscorersByCompetition(allGoalscorersByCompetition, matches, "CL", null);
+		getGoalscorersByCompetition(allGoalscorersByCompetition, matches, "EL", null);
+
+		return allGoalscorersByCompetition;
+	}
+
 	// todo this class contains a lot of duplicate functionality - get rid of it
 	@GetMapping("/getSingleTeamGoalScorers/{teamName}")
-	public List<Goalscorer> getTeamGoalscorers(@PathVariable("teamName") String teamName)
+	public Map<String, List<Goalscorer>> getTeamGoalscorers(@PathVariable("teamName") String teamName)
 	{
-		Iterable<Matches> matches = matchesRepository.findByHometeamOrAwayteam(teamName, teamName);;
-		List<Goalscorer> goalscorers = getTeamGoalscorers(matches, teamName);
+		Map<String, List<Goalscorer>> allGoalscorersByCompetition = new HashMap<>();
 
-		return goalscorers;
+		// total
+		List<Matches> matches = matchesRepository.findByHometeamOrAwayteam(teamName, teamName);
+		List<Goalscorer> goalscorers = getTeamGoalscorers(matches, teamName);
+		allGoalscorersByCompetition.put("Total", goalscorers);
+
+		getGoalscorersByCompetition(allGoalscorersByCompetition, matches, "CL", teamName);
+		getGoalscorersByCompetition(allGoalscorersByCompetition, matches, "EL", teamName);
+
+		return allGoalscorersByCompetition;
+	}
+
+	private void getGoalscorersByCompetition(Map<String, List<Goalscorer>> allGoalscorersByCompetition, List<Matches> matches, String competitionName, String teamName){
+		List<Matches> matchesForCompetition = matches.stream().filter(m->m.getCompetition().equalsIgnoreCase(competitionName)).collect(Collectors.toList());
+		List<Goalscorer> goalscorersForCompetition;
+
+		if (teamName != null){
+			goalscorersForCompetition = getTeamGoalscorers(matchesForCompetition, teamName);
+		} else {
+			goalscorersForCompetition = getAllGoalscorers(matchesForCompetition);
+		}
+
+		allGoalscorersByCompetition.put(competitionName, goalscorersForCompetition);
 	}
 
 	private List<Goalscorer> getTeamGoalscorers(Iterable<Matches> matches, String teamname) {
 
-//		Iterable<Matches> matches = null;
-//		if(customMatches == null)
-//			matches =
-//		else
-//			matches = customMatches;
-
-		Map<String,Map<String, Integer>> playerWithGoals = new HashMap<String,Map<String, Integer>>();
+		Map<String,Map<String, Integer>> playerWithGoals = new HashMap<>();
 
 		for(Matches m : matches)
 		{
@@ -203,34 +237,18 @@ public class GlobalStatsController {
 	
 	public	List<Goalscorer> getAllGoalscorers(Iterable<Matches> matches) {
 
-//		Iterable<Matches> matches = null;
-//		if(customMatches == null)
-//			matches =
-//		else
-//			matches = customMatches;
-			
-		Map<String,Map<String, Integer>> playerWithGoals = new HashMap<String,Map<String, Integer>>();
+		Map<String,Map<String, Integer>> playerWithGoals = new HashMap<>();
 		
-		for(Matches m : matches)
-		{
-			if(m.getGoalscorers() != null)
-			{
+		for(Matches m : matches) {
+			if(m.getGoalscorers() != null) {
 				String[] goalscorers = m.getGoalscorers().split("-");
 				addGoalsScorers(playerWithGoals, m, goalscorers[0], m.getHometeam()); //home
 				addGoalsScorers(playerWithGoals, m, goalscorers[1], m.getAwayteam()); //away
 			}
-			
 		}
-		
-		
 		List<Goalscorer> finalGoalscorers = transforMapToGoalscorersList(playerWithGoals);
-		
-		
 		finalGoalscorers.sort((o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
-		
-//		Collections.sort(finalGoalscorers.arrayList, 
-//                (o1, o2) -> o1.getStartDate().compareTo(o2.getStartDate()));
-//	
+
 		return finalGoalscorers;
 	}
 	

@@ -174,13 +174,13 @@ public class SeasonsController {
 		
 		List<Goalscorer> groupStageGoalscorers = helperFunction(groupGoalscorers);
 		
-		finalTablesWithStats.put("TotalGoalscorersGroupStage", getTotalGoalscorers(groupStageGoalscorers, allLogos, 5));
-		finalTablesWithStats.put("TotalGoalscorersPlayOffs", getTotalGoalscorers(goalscorersPO, allLogos, 5));
+		finalTablesWithStats.put("TotalGoalscorersGroupStage", getTotalGoalscorers(groupStageGoalscorers, allLogos));
+		finalTablesWithStats.put("TotalGoalscorersPlayOffs", getTotalGoalscorers(goalscorersPO, allLogos));
 		
 		
 		
 		List<Goalscorer> goalScorersAllPhases = createTotalGoalscorersAllPhases(groupStageGoalscorers, goalscorersPO); // here is every player who score at least goal no matter if it was only in GS or PO
-		finalTablesWithStats.put("TotalGoalscorersAllPhases", getTotalGoalscorers(goalScorersAllPhases, allLogos, 5));
+		finalTablesWithStats.put("TotalGoalscorersAllPhases", getTotalGoalscorers(goalScorersAllPhases, allLogos));
 		
 		
 		
@@ -238,30 +238,10 @@ public class SeasonsController {
 	
 	
 	//this runs when array with goalscorers is sorted
-	private List<Goalscorer> getTotalGoalscorers(List<Goalscorer> goalscorers, List<FileModel>logos, int numberOfFinalTopscorers)
+	private List<Goalscorer> getTotalGoalscorers(List<Goalscorer> goalscorers, List<FileModel>logos)
 	{
 		
-		List<Goalscorer> finalGoalscorers = new ArrayList<>();
-		
-		for(int i=0; i < goalscorers.size(); i++)
-		{
-			
-			System.out.println("We are on "+i+ " from "+goalscorers.size());
-			Goalscorer currentGoalscorer = goalscorers.get(i);
-			
-			if(i<numberOfFinalTopscorers)
-				finalGoalscorers.add(currentGoalscorer);
-			
-			else
-			{
-				if(currentGoalscorer.getTotalGoalsCount() == finalGoalscorers.get(i-1).getTotalGoalsCount()) // as array is sorted check only if another player has at least as many goals as previous one
-					finalGoalscorers.add(currentGoalscorer);
-				
-				else
-					break;
-			}
-				
-		}
+		List<Goalscorer> finalGoalscorers = goalscorers;
 		
 		
 		//TODO this is used multiple times add it to function

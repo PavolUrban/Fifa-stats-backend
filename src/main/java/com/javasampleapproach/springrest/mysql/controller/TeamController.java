@@ -1,14 +1,7 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.javasampleapproach.springrest.mysql.model.*;
@@ -111,7 +104,7 @@ public class TeamController {
 		getMatchesByCompetition(lostFinalMatches, "EL", "Lost", team);
 		getMatchesByCompetition(wonFinalMatches, "EL", "Won", team);
 
-
+		Set<String> oponents = new HashSet<>();
 		for(Matches m : matches)  {
 
 			// wins, draws, losses counter
@@ -127,9 +120,11 @@ public class TeamController {
 			if(m.getHometeam().equalsIgnoreCase(teamName)) {
 				team.getMatchesStats().get(m.getCompetition()).put("GoalsScored", team.getMatchesStats().get(m.getCompetition()).get("GoalsScored") + m.getScorehome());
 				team.getMatchesStats().get(m.getCompetition()).put("GoalsConceded", team.getMatchesStats().get(m.getCompetition()).get("GoalsConceded") + m.getScoreaway());
+				oponents.add(m.getAwayteam());
 			} else if(m.getAwayteam().equalsIgnoreCase(teamName)) {
 				team.getMatchesStats().get(m.getCompetition()).put("GoalsScored", team.getMatchesStats().get(m.getCompetition()).get("GoalsScored") + m.getScoreaway());
 				team.getMatchesStats().get(m.getCompetition()).put("GoalsConceded", team.getMatchesStats().get(m.getCompetition()).get("GoalsConceded") + m.getScorehome());
+				oponents.add(m.getHometeam());
 			}
 
 			// goalscorers
@@ -138,8 +133,10 @@ public class TeamController {
 
 				if(m.getHometeam().equalsIgnoreCase(teamName)) {
 					addHomeOrAwayGoalscorersProperly(team, m, goalscorers[0]); // 0 - home goalscorers (they are written before character '-')
+					//addConcededGoalsProperly(team, m, goalscorers[1]);
 				} else {
 					addHomeOrAwayGoalscorersProperly(team, m, goalscorers[1]);
+					//addConcededGoalsProperly(team, m, goalscorers[0]);
 				}
 			}
 
@@ -162,6 +159,9 @@ public class TeamController {
 		printGoalscorersMap(sortedMapEL);
 		team.getGoalScorers().put("EL", sortedMapEL);
 
+		List<FileModel> oponentsLogos = fileRepository.getLogosForAllTeams(oponents);
+		oponentsLogos.add(team.getFm());
+		team.setOponentsLogos(oponentsLogos);
 
 		transformGoalMapToTimeRanges(team);
 
@@ -334,11 +334,13 @@ public class TeamController {
 			String[] minutes = fullInfo[0].split(",");
 
 			for (int i = 0; i < minutes.length; i++) {
-				insertNewScoringTimeOrUpdateExisting(minutes[i], team);
+				insertNewScoringTimeOrUpdateExisting(team.getGoalsByMinutesCount(),minutes[i]); // scored map
+				//insertNewScoringTimeOrUpdateExisting(team.getConcededGoalsByMinutesCount(), minutes[i]); // conceded
 			}
 			numberOfGoals = minutes.length;
 		} else {
-			insertNewScoringTimeOrUpdateExisting(fullInfo[0], team);
+			insertNewScoringTimeOrUpdateExisting(team.getGoalsByMinutesCount(), fullInfo[0]); // scored map
+			//insertNewScoringTimeOrUpdateExisting(team.getConcededGoalsByMinutesCount(), fullInfo[0]); // conceded
 		}
 
 		// for EL or CL
@@ -356,11 +358,11 @@ public class TeamController {
 		}
 	}
 
-	private void insertNewScoringTimeOrUpdateExisting(String goalTime, TeamStats team){
-		if (team.getGoalsByMinutesCount().containsKey(goalTime)) {
-			team.getGoalsByMinutesCount().put(goalTime, team.getGoalsByMinutesCount().get(goalTime) + 1);
+	private void insertNewScoringTimeOrUpdateExisting(Map<String, Integer> goalsMinutesCountMap, String goalTime){
+		if (goalsMinutesCountMap.containsKey(goalTime)) {
+			goalsMinutesCountMap.put(goalTime, goalsMinutesCountMap.get(goalTime) + 1);
 		} else {
-			team.getGoalsByMinutesCount().put(goalTime, 1);
+			goalsMinutesCountMap.put(goalTime, 1);
 		}
 	}
 
