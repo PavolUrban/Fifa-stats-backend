@@ -129,7 +129,7 @@ public class TeamController {
 				oponents.add(m.getHometeam());
 			}
 
-			// goalscorers
+			// TODO - this has to be removed, goalscorers are fetched from globalstats controller, goals per ranges are here goalscorers
 			if(m.getGoalscorers() != null) {
 				String[] goalscorers = m.getGoalscorers().split("-");
 				if(m.getHometeam().equalsIgnoreCase(teamName)) {
@@ -151,12 +151,12 @@ public class TeamController {
 
 			// yellow cards
 			if(m.getYellowcards() != null) {
-				CardsStatsCalculator.getRedAndYellowCards(m, team, m.getYellowcards(), m.getCompetition(), teamName, MyUtils.CARD_TYPE_YELLOW);
+				CardsStatsCalculator.getRedAndYellowCards(m, team.getPlayersCardsStatisticsPerCompetition(), m.getYellowcards(), m.getCompetition(), teamName, MyUtils.CARD_TYPE_YELLOW);
 			}
 
 			//red cards
 			if(m.getRedcards() != null) {
-				CardsStatsCalculator.getRedAndYellowCards(m, team, m.getRedcards(), m.getCompetition(), teamName, MyUtils.CARD_TYPE_RED);
+				CardsStatsCalculator.getRedAndYellowCards(m, team.getPlayersCardsStatisticsPerCompetition(), m.getRedcards(), m.getCompetition(), teamName, MyUtils.CARD_TYPE_RED);
 			}
 		}
 
@@ -177,9 +177,7 @@ public class TeamController {
 
 		TimeRangesMapper.transformGoalMapToTimeRanges(team);
 
-		Collections.sort(team.getPlayersCardsStatisticsPerCompetition().get("Total"), Comparator.comparingInt(FifaPlayer::getCardsTotal).thenComparing(FifaPlayer::getRedCards).reversed());
-		Collections.sort(team.getPlayersCardsStatisticsPerCompetition().get("CL"), Comparator.comparingInt(FifaPlayer::getCardsTotal).thenComparing(FifaPlayer::getRedCards).reversed());
-		Collections.sort(team.getPlayersCardsStatisticsPerCompetition().get("EL"), Comparator.comparingInt(FifaPlayer::getCardsTotal).thenComparing(FifaPlayer::getRedCards).reversed());
+		CardsStatsCalculator.sortCardsMap(team.getPlayersCardsStatisticsPerCompetition());
 
 		return team;
 	}

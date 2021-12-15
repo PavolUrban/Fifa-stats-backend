@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 public class GoalscorersCalculator {
 
+
     public static void addHomeOrAwayGoalscorersProperly(boolean updatingScoredGoals, Map<String, Integer> goalsByMinutesCount , Matches m, String goalscorersAsString, TeamStats team)
     {
         // check for multiple goalscorers - multiple goalscorers are separated by ;

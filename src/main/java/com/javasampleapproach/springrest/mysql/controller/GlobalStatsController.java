@@ -13,6 +13,7 @@ import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
 
 import Utils.MyUtils;
+import Utils.CardsStatsCalculator;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -168,7 +169,32 @@ public class GlobalStatsController {
 		return allGoalscorersByCompetition;
 	}
 
-	// todo this class contains a lot of duplicate functionality - get rid of it
+	@GetMapping("/getAllCards")
+	public Map<String, List<FifaPlayer>> getAllCards()
+	{
+		Map<String, List<FifaPlayer>> allPlayersWithCardByCompetition = new HashMap<>();
+
+		allPlayersWithCardByCompetition.put("Total", new ArrayList<>());
+		allPlayersWithCardByCompetition.put("CL", new ArrayList<>());
+		allPlayersWithCardByCompetition.put("EL", new ArrayList<>());
+
+		List<Matches> matchesWithYellowOrRed = matchesRepository.findByYellowcardsIsNotNullOrRedcardsIsNotNull();
+
+		matchesWithYellowOrRed.forEach(match->{
+			if(match.getYellowcards() != null) {
+				CardsStatsCalculator.getRedAndYellowCards(match, allPlayersWithCardByCompetition, match.getYellowcards(), match.getCompetition(),null, MyUtils.CARD_TYPE_YELLOW);
+			}
+			if(match.getRedcards() != null) {
+				CardsStatsCalculator.getRedAndYellowCards(match, allPlayersWithCardByCompetition, match.getRedcards(), match.getCompetition(), null, MyUtils.CARD_TYPE_RED);
+			}
+		});
+
+		CardsStatsCalculator.sortCardsMap(allPlayersWithCardByCompetition);
+
+		return allPlayersWithCardByCompetition;
+	}
+
+	// todo this class contains a lot of duplicate functionality - get rid of it + it has to be removed to team controller
 	@GetMapping("/getSingleTeamGoalScorers/{teamName}")
 	public Map<String, List<Goalscorer>> getTeamGoalscorers(@PathVariable("teamName") String teamName)
 	{

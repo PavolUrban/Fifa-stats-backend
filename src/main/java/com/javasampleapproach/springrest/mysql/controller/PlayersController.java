@@ -69,6 +69,7 @@ public class PlayersController {
 
 	// todo this function contains duplicate code - remove it
 	private void getCardsIfNotNull(Matches match, int mainPlayerIndex, int opositionPlayerIndex, PlayerStats mainPlayer, PlayerStats opositionPlayer) {
+		System.out.println(match);
 		if(match.getYellowcards() != null) {
 			String[] yellowCards = match.getYellowcards().split("-");
 			String cardsForCurrentPlayer = yellowCards[mainPlayerIndex];
@@ -101,9 +102,6 @@ public class PlayersController {
 				numberOfCardsToAdd =1;
 			}
 		}
-
-		System.out.println("\t" + allCurrentCards +" teda pripocitam "+numberOfCardsToAdd);
-
 
 		return numberOfCardsToAdd;
 	}

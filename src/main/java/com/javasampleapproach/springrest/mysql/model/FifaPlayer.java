@@ -13,4 +13,6 @@ public class FifaPlayer {
     private int cardsTotal = 0;
     private int redCards = 0;
     private int yellowCards = 0;
+
+    // TODO - add cards per team + per season
 }

@@ -58,4 +58,7 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 
 	// all final matches by competition
 	List<Matches> findByCompetitionPhaseAndCompetitionOrderBySeason(String competitionPhase, String competition);
+
+
+	List<Matches> findByYellowcardsIsNotNullOrRedcardsIsNotNull();
 }
