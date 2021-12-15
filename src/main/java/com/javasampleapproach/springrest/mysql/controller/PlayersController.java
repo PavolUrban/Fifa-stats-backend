@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.javasampleapproach.springrest.mysql.model.TeamStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,12 +31,13 @@ public class PlayersController {
 
 	private static final String PAVOL_JAY = "Pavol Jay";
 	private static final String KOTLIK = "Kotlik";
+	private static final String DRAW = "D";
 
 	public String whoIsWinnerOfMatch(Matches match, String playerFirst, String playerSecond) {
 		String winner = "";
 
-		if (match.getWinner().equalsIgnoreCase("D"))
-			winner = "D";
+		if (match.getWinner().equalsIgnoreCase(DRAW))
+			winner = DRAW;
 
 		else if ((match.getHometeam().equalsIgnoreCase(match.getWinner()) && (match.getPlayerH().equalsIgnoreCase(playerFirst))) ||
 				(match.getAwayteam().equalsIgnoreCase(match.getWinner())) && (match.getPlayerA().equalsIgnoreCase(playerFirst)))
@@ -47,22 +49,65 @@ public class PlayersController {
 		return winner;
 	}
 
-
-	//this function is calculated for pavol jay -> scored goals by him is conceded goals by kotlik etc.
-	private String getGoalsScored(Matches match) {
+	// this function is calculated for PAVOL_JAY -> scored goals by him is conceded goals by KOTLIK etc.
+	private List<Integer> getGoalsScoredAndConceded(Matches match, PlayerStats mainPLayer, PlayerStats opositionPlayer) {
 		int goalsScored = 0;
 		int goalsConceded = 0;
 
-		if (match.getPlayerH().equalsIgnoreCase("Pavol Jay")) {
+		if (match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) {
 			goalsScored = match.getScorehome();
 			goalsConceded = match.getScoreaway();
-		} else if (match.getPlayerA().equalsIgnoreCase("Pavol Jay")) {
+			getCardsIfNotNull(match, 0,1, mainPLayer, opositionPlayer);
+		} else if (match.getPlayerA().equalsIgnoreCase(PAVOL_JAY)) {
 			goalsScored = match.getScoreaway();
 			goalsConceded = match.getScorehome();
+			getCardsIfNotNull(match, 1,0, mainPLayer, opositionPlayer);
 		}
 
-		return goalsScored + "," + goalsConceded;
+		return Arrays.asList(goalsScored, goalsConceded);
 	}
+
+	// todo this function contains duplicate code - remove it
+	private void getCardsIfNotNull(Matches match, int mainPlayerIndex, int opositionPlayerIndex, PlayerStats mainPlayer, PlayerStats opositionPlayer) {
+		if(match.getYellowcards() != null) {
+			String[] yellowCards = match.getYellowcards().split("-");
+			String cardsForCurrentPlayer = yellowCards[mainPlayerIndex];
+			String cardsForOpositionPlayer = yellowCards[opositionPlayerIndex];
+			mainPlayer.setNumberOfYellowCards( mainPlayer.getNumberOfYellowCards() + addProperCardCount(cardsForCurrentPlayer));
+			opositionPlayer.setNumberOfYellowCards(opositionPlayer.getNumberOfYellowCards() + addProperCardCount(cardsForOpositionPlayer));
+		}
+
+		if(match.getRedcards() != null) {
+			String[] redCards = match.getRedcards().split("-");
+			String cardsForCurrentPlayer = redCards[mainPlayerIndex];
+			String cardsForOpositionPlayer = redCards[opositionPlayerIndex];
+			mainPlayer.setNumberOfRedCards( mainPlayer.getNumberOfRedCards() + addProperCardCount(cardsForCurrentPlayer));
+			opositionPlayer.setNumberOfRedCards( opositionPlayer.getNumberOfRedCards() + addProperCardCount(cardsForOpositionPlayer));
+		}
+	}
+
+
+	private static int addProperCardCount (String allCurrentCards)
+	{
+		int numberOfCardsToAdd = 0;
+
+		// check for multiple players separated by delimiter
+		if (allCurrentCards.contains(";")) {
+			String[] playersWithCurrentCard = allCurrentCards.split(";");
+			numberOfCardsToAdd = playersWithCurrentCard.length;
+		} else {
+			// '/' is used for no goalscorer - if string contains this character no record for this stat is provided
+			if ( !allCurrentCards.equalsIgnoreCase("/") ) {
+				numberOfCardsToAdd =1;
+			}
+		}
+
+		System.out.println("\t" + allCurrentCards +" teda pripocitam "+numberOfCardsToAdd);
+
+
+		return numberOfCardsToAdd;
+	}
+
 
 
 	@GetMapping("/getGlobalStats")
@@ -70,52 +115,46 @@ public class PlayersController {
 
 		Map<String, PlayerStats> stats = new HashMap<>();
 
-
-		//	List<Player> players = (List<Player>) playersRepository.findAll();
 		List<Matches> matches = (List<Matches>) matchesRepository.findAll();
 
 		Map<String, Integer> winnersCount = new HashMap<>();
-
-		winnersCount.put("D", 0);
-		winnersCount.put("Pavol Jay", 0);
-		winnersCount.put("Kotlik", 0);
-
+		winnersCount.put(DRAW, 0);
+		winnersCount.put(PAVOL_JAY, 0);
+		winnersCount.put(KOTLIK, 0);
 
 		PlayerStats pavolJay = new PlayerStats();
 		PlayerStats kotlik = new PlayerStats();
 
 		for (Matches m : matches) {
-			String winnerName = whoIsWinnerOfMatch(m, "Pavol Jay", "Kotlik");
+			String winnerName = whoIsWinnerOfMatch(m, PAVOL_JAY, KOTLIK);
 			winnersCount.put(winnerName, winnersCount.get(winnerName) + 1);
 
-			String[] goalsScoredAndConceded = getGoalsScored(m).split(",");
-			int goalsScored = Integer.parseInt(goalsScoredAndConceded[0]);
-			int goalsConceded = Integer.parseInt(goalsScoredAndConceded[1]);
-
-			pavolJay.setGoalsScored(pavolJay.getGoalsScored() + goalsScored);
-			pavolJay.setGoalsConceded(pavolJay.getGoalsConceded() + goalsConceded);
-
-			//goals scored by pavol jay is conceded by kotlik and so on
-			kotlik.setGoalsScored(kotlik.getGoalsScored() + goalsConceded);
-			kotlik.setGoalsConceded(kotlik.getGoalsConceded() + goalsScored);
+			List<Integer> goalsScoredANdConceeeded = getGoalsScoredAndConceded(m, pavolJay, kotlik);
+			int goalsScored = goalsScoredANdConceeeded.get(0);
+			int goalsConceded = goalsScoredANdConceeeded.get(1);
+			setGoalsScoredAndConcededForPlayer(pavolJay, goalsScored, goalsConceded);
+			setGoalsScoredAndConcededForPlayer(kotlik, goalsConceded, goalsScored);
 		}
 
+		prepareStats(pavolJay, winnersCount, PAVOL_JAY, KOTLIK);
+		prepareStats(kotlik, winnersCount, KOTLIK, PAVOL_JAY);
 
-		ArrayList<Integer> bilancePavolJay = new ArrayList<>(Arrays.asList(winnersCount.get("Pavol Jay"), winnersCount.get("D"), winnersCount.get("Kotlik")));
-		ArrayList<Integer> bilanceKotlik = new ArrayList<>(Arrays.asList(winnersCount.get("Kotlik"), winnersCount.get("D"), winnersCount.get("Pavol Jay")));
+		stats.put(PAVOL_JAY, pavolJay);
+		stats.put(KOTLIK, kotlik);
 
-		pavolJay.setWins(winnersCount.get("Pavol Jay"));
-		pavolJay.setLosses(winnersCount.get("Kotlik")); //win of one player is loss of second one
-		pavolJay.setDraws(winnersCount.get("D"));
-		pavolJay.setTotalBilance(bilancePavolJay);
-
-		kotlik.setWins(winnersCount.get("Kotlik"));
-		kotlik.setLosses(winnersCount.get("Pavol Jay"));
-		kotlik.setDraws(winnersCount.get("D"));
-		kotlik.setTotalBilance(bilanceKotlik);
-
-		stats.put("Pavol Jay", pavolJay);
-		stats.put("Kotlik", kotlik);
 		return stats;
+	}
+
+	private void prepareStats(PlayerStats player, Map<String, Integer> winnersCount, String playerWinner, String playerLooser) {
+		ArrayList<Integer> totalStats = new ArrayList<>(Arrays.asList(winnersCount.get(playerWinner), winnersCount.get(DRAW), winnersCount.get(playerLooser)));
+		player.setWins(totalStats.get(0));
+		player.setDraws(totalStats.get(1));
+		player.setLosses(totalStats.get(2));
+		player.setTotalBilance(totalStats);
+	}
+
+	private void setGoalsScoredAndConcededForPlayer(PlayerStats player, int goalsScored, int goalsConceded) {
+		player.setGoalsScored(player.getGoalsScored() + goalsScored);
+		player.setGoalsConceded(player.getGoalsConceded() + goalsConceded);
 	}
 }

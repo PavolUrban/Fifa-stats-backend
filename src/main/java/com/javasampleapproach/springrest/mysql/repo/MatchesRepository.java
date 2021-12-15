@@ -21,7 +21,8 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 					"when competitionphase = 'Semifinals' then 2 " +
 					"when competitionphase = 'Quarterfinals' then 3 " +
 					"when competitionphase = 'Osemfinals' then 4 " +
-					"else 5 " +
+					"when competitionphase = '16-finals' then 5 " +
+					"else 6 " +
 				"end asc") //competition, season, competitionPhase,
 	List<Matches> getAllMatchesForTeam(String teamname);
 

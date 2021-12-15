@@ -31,8 +31,6 @@ public class GlobalStatsController {
 	@Autowired
 	SeasonsRepository seasonsRepository;
 
-	//TODO by team, by competition,  by season
-
 
 	public void updateOrAddPlayerInMap(Map<String,Map<String, Integer>> playerWithGoals, String player, int numberOfGoals, String team)
 	{
@@ -153,15 +151,6 @@ public class GlobalStatsController {
 		return listOfGoalscorers;
 	}
 
-	// todo remove this soon
-	@GetMapping("/getAllTimeGoalScorers")
-	public List<Goalscorer> getGlobalGoalscorers()
-	{
-		Iterable<Matches> matches = matchesRepository.findAll();
-		List<Goalscorer> goalscorers = getAllGoalscorers(matches);
-		
-		return goalscorers;
-	}
 
 	@GetMapping("/getAllGoalScorers")
 	public Map<String, List<Goalscorer>> getAllGoalscorers()
@@ -438,7 +427,9 @@ public class GlobalStatsController {
 			clw.setPlayerName(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
 			clw.setSeason(match.getSeason());
 			clw.setTeamName(match.getWinner());
+			clw.setRunnerUp(getRunnerUp(match));
 			clw.setTeamLogo(fileRepository.findByTeamname(match.getWinner()));
+			clw.setRunnerUpLogo(fileRepository.findByTeamname(clw.getRunnerUp()));
 
 			winnerList.add(clw);
 		});
@@ -448,6 +439,17 @@ public class GlobalStatsController {
 //		});
 
 		return winnerList;
+	}
+
+	private String getRunnerUp(Matches match) {
+		String runnerUp;
+		if(match.getWinner().equalsIgnoreCase(match.getHometeam())) {
+			runnerUp = match.getAwayteam();
+		} else {
+			runnerUp = match.getHometeam();
+		}
+
+		return runnerUp;
 	}
 
 	//TODO Use this for view with both EL and CL

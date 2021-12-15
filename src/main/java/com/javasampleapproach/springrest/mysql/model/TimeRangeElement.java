@@ -12,4 +12,5 @@ public class TimeRangeElement {
     private int lowBorder;
     private int upBorder;
     private int numberOfGoals;
+    private int numberOfConcededGoals;
 }

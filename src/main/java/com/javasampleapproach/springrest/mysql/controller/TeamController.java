@@ -1,9 +1,11 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
+import java.sql.Time;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import Utils.CardsStatsCalculator;
 import com.javasampleapproach.springrest.mysql.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +24,9 @@ import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
 
 import Utils.MyUtils;
+import Utils.CardsStatsCalculator;
+import Utils.GoalscorersCalculator;
+import Utils.TimeRangesMapper;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -74,10 +79,8 @@ public class TeamController {
 		return finalTeams;
 	}
 
-	private void getMatchesByCompetition(List<Matches> matchesToFilter, String competition, String result, TeamStats team){
-		List<Matches> filteredMatches = matchesToFilter.stream().filter(m->m.getCompetition().equalsIgnoreCase(competition)).collect(Collectors.toList());
-		team.getFinalMatches().get(competition).put(result, filteredMatches);
-	}
+
+	// TODO check for multiple times used basically the same condition, this may be improved
 
 	@GetMapping("/getTeamStats/{teamname}")
 	public TeamStats singleTeamStats(@PathVariable("teamname") String teamName) {
@@ -95,16 +98,15 @@ public class TeamController {
 		List<Matches> lostFinalMatches = finalMatches.stream().filter(m-> ! (m.getWinner().equalsIgnoreCase(teamName))).collect(Collectors.toList());
 		List<Matches> wonFinalMatches = finalMatches.stream().filter(m-> m.getWinner().equalsIgnoreCase(teamName)).collect(Collectors.toList());
 
-
 		team.getFinalMatches().get("Total").put("Won", wonFinalMatches);
 		team.getFinalMatches().get("Total").put("Lost", lostFinalMatches);
-
 		getMatchesByCompetition(lostFinalMatches, "CL", "Lost", team);
 		getMatchesByCompetition(wonFinalMatches, "CL", "Won", team);
 		getMatchesByCompetition(lostFinalMatches, "EL", "Lost", team);
 		getMatchesByCompetition(wonFinalMatches, "EL", "Won", team);
 
 		Set<String> oponents = new HashSet<>();
+
 		for(Matches m : matches)  {
 
 			// wins, draws, losses counter
@@ -130,13 +132,13 @@ public class TeamController {
 			// goalscorers
 			if(m.getGoalscorers() != null) {
 				String[] goalscorers = m.getGoalscorers().split("-");
-
 				if(m.getHometeam().equalsIgnoreCase(teamName)) {
-					addHomeOrAwayGoalscorersProperly(team, m, goalscorers[0]); // 0 - home goalscorers (they are written before character '-')
-					//addConcededGoalsProperly(team, m, goalscorers[1]);
+					// 0 - home goalscorers (they are written before character '-')
+					GoalscorersCalculator.addHomeOrAwayGoalscorersProperly(true, team.getGoalsByMinutesCount(), m, goalscorers[0], team);
+					GoalscorersCalculator.addHomeOrAwayGoalscorersProperly(false, team.getConcededGoalsByMinutesCount(), m, goalscorers[1], team);
 				} else {
-					addHomeOrAwayGoalscorersProperly(team, m, goalscorers[1]);
-					//addConcededGoalsProperly(team, m, goalscorers[0]);
+					GoalscorersCalculator.addHomeOrAwayGoalscorersProperly(true, team.getGoalsByMinutesCount(), m, goalscorers[1], team);
+					GoalscorersCalculator.addHomeOrAwayGoalscorersProperly(false, team.getConcededGoalsByMinutesCount(), m, goalscorers[0], team);
 				}
 			}
 
@@ -146,68 +148,41 @@ public class TeamController {
 			} else if(m.getCompetition().equalsIgnoreCase("EL")) {
 				seasonsEL.add(m.getSeason());
 			}
+
+			// yellow cards
+			if(m.getYellowcards() != null) {
+				CardsStatsCalculator.getRedAndYellowCards(m, team, m.getYellowcards(), m.getCompetition(), teamName, MyUtils.CARD_TYPE_YELLOW);
+			}
+
+			//red cards
+			if(m.getRedcards() != null) {
+				CardsStatsCalculator.getRedAndYellowCards(m, team, m.getRedcards(), m.getCompetition(), teamName, MyUtils.CARD_TYPE_RED);
+			}
 		}
 
 		team.getMatchesStats().get("CL").put("Seasons", seasonsCL.size());
 		team.getMatchesStats().get("EL").put("Seasons", seasonsEL.size());
 
-		Map<String, Integer> sortedMapCL = sortMap(team.getGoalScorers().get("CL"));
-		printGoalscorersMap(sortedMapCL);
+		Map<String, Integer> sortedMapCL = GoalscorersCalculator.sortMap(team.getGoalScorers().get("CL"));
+		//printGoalscorersMap(sortedMapCL);
 		team.getGoalScorers().put("CL", sortedMapCL);
 
-		Map<String, Integer> sortedMapEL = sortMap(team.getGoalScorers().get("EL"));
-		printGoalscorersMap(sortedMapEL);
+		Map<String, Integer> sortedMapEL = GoalscorersCalculator.sortMap(team.getGoalScorers().get("EL"));
+		//printGoalscorersMap(sortedMapEL);
 		team.getGoalScorers().put("EL", sortedMapEL);
 
 		List<FileModel> oponentsLogos = fileRepository.getLogosForAllTeams(oponents);
 		oponentsLogos.add(team.getFm());
 		team.setOponentsLogos(oponentsLogos);
 
-		transformGoalMapToTimeRanges(team);
+		TimeRangesMapper.transformGoalMapToTimeRanges(team);
+
+		Collections.sort(team.getPlayersCardsStatisticsPerCompetition().get("Total"), Comparator.comparingInt(FifaPlayer::getCardsTotal).thenComparing(FifaPlayer::getRedCards).reversed());
+		Collections.sort(team.getPlayersCardsStatisticsPerCompetition().get("CL"), Comparator.comparingInt(FifaPlayer::getCardsTotal).thenComparing(FifaPlayer::getRedCards).reversed());
+		Collections.sort(team.getPlayersCardsStatisticsPerCompetition().get("EL"), Comparator.comparingInt(FifaPlayer::getCardsTotal).thenComparing(FifaPlayer::getRedCards).reversed());
 
 		return team;
 	}
-
-	private void transformGoalMapToTimeRanges(TeamStats team){
-
-		int wholeRange = 90;
-		int stepSize = 5; // todo as variable
-		int numberOfRanges = wholeRange/stepSize;
-
-		List<TimeRangeElement> allRanges = new ArrayList<>();
-
-		for(int i = 0; i < numberOfRanges; i++ ) {
-
-			if ((i*stepSize) > wholeRange){
-				break;
-			}
-			int lowBorder = i * stepSize;
-			int upBorder = i * stepSize + stepSize;
-			TimeRangeElement tre = new TimeRangeElement();
-			tre.setLabel(lowBorder + " - " + upBorder);
-			tre.setLowBorder(lowBorder);
-			tre.setUpBorder(upBorder);
-			tre.setNumberOfGoals(0);
-			allRanges.add(tre);
-		}
-
-		team.getGoalsByMinutesCount().forEach((time, goalsCount)->{
-			int timeAsInt = Integer.parseInt(time);
-
-			allRanges.forEach(range->{
-				if( (timeAsInt > range.getLowBorder()) && (timeAsInt <= range.getUpBorder())){
-					range.setNumberOfGoals(range.getNumberOfGoals() + goalsCount);
-				} else if( (timeAsInt > wholeRange) && (range.getUpBorder() == 90)){
-					// add all goals scored after 90 minute to the last range
-					range.setNumberOfGoals(range.getNumberOfGoals() + goalsCount);
-				}
-			});
-		});
-
-		team.setGoalsPerTimeRanges(allRanges);
-	}
-
-
 
 	// TODO - who has won the most games, most red cards ...
 	@GetMapping("/getGlobalTeamStats")
@@ -266,118 +241,9 @@ public class TeamController {
 		}
 	}
 
-
-
-	private void addHomeOrAwayGoalscorersProperly(TeamStats team, Matches m, String goalscorersAsString)
-	{
-		// check for multiple goalscorers - multiple goalscorers are separated by ;
-		if (goalscorersAsString.contains(";")) {
-			String[] allGoalscorers = goalscorersAsString.split(";");
-
-			for (String goalScorer : allGoalscorers)
-			{
-				// in some old FIFA seasons there are not minutes with goalscorers, only number of goals in match by player
-				if (MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(m.getSeason())) {
-					recalculateGoalsAndUpdateScorersMapForOlderFifaSeasons(team, m, goalScorer);
-				} else {
-					recalculateGoalsAndUpdateGoalscorersMap(team, m, goalScorer);
-				}
-			}
-		} else {
-			// '/' is used for no goalscorer - if string contains this character no one has scored so no one will be added to goalscorers list
-			if (!goalscorersAsString.equalsIgnoreCase("/")) {
-				if(MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(m.getSeason())) {
-					recalculateGoalsAndUpdateScorersMapForOlderFifaSeasons(team, m, goalscorersAsString);
-				}
-				else {
-					recalculateGoalsAndUpdateGoalscorersMap(team, m, goalscorersAsString);
-				}
-			}
-		}
-	}
-	
-	private void recalculateGoalsAndUpdateScorersMapForOlderFifaSeasons(TeamStats team, Matches m, String goalScorer) {
-		// by default goalscorer must scored at least 1 goal
-		int numberOfGoals = 1;
-		String goalscorerName;
-		
-		// goalscorer is in format 4*Name, where number is number of goals in current match, if goalscorers has only one goal it is in format Name
-		if(goalScorer.contains("*")) {
-			String[] info = goalScorer.split("\\*");
-			numberOfGoals = Integer.parseInt(info[0]);
-			goalscorerName = info[1];
-		} else{
-			goalscorerName = goalScorer;
-		}
-
-		team.setUnknownTimeGoals(team.getUnknownTimeGoals() + numberOfGoals);
-
-		// for EL or CL
-		updateOrInsertGoalscorerToProperCompetition(team.getGoalScorers().get(m.getCompetition()), goalscorerName, numberOfGoals);
-
-		// for total
-		updateOrInsertGoalscorerToProperCompetition(team.getGoalScorers().get("Total"), goalscorerName, numberOfGoals);
-	}
-
-
-	private void recalculateGoalsAndUpdateGoalscorersMap(TeamStats team, Matches m, String goalScorer)
-	{
-		String[] fullInfo = goalScorer.split(" ");
-		String goalscorerName = fullInfo[1];
-
-		// by default goalscorer must scored at least 1 goal
-		int numberOfGoals = 1;
-
-		// goalscorer has multiple goals in this match
-		if (fullInfo[0].contains(","))
-		{
-			String[] minutes = fullInfo[0].split(",");
-
-			for (int i = 0; i < minutes.length; i++) {
-				insertNewScoringTimeOrUpdateExisting(team.getGoalsByMinutesCount(),minutes[i]); // scored map
-				//insertNewScoringTimeOrUpdateExisting(team.getConcededGoalsByMinutesCount(), minutes[i]); // conceded
-			}
-			numberOfGoals = minutes.length;
-		} else {
-			insertNewScoringTimeOrUpdateExisting(team.getGoalsByMinutesCount(), fullInfo[0]); // scored map
-			//insertNewScoringTimeOrUpdateExisting(team.getConcededGoalsByMinutesCount(), fullInfo[0]); // conceded
-		}
-
-		// for EL or CL
-		updateOrInsertGoalscorerToProperCompetition(team.getGoalScorers().get(m.getCompetition()), goalscorerName, numberOfGoals);
-
-		// for total
-		updateOrInsertGoalscorerToProperCompetition(team.getGoalScorers().get("Total"), goalscorerName, numberOfGoals);
-	}
-
-	private void updateOrInsertGoalscorerToProperCompetition(Map<String, Integer> map, String goalscorerName, int numberOfGoals) {
-		if (map.containsKey(goalscorerName)) {
-			map.put(goalscorerName, map.get(goalscorerName) + numberOfGoals);
-		} else {
-			map.put(goalscorerName, numberOfGoals);
-		}
-	}
-
-	private void insertNewScoringTimeOrUpdateExisting(Map<String, Integer> goalsMinutesCountMap, String goalTime){
-		if (goalsMinutesCountMap.containsKey(goalTime)) {
-			goalsMinutesCountMap.put(goalTime, goalsMinutesCountMap.get(goalTime) + 1);
-		} else {
-			goalsMinutesCountMap.put(goalTime, 1);
-		}
-	}
-
-	private Map<String, Integer> sortMap(Map<String, Integer> mapToSort){
-		Map<String, Integer> sortedMap = mapToSort.entrySet().stream()
-				.sorted(Entry.comparingByValue())
-				.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-
-		return sortedMap;
-	}
-
-	private void printGoalscorersMap(Map<String, Integer> mapToPrint){
-		for (Map.Entry<String,Integer> entry : mapToPrint.entrySet()) {
-			System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
-		}
+	private void getMatchesByCompetition(List<Matches> matchesToFilter, String competition, String result, TeamStats team){
+		List<Matches> filteredMatches = matchesToFilter.stream().filter(m->m.getCompetition().equalsIgnoreCase(competition)).collect(Collectors.toList());
+		team.getFinalMatches().get(competition).put(result, filteredMatches);
 	}
 
 }

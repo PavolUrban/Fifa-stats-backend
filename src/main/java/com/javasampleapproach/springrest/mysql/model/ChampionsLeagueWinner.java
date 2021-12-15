@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 public class ChampionsLeagueWinner {
 
     private String teamName;
+    private String runnerUp;
     private String playerName;
     private String season;
     FileModel teamLogo;
+    FileModel runnerUpLogo;
 
 //todo use this for EL and CL in one row
 //    private String teamNameEL;

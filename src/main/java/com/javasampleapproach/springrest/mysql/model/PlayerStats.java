@@ -20,7 +20,10 @@ public class PlayerStats {
 
 	private int numberOfCLTitles;
 	private int numberOfELTitles;
-	
+
+	private int totalNumberOfCards = 0;
+	private int numberOfYellowCards = 0;
+	private int numberOfRedCards = 0;
 	
 	public PlayerStats()
 	{

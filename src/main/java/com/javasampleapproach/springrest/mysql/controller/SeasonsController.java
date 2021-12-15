@@ -60,10 +60,13 @@ public class SeasonsController {
 		for(String groupName : groupNames)
 		{
 			
-			Set<String> set = new HashSet<>(matches.size());
-//			matches.stream().filter(p -> p.getCompetitionPhase().equalsIgnoreCase("GROUP A") ?  set.add(p.getAwayteam()) : set.add("picovina")).collect(Collectors.toList());
-			matches.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).filter(o -> set.add(o.getAwayteam())).collect(Collectors.toList());
-			
+			Set<String> set = new HashSet<>();
+
+			matches.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).forEach(a->{
+				set.add(a.getHometeam());
+				set.add(a.getAwayteam());
+			});
+
 			//goalscorers !!
 			
 			List<Goalscorer> goalscorers = globalStats.getAllGoalscorers(matches.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).collect(Collectors.toList()));
@@ -80,7 +83,9 @@ public class SeasonsController {
 			
 			List<TableTeam> allTeamsInCurrentGroup = new ArrayList();
 			for(String team : set)
-			{	
+			{
+				System.out.println(team);
+				System.out.println(team);
 				TableTeam tableTeam = new TableTeam();
 				List<Matches> allMatchesByTeam = matches.stream().filter(s -> team.equalsIgnoreCase(s.getHometeam()) || s.getAwayteam().equalsIgnoreCase(team) ).collect(Collectors.toList());
 			
@@ -107,7 +112,7 @@ public class SeasonsController {
 				tableTeam.setGoalsScored(sumScoredHome + sumScoredAway);
 				tableTeam.setGoalsConceded(sumConcededHome + sumConcededAway);
 				tableTeam.setPoints(tableTeam.getWins()*3 + tableTeam.getDraws()*1);
-		
+
 				FileModel test = fileRepository.findByTeamname(team);
 				if(test !=null)
 				{
@@ -165,9 +170,10 @@ public class SeasonsController {
 		
 		finalTablesWithStats.put("Final", finalMatch);
 		
-		if(finalMatch != null)
-			finalTablesWithStats.put("WinnerTeamLogo", allLogos.stream().filter(l->l.getTeamname().equalsIgnoreCase(finalMatch.getWinner())).findAny().orElse(null));
-		
+		if(finalMatch != null) {
+			finalTablesWithStats.put("WinnerTeamLogo", fileRepository.findByTeamname(finalMatch.getWinner()));
+		}
+
 		
 //		finalTablesWithStats.put("TotalGoalscorersGroupStage", getTotalGoalscorersFromGroups(groupGoalscorers, allLogos));
 		
@@ -250,6 +256,9 @@ public class SeasonsController {
 			   
 			   String goalscorersTeam = top.getGoalsByTeams().keySet().stream().findFirst().get();
 			   FileModel currentLogo = logos.stream().filter(l -> l.getTeamname().equalsIgnoreCase(goalscorersTeam)).findFirst().orElse(null);
+			   if(currentLogo == null) {
+				   currentLogo = fileRepository.findByTeamname(goalscorersTeam);
+			   }
 			   top.setTeamLogo(currentLogo);
 		   }
 		
