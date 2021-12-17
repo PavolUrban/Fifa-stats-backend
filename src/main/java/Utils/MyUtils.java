@@ -7,6 +7,7 @@ public class MyUtils {
 
 	public static final String PAVOL_JAY = "Pavol Jay"; //todo use these in whole project
 	public static final String KOTLIK = "Kotlik";
+	public static String RESULT_DRAW = "D";
 
 	public static final String CHAMPIONS_LEAGUE = "CL";
 	public static final String EUROPEAN_LEAGUE = "EL";
@@ -31,7 +32,6 @@ public class MyUtils {
 
 	public static String CARD_TYPE_YELLOW = "yellow";
 	public static String CARD_TYPE_RED = "red";
-
 
 	public static List<String> seasonsWithGoalscorersWithoutMinutes= Arrays.asList("FIFA07","FIFA09","FIFA11","FIFA13");
 	public static List<String> championsLeagueStagesList = Arrays.asList(GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, OSEMFINALS, QUARTERFINALS, SEMIFINALS, FINAL);

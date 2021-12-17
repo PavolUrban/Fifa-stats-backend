@@ -36,45 +36,37 @@ public class SeasonsController {
 	
 	@Autowired
 	FileRepository fileRepository;
-	
-	
-	
-	//completeSeasons/getAllPhases/FIFA20/CL
+
 	@GetMapping("/getAllPhases/{season}/{competition}")
-	public Object getAllCustomers(@PathVariable("season") String season, @PathVariable("competition") String competition) {
+	public Object getAllPhasesForSeasondAndCompetition(@PathVariable("season") String season, @PathVariable("competition") String competition) {
 		List<FileModel> allLogos = new ArrayList<>();
 		Map<String, Object> finalTablesWithStats = new HashMap<String, Object>();
 		GlobalStatsController globalStats = new GlobalStatsController();
 		Map<String, List<TableTeam>> groupsWithTeams = new HashMap<String, List<TableTeam>>();
-		
+
+		/*  *********** GROUP STAGE *********** */
 		List<Matches> matches = matchesRepository.getAllMatchesBySeasonAndCompetitionGroupStage(season, competition);
 
-		Set<String> groupNames = new HashSet<String>();
-		
+		Set<String> groupNames = new HashSet<>();
 		matches.stream().filter(p ->  groupNames.add(p.getCompetitionPhase())).collect(Collectors.toList());
-		System.out.println("These are the group names");
-		System.out.println(groupNames);
-		Map<String, Object> groupStatsForPlayers = new HashMap<String, Object>();
-		Map<String, Object> groupGoalscorers = new HashMap<String, Object>();
+
+		Map<String, Object> groupStatsForPlayers = new HashMap<>();
+		Map<String, Object> groupGoalscorers = new HashMap<>();
 		
-		for(String groupName : groupNames)
-		{
+		for(String groupName : groupNames) {
 			
-			Set<String> set = new HashSet<>();
+			Set<String> teamNamesInCurrentGroup = new HashSet<>();
 
 			matches.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).forEach(a->{
-				set.add(a.getHometeam());
-				set.add(a.getAwayteam());
+				teamNamesInCurrentGroup.add(a.getHometeam());
+				teamNamesInCurrentGroup.add(a.getAwayteam());
 			});
 
 			//goalscorers !!
-			
 			List<Goalscorer> goalscorers = globalStats.getAllGoalscorers(matches.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).collect(Collectors.toList()));
 			groupGoalscorers.put(groupName, goalscorers);
-			
-			
-		
-			//player stats
+
+			//player stats PavolJay vs Kotlik
 			Map<String, Integer> winsByPlayersInCurrentGroup = new HashMap<String, Integer>();
 			winsByPlayersInCurrentGroup.put("Pavol Jay", 0);
 			winsByPlayersInCurrentGroup.put("Kotlik", 0);
@@ -82,10 +74,7 @@ public class SeasonsController {
 			
 			
 			List<TableTeam> allTeamsInCurrentGroup = new ArrayList();
-			for(String team : set)
-			{
-				System.out.println(team);
-				System.out.println(team);
+			for(String team : teamNamesInCurrentGroup) {
 				TableTeam tableTeam = new TableTeam();
 				List<Matches> allMatchesByTeam = matches.stream().filter(s -> team.equalsIgnoreCase(s.getHometeam()) || s.getAwayteam().equalsIgnoreCase(team) ).collect(Collectors.toList());
 			

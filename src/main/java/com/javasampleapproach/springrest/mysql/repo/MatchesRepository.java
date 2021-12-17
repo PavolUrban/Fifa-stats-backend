@@ -9,12 +9,6 @@ import com.javasampleapproach.springrest.mysql.model.Matches;
 
 public interface MatchesRepository extends CrudRepository<Matches, Long>{
 
-
-
-
-
-
-
 	@Query("SELECT m FROM Matches m WHERE m.hometeam = ?1 OR m.awayteam = ?1 " +
 			"ORDER BY SEASON DESC "+
 				", case when competitionphase = 'Final' then 1 " +

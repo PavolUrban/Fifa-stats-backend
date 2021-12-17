@@ -253,9 +253,10 @@ public class GlobalStatsController {
 	public	List<Goalscorer> getAllGoalscorers(Iterable<Matches> matches) {
 
 		Map<String,Map<String, Integer>> playerWithGoals = new HashMap<>();
-		
+
 		for(Matches m : matches) {
 			if(m.getGoalscorers() != null) {
+				System.out.println(m);
 				String[] goalscorers = m.getGoalscorers().split("-");
 				addGoalsScorers(playerWithGoals, m, goalscorers[0], m.getHometeam()); //home
 				addGoalsScorers(playerWithGoals, m, goalscorers[1], m.getAwayteam()); //away

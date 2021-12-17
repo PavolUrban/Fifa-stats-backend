@@ -1,7 +1,6 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import Utils.MyUtils;
+import com.javasampleapproach.springrest.mysql.repo.SeasonsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,7 +25,6 @@ import com.javasampleapproach.springrest.mysql.model.TeamGlobalStats;
 import com.javasampleapproach.springrest.mysql.repo.FileRepository;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 
-import statsCreator.SingleSeasonStats;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -37,6 +36,9 @@ public class MatchesController {
 
 	@Autowired
 	FileRepository fileRepository;
+
+	@Autowired
+	SeasonsRepository seasonsRepository;
 	
 	@GetMapping("/getMatches")
 	public List<Matches> getAllCustomers() {
@@ -51,50 +53,19 @@ public class MatchesController {
 	@GetMapping("/getMatchesForTeam/{teamname}")
 	public Map<String, Object> getMatchesForCustomTeam(@PathVariable("teamname") String teamName) {
 
-		List<Matches> matches = new ArrayList<>();
-//		matches = matchesRepository.getAllMatchesForTeam(teamName);
-	
-		matches = matchesRepository.findByHometeamOrAwayteam(teamName, teamName);
+		List<Matches> matches = matchesRepository.findByHometeamOrAwayteam(teamName, teamName);
 
-		//SingleSeasonStats.compute(matches, teamName);
-		
-		
-	Map<String, Object> result = new HashMap();
-		
-		
+		Map<String, Object> result = new HashMap();
 		result.put("osemfinals",null);
 		result.put("quarterfinals",null);
 		result.put("semifinals",null);
 		result.put("finals",null);
-		
-		//Map<String, Integer> ll = new HashMap< >();
-	
-		//Iterable<Matches> groupStage = matches.stream().filter(o -> o.getCompetitionPhase().contains("GROUP")).collect(Collectors.toList());
-		
+
 		List<Matches> osemfinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Osemfinals")).collect(Collectors.toList());
 		Iterable<Matches> quarterfinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Quarterfinals")).collect(Collectors.toList());
 		Iterable<Matches> semifinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Semifinals")).collect(Collectors.toList());
 		List<Matches> finals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Final")).sorted((x1,x2)-> x2.getSeason().compareTo(x1.getSeason())).collect(Collectors.toList());
-		
-	
-		for(Matches osemfinal: osemfinals)
-		{
-			
-			System.out.println(osemfinal.getSeason() + "... "+osemfinal.getHometeam() + " vs "+osemfinal.getAwayteam());
-		}
-		
-		
-		//System.out.println("\nGroup");
-		//System.out.println(groupStage);
-		System.out.println("\nOsemfinals");
-		System.out.println(osemfinals);
-		System.out.println("\nQuartefinals");
-		System.out.println(quarterfinals);
-		System.out.println("\nSemifinals");
-		System.out.println(semifinals);
-		System.out.println("\nFinals");
-	
-		
+
 		TeamGlobalStats teamGlobalStats = new TeamGlobalStats();
 		teamGlobalStats.setFinalsPlayed(finals.size());
 		
@@ -113,11 +84,6 @@ public class MatchesController {
 		result.put("finalStats", teamGlobalStats);
 		
 		return result;
-
-		
-		
-		
-		//return matches;
 	}
 	
 	
@@ -153,14 +119,26 @@ public class MatchesController {
 		
 		return matches;
 	}
-	
+
+	// TODO add some validation - e.g if provided goalscorers match up witch score
 	@PostMapping(value = "/newmatch/create")
 	public Matches createMatch(@RequestBody Matches match) {
-		
 
-		Matches newMatch = matchesRepository.save(new Matches(match.getHometeam(), match.getAwayteam(), match.getScorehome(), match.getScoreaway(), match.getCompetition(), match.getCompetitionPhase()));
+		if (match.getScorehome() > match.getScoreaway()) {
+			match.setWinner(match.getHometeam());
+		} else if (match.getScorehome() == match.getScoreaway()) {
+			match.setWinner(MyUtils.RESULT_DRAW);
+		} else {
+			match.setWinner(match.getAwayteam());
+		}
+
+		if(match.getGoalscorers() == null) {
+			match.setGoalscorers("/-/"); //todo check if this is really needed
+		}
+
+		Matches newMatch = matchesRepository.save(match);
+
 		return newMatch;
-		
 	}
 	
 	
@@ -209,12 +187,8 @@ public class MatchesController {
 		overallStats.put(firstTeam, 0);
 		overallStats.put(secondTeam, 0);
 		overallStats.put("D", 0);
-		
-		
-		
-		
-		for(Matches match : finalList)
-		{
+
+		for(Matches match : finalList) {
 			//players statistics
 			String winner = playersController.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik");
 			playersStats.put(winner, playersStats.get(winner) + 1);
@@ -225,8 +199,7 @@ public class MatchesController {
 
 		GlobalStatsController globalStats = new GlobalStatsController();
 		List<Goalscorer> goalscorers = globalStats.getAllGoalscorers(finalList);
-		
-		
+
 		Map<String, Object> logos = new HashMap<String, Object>();
 		
 		setLogoIfPresented(firstTeam, logos);
@@ -241,36 +214,26 @@ public class MatchesController {
 		
 		return response;
 	}
-	
 
-	public void setLogoIfPresented(String teamName, Map<String, Object> logos)
-	{
-		FileModel logo = fileRepository.findByTeamname(teamName);
-		if(logo !=null)
-			logos.put(teamName, logo);
-	}
-
-
-
-
-
-	@GetMapping("/dataToCreateMatch/{competition}")
-	public Map<String, List<String>> getDataToCreateMatch(@PathVariable("competition") String competition){
+	@GetMapping("/getDataToCreateMatch/")
+	public Map<String, List<String>> getDataToCreateMatch(){
 
 		Map<String, List<String>> dataToCreateMatch = new HashMap<>();
 
 		dataToCreateMatch.put("competitionsList", MyUtils.competitionsList);
 		dataToCreateMatch.put("playerNamesList", MyUtils.playerNamesList);
-
-		if(competition.equalsIgnoreCase("CL")){
-			dataToCreateMatch.put("competitionPhasesList", MyUtils.championsLeagueStagesList);
-		}
-		else{
-			dataToCreateMatch.put("competitionPhasesList", MyUtils.europeanLeagueStagesList);
-		}
-
+		dataToCreateMatch.put("competitionsPhasesCL", MyUtils.championsLeagueStagesList);
+		dataToCreateMatch.put("competitionsPhasesEL", MyUtils.europeanLeagueStagesList);
+		dataToCreateMatch.put("seasonsList", seasonsRepository.getAvailableSeasonsList());
 
 		return  dataToCreateMatch;
 	}
+
+	public void setLogoIfPresented(String teamName, Map<String, Object> logos) {
+		FileModel logo = fileRepository.findByTeamname(teamName);
+		if(logo !=null)
+			logos.put(teamName, logo);
+	}
+
 
 }

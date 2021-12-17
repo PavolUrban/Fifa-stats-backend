@@ -25,6 +25,8 @@ import com.javasampleapproach.springrest.mysql.repo.CustomerRepository;
 @RequestMapping("/api")
 public class CustomerController {
 
+	// TODO this whole file should be deleted
+
 	@Autowired
 	CustomerRepository repository;
 

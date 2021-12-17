@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 public class Matches {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
 
 	@Column(name = "hometeam")
@@ -60,19 +60,40 @@ public class Matches {
 	@Column(name = "competitionphase")
 	private String competitionPhase;
 
-	
-	
-	
-	public Matches(String hometeam, String awayTeam, int scoreHome, int scoreAway, String competition, String competitionPhase)
+
+// TODO both constructors probably can be deleted
+
+	public Matches(String hometeam, String awayTeam, int scoreHome, int scoreAway, String playerH, String playerA, String season, String competition, String competitionPhase, String yellowcards,
+				   String goalscorers, String redcards)
 	{
 		this.hometeam = hometeam;
 		this.awayteam = awayTeam;
 		this.scorehome = scoreHome;
 		this.scoreaway = scoreAway;
+		this.playerH = playerH;
+		this.playerA = playerA;
+		this.season = season;
 		this.competition = competition;
 		this.competitionPhase = competitionPhase;
-		
+		this.yellowcards = yellowcards;
+		this.redcards = redcards;
+		this.goalscorers = goalscorers;
 	}
-	
-	
+
+	public Matches(Matches matchWithoutId){
+		this.hometeam = matchWithoutId.getHometeam();
+		this.awayteam = matchWithoutId.getAwayteam();
+		this.scorehome = matchWithoutId.getScorehome();
+		this.scoreaway = matchWithoutId.getScoreaway();
+		this.playerH = matchWithoutId.getPlayerH();
+		this.playerA = matchWithoutId.getPlayerA();
+		this.season = matchWithoutId.getSeason();
+		this.competition = matchWithoutId.getCompetition();
+		this.competitionPhase = matchWithoutId.getCompetitionPhase();
+		this.yellowcards = matchWithoutId.getYellowcards();
+		this.redcards = matchWithoutId.getRedcards();
+		this.goalscorers = matchWithoutId.getGoalscorers();
+	}
+
+
 }

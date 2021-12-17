@@ -21,33 +21,9 @@ public class GeneralController {
 	@Autowired
 	SeasonsRepository seasonsRepository;
 
-	
-//	@GetMapping("/getSeasonsList/test/test")
-//	public List<String> seasons() {
-//
-//		List<Seasons> seasons = (List<Seasons>) seasonsRepository.findAll();
-//		List<String> seasonsStringList = new ArrayList<>();
-//		
-//		for(Seasons season : seasons)
-//		{
-//			seasonsStringList.add(season.getSeason());
-//		}
-//		
-//		return seasonsStringList;
-//	}
-//	
 	@GetMapping("/getSeasonsList/{competition}")
-	public List<String> getAllCustomers(@PathVariable("competition") String competition) {
-
-		List<Seasons> seasons = (List<Seasons>) seasonsRepository.findAll();
-		List<String> seasonsStringList = new ArrayList<>();
-		
-		for(Seasons season : seasons)
-		{
-			seasonsStringList.add(season.getSeason());
-		}
-		
-		return seasonsStringList;
+	public List<String> getAllSeasons(@PathVariable("competition") String competition) {
+		return seasonsRepository.getAvailableSeasonsList();
 	}
 
 

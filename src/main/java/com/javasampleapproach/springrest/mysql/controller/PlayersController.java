@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.javasampleapproach.springrest.mysql.model.TeamStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +16,8 @@ import com.javasampleapproach.springrest.mysql.model.Matches;
 import com.javasampleapproach.springrest.mysql.model.PlayerStats;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.PlayersRepository;
+
+import static Utils.MyUtils.*;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -29,15 +30,46 @@ public class PlayersController {
 	@Autowired
 	MatchesRepository matchesRepository;
 
-	private static final String PAVOL_JAY = "Pavol Jay";
-	private static final String KOTLIK = "Kotlik";
-	private static final String DRAW = "D";
+	@GetMapping("/getGlobalStats")
+	public Map<String, PlayerStats> getGlobalStats() {
+
+		Map<String, PlayerStats> stats = new HashMap<>();
+
+		List<Matches> matches = (List<Matches>) matchesRepository.findAll();
+
+		Map<String, Integer> winnersCount = new HashMap<>();
+		winnersCount.put(RESULT_DRAW, 0);
+		winnersCount.put(PAVOL_JAY, 0);
+		winnersCount.put(KOTLIK, 0);
+
+		PlayerStats pavolJay = new PlayerStats();
+		PlayerStats kotlik = new PlayerStats();
+
+		for (Matches m : matches) {
+			String winnerName = whoIsWinnerOfMatch(m, PAVOL_JAY, KOTLIK);
+			winnersCount.put(winnerName, winnersCount.get(winnerName) + 1);
+
+			List<Integer> goalsScoredANdConceeeded = getGoalsScoredAndConceded(m, pavolJay, kotlik);
+			int goalsScored = goalsScoredANdConceeeded.get(0);
+			int goalsConceded = goalsScoredANdConceeeded.get(1);
+			setGoalsScoredAndConcededForPlayer(pavolJay, goalsScored, goalsConceded);
+			setGoalsScoredAndConcededForPlayer(kotlik, goalsConceded, goalsScored);
+		}
+
+		prepareStats(pavolJay, winnersCount, PAVOL_JAY, KOTLIK);
+		prepareStats(kotlik, winnersCount, KOTLIK, PAVOL_JAY);
+
+		stats.put(PAVOL_JAY, pavolJay);
+		stats.put(KOTLIK, kotlik);
+
+		return stats;
+	}
 
 	public String whoIsWinnerOfMatch(Matches match, String playerFirst, String playerSecond) {
-		String winner = "";
+		String winner;
 
-		if (match.getWinner().equalsIgnoreCase(DRAW))
-			winner = DRAW;
+		if (match.getWinner().equalsIgnoreCase(RESULT_DRAW))
+			winner = RESULT_DRAW;
 
 		else if ((match.getHometeam().equalsIgnoreCase(match.getWinner()) && (match.getPlayerH().equalsIgnoreCase(playerFirst))) ||
 				(match.getAwayteam().equalsIgnoreCase(match.getWinner())) && (match.getPlayerA().equalsIgnoreCase(playerFirst)))
@@ -106,45 +138,8 @@ public class PlayersController {
 		return numberOfCardsToAdd;
 	}
 
-
-
-	@GetMapping("/getGlobalStats")
-	public Map<String, PlayerStats> getGlobalStats() {
-
-		Map<String, PlayerStats> stats = new HashMap<>();
-
-		List<Matches> matches = (List<Matches>) matchesRepository.findAll();
-
-		Map<String, Integer> winnersCount = new HashMap<>();
-		winnersCount.put(DRAW, 0);
-		winnersCount.put(PAVOL_JAY, 0);
-		winnersCount.put(KOTLIK, 0);
-
-		PlayerStats pavolJay = new PlayerStats();
-		PlayerStats kotlik = new PlayerStats();
-
-		for (Matches m : matches) {
-			String winnerName = whoIsWinnerOfMatch(m, PAVOL_JAY, KOTLIK);
-			winnersCount.put(winnerName, winnersCount.get(winnerName) + 1);
-
-			List<Integer> goalsScoredANdConceeeded = getGoalsScoredAndConceded(m, pavolJay, kotlik);
-			int goalsScored = goalsScoredANdConceeeded.get(0);
-			int goalsConceded = goalsScoredANdConceeeded.get(1);
-			setGoalsScoredAndConcededForPlayer(pavolJay, goalsScored, goalsConceded);
-			setGoalsScoredAndConcededForPlayer(kotlik, goalsConceded, goalsScored);
-		}
-
-		prepareStats(pavolJay, winnersCount, PAVOL_JAY, KOTLIK);
-		prepareStats(kotlik, winnersCount, KOTLIK, PAVOL_JAY);
-
-		stats.put(PAVOL_JAY, pavolJay);
-		stats.put(KOTLIK, kotlik);
-
-		return stats;
-	}
-
 	private void prepareStats(PlayerStats player, Map<String, Integer> winnersCount, String playerWinner, String playerLooser) {
-		ArrayList<Integer> totalStats = new ArrayList<>(Arrays.asList(winnersCount.get(playerWinner), winnersCount.get(DRAW), winnersCount.get(playerLooser)));
+		ArrayList<Integer> totalStats = new ArrayList<>(Arrays.asList(winnersCount.get(playerWinner), winnersCount.get(RESULT_DRAW), winnersCount.get(playerLooser)));
 		player.setWins(totalStats.get(0));
 		player.setDraws(totalStats.get(1));
 		player.setLosses(totalStats.get(2));
