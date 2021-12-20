@@ -5,7 +5,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
-import com.javasampleapproach.springrest.mysql.model.Matches;
+import com.javasampleapproach.springrest.mysql.entities.Matches;
+import org.springframework.data.repository.query.Param;
 
 public interface MatchesRepository extends CrudRepository<Matches, Long>{
 
@@ -14,8 +15,8 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 				", case when competitionphase = 'Final' then 1 " +
 					"when competitionphase = 'Semifinals' then 2 " +
 					"when competitionphase = 'Quarterfinals' then 3 " +
-					"when competitionphase = 'Osemfinals' then 4 " +
-					"when competitionphase = '16-finals' then 5 " +
+					"when competitionphase = 'Round of 16' then 4 " +
+					"when competitionphase = 'Round of 32' then 5 " +
 					"else 6 " +
 				"end asc") //competition, season, competitionPhase,
 	List<Matches> getAllMatchesForTeam(String teamname);
@@ -23,7 +24,7 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	@Query("SELECT m FROM Matches m WHERE m.season = ?1 AND m.competition= ?2 AND m.competitionPhase LIKE 'GROUP%' ORDER BY competitionPhase, id DESC")
 	List<Matches> getAllMatchesBySeasonAndCompetitionGroupStage(String season, String competition);
 	
-	@Query("SELECT m FROM Matches m WHERE m.season = ?1 AND m.competition= ?2 AND m.competitionPhase LIKE '%final%' ORDER BY competitionPhase, id ASC")
+	@Query("SELECT m FROM Matches m WHERE m.season = ?1 AND m.competition= ?2 AND ( m.competitionPhase LIKE '%final%' OR m.competitionPhase LIKE 'Round%' ) ORDER BY competitionPhase, id ASC")
 	List<Matches> getAllMatchesBySeasonAndCompetitionPlayOffs(String season, String competition);
 	
 	
@@ -55,4 +56,20 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 
 
 	List<Matches> findByYellowcardsIsNotNullOrRedcardsIsNotNull();
+
+	//"SELECT c FROM Customer c WHERE (:name is null or c.name = :name) and (:email is null"
+	//			+ " or c.email = :email)"
+	@Query("SELECT m FROM Matches m where (:season is null or m.season = :season) and (:competition is null or m.competition = :competition) and (:competitionPhase is null or m.competitionPhase = :competitionPhase) " +
+			"ORDER BY SEASON DESC "+
+			", case when competitionphase = 'Final' then 1 " +
+			"when competitionphase = 'Semifinals' then 2 " +
+			"when competitionphase = 'Quarterfinals' then 3 " +
+			"when competitionphase = 'Round of 16' then 4 " +
+			"when competitionphase = 'Round of 32' then 5 " +
+			"else 6 " +
+			"end asc")
+	List<Matches> getMatchesWithCustomFilters(@Param("season") String season,@Param("competition") String competition, @Param("competitionPhase") String competitionPhase);
+
+	@Query("SELECT MIN(m.season) FROM Matches m WHERE (m.awayteam = ?1 OR hometeam = ?1) AND competition = ?2")
+	String firstSeasonInCompetition(String teamName, String competition);
 }

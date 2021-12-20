@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,11 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.javasampleapproach.springrest.mysql.model.FileModel;
 import com.javasampleapproach.springrest.mysql.model.Goalscorer;
-import com.javasampleapproach.springrest.mysql.model.Matches;
+import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.model.PlayOffMatch;
 import com.javasampleapproach.springrest.mysql.model.TableTeam;
 import com.javasampleapproach.springrest.mysql.repo.FileRepository;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
+
+import static Utils.MyUtils.KOTLIK;
+import static Utils.MyUtils.PAVOL_JAY;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -74,9 +76,9 @@ public class SeasonsController {
 			
 			
 			List<TableTeam> allTeamsInCurrentGroup = new ArrayList();
-			for(String team : teamNamesInCurrentGroup) {
+			for(String teamName : teamNamesInCurrentGroup) {
 				TableTeam tableTeam = new TableTeam();
-				List<Matches> allMatchesByTeam = matches.stream().filter(s -> team.equalsIgnoreCase(s.getHometeam()) || s.getAwayteam().equalsIgnoreCase(team) ).collect(Collectors.toList());
+				List<Matches> allMatchesByTeam = matches.stream().filter(s -> teamName.equalsIgnoreCase(s.getHometeam()) || s.getAwayteam().equalsIgnoreCase(teamName) ).collect(Collectors.toList());
 			
 				Map<String, Integer> winsByPlayersByCurrentTeam = setnumberOfPlayersWins(allMatchesByTeam);
 				winsByPlayersInCurrentGroup.put("Pavol Jay", winsByPlayersByCurrentTeam.get("Pavol Jay") + winsByPlayersInCurrentGroup.get("Pavol Jay"));
@@ -84,16 +86,16 @@ public class SeasonsController {
 				winsByPlayersInCurrentGroup.put("Draws", winsByPlayersByCurrentTeam.get("Draws") + winsByPlayersInCurrentGroup.get("Draws"));
 				
 				
-				int sumScoredHome = allMatchesByTeam.stream().filter(o -> o.getHometeam().equalsIgnoreCase(team)).mapToInt(o -> o.getScorehome()).sum();
-				int sumScoredAway = allMatchesByTeam.stream().filter(o -> o.getAwayteam().equalsIgnoreCase(team)).mapToInt(o -> o.getScoreaway()).sum();
-				int sumConcededHome = allMatchesByTeam.stream().filter(o -> o.getHometeam().equalsIgnoreCase(team)).mapToInt(o -> o.getScoreaway()).sum();
-				int sumConcededAway = allMatchesByTeam.stream().filter(o -> o.getAwayteam().equalsIgnoreCase(team)).mapToInt(o -> o.getScorehome()).sum();
+				int sumScoredHome = allMatchesByTeam.stream().filter(o -> o.getHometeam().equalsIgnoreCase(teamName)).mapToInt(o -> o.getScorehome()).sum();
+				int sumScoredAway = allMatchesByTeam.stream().filter(o -> o.getAwayteam().equalsIgnoreCase(teamName)).mapToInt(o -> o.getScoreaway()).sum();
+				int sumConcededHome = allMatchesByTeam.stream().filter(o -> o.getHometeam().equalsIgnoreCase(teamName)).mapToInt(o -> o.getScoreaway()).sum();
+				int sumConcededAway = allMatchesByTeam.stream().filter(o -> o.getAwayteam().equalsIgnoreCase(teamName)).mapToInt(o -> o.getScorehome()).sum();
 				
-				long wins = allMatchesByTeam.stream().filter(p-> p.getWinner().equalsIgnoreCase(team)).count();
+				long wins = allMatchesByTeam.stream().filter(p-> p.getWinner().equalsIgnoreCase(teamName)).count();
 				long draws = allMatchesByTeam.stream().filter(p-> p.getWinner().equalsIgnoreCase("D")).count();
 				long losses = allMatchesByTeam.size()- wins - draws;
 					
-				tableTeam.setTeamname(team);
+				tableTeam.setTeamname(teamName);
 				tableTeam.setWins((int) wins);
 				tableTeam.setDraws((int) draws);
 				tableTeam.setLosses((int) losses);
@@ -102,13 +104,28 @@ public class SeasonsController {
 				tableTeam.setGoalsConceded(sumConcededHome + sumConcededAway);
 				tableTeam.setPoints(tableTeam.getWins()*3 + tableTeam.getDraws()*1);
 
-				FileModel test = fileRepository.findByTeamname(team);
+				FileModel test = fileRepository.findByTeamname(teamName);
 				if(test !=null)
 				{
 					tableTeam.setLogo(test);
 					allLogos.add(test);
 				}
-					
+
+				//todo for this table TeamsOwnerBySeason is prepared - USE IT SOON!
+				long currentTeamMatchesByPavolJay = allMatchesByTeam
+						.stream()
+						.filter(match->
+										(match.getHometeam().equalsIgnoreCase(teamName) && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
+										(match.getAwayteam().equalsIgnoreCase(teamName) && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY))
+						).count();
+
+				double playedByPavolJayPercentage = currentTeamMatchesByPavolJay/ (allMatchesByTeam.size() *1.0);
+
+				if(playedByPavolJayPercentage>0.6){
+					tableTeam.setOwnedByPlayer(PAVOL_JAY);
+				} else {
+					tableTeam.setOwnedByPlayer(KOTLIK);
+				}
 				
 				allTeamsInCurrentGroup.add(tableTeam);
 			}

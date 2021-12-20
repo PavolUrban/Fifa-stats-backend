@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.javasampleapproach.springrest.mysql.model.Matches;
+import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.model.PlayerStats;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.PlayersRepository;

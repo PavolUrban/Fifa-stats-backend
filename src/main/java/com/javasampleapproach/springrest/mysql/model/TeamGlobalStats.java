@@ -19,7 +19,7 @@ public class TeamGlobalStats {
 	private int quarterfinalsPlayed;
 	private int quarterfinalsQualificationCount;
 	
-	private int osemfinalsPlayed;
-	private int osemfinalsQualificationCount;
+	private int roundOf16Played;
+	private int roundOf16PlayedQualificationCount;
 	
 }

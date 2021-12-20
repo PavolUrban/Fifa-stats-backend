@@ -1,8 +1,7 @@
 package Utils;
 
 import com.javasampleapproach.springrest.mysql.model.FifaPlayer;
-import com.javasampleapproach.springrest.mysql.model.Matches;
-import com.javasampleapproach.springrest.mysql.model.TeamStats;
+import com.javasampleapproach.springrest.mysql.entities.Matches;
 
 import java.util.Collections;
 import java.util.Comparator;

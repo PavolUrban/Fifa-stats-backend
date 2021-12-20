@@ -1,11 +1,12 @@
 package com.javasampleapproach.springrest.mysql.model;
 
+import com.javasampleapproach.springrest.mysql.entities.Team;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class TeamWithLogo extends Team{
+public class TeamWithLogo extends Team {
 	private String teamName;
 	private String firstSeasonCL;
 	private String firstSeasonEL;

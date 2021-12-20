@@ -17,6 +17,7 @@ public class TableTeam {
 	private int goalsConceded;
 	private Integer points;
 	private int placeInGroup;
-	
+	private String ownedByPlayer;
+
 	private FileModel logo;
 }

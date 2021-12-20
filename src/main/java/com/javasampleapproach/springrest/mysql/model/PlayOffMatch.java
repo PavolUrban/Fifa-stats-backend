@@ -1,5 +1,6 @@
 package com.javasampleapproach.springrest.mysql.model;
 
+import com.javasampleapproach.springrest.mysql.entities.Matches;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

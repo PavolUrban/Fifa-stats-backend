@@ -12,6 +12,8 @@ public class MyUtils {
 	public static final String CHAMPIONS_LEAGUE = "CL";
 	public static final String EUROPEAN_LEAGUE = "EL";
 
+	public static final String ALL_SEASONS = "All seasons";
+	public static final String ALL_PHASES = "All phases";
 	public static final String GROUP_A = "GROUP A";
 	public static final String GROUP_B = "GROUP B";
 	public static final String GROUP_C = "GROUP C";
@@ -24,8 +26,8 @@ public class MyUtils {
 	public static final String GROUP_J = "GROUP J";
 	public static final String GROUP_K = "GROUP K";
 	public static final String GROUP_L = "GROUP L";
-	public static final String SIXTEENFINALS = "16-finals";
-	public static final String OSEMFINALS = "Osemfinals"; // todo translate this
+	public static final String ROUND_OF_32 = "Round of 32";
+	public static final String ROUND_OF_16 = "Round of 16"; // todo translate this
 	public static final String QUARTERFINALS = "Quarterfinals";
 	public static final String SEMIFINALS = "Semifinals";
 	public static final String FINAL = "Final";
@@ -34,8 +36,11 @@ public class MyUtils {
 	public static String CARD_TYPE_RED = "red";
 
 	public static List<String> seasonsWithGoalscorersWithoutMinutes= Arrays.asList("FIFA07","FIFA09","FIFA11","FIFA13");
-	public static List<String> championsLeagueStagesList = Arrays.asList(GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, OSEMFINALS, QUARTERFINALS, SEMIFINALS, FINAL);
-	public static List<String> europeanLeagueStagesList =  Arrays.asList(GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, GROUP_I, GROUP_J, GROUP_K, GROUP_L, SIXTEENFINALS, OSEMFINALS, QUARTERFINALS, SEMIFINALS, FINAL);
+	public static List<String> championsLeagueStagesList = Arrays.asList(GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, ROUND_OF_16, QUARTERFINALS, SEMIFINALS, FINAL);
+	public static List<String> europeanLeagueStagesList =  Arrays.asList(GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, GROUP_I, GROUP_J, GROUP_K, GROUP_L, ROUND_OF_32, ROUND_OF_16, QUARTERFINALS, SEMIFINALS, FINAL);
 	public static List<String> playerNamesList = Arrays.asList(PAVOL_JAY, KOTLIK);
 	public static List<String> competitionsList = Arrays.asList(CHAMPIONS_LEAGUE, EUROPEAN_LEAGUE);
+	public static List<String> championsLeagueStagesListWithDefault = Arrays.asList(ALL_PHASES, GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, ROUND_OF_16, QUARTERFINALS, SEMIFINALS, FINAL);
+	public static List<String> europeanLeagueStagesListWithDefault =  Arrays.asList(ALL_PHASES, GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, GROUP_I, GROUP_J, GROUP_K, GROUP_L, ROUND_OF_32, ROUND_OF_16, QUARTERFINALS, SEMIFINALS, FINAL);
+
 }

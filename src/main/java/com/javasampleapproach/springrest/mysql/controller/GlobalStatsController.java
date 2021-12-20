@@ -3,6 +3,8 @@ package com.javasampleapproach.springrest.mysql.controller;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.javasampleapproach.springrest.mysql.entities.Matches;
+import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.*;
 import com.javasampleapproach.springrest.mysql.repo.SeasonsRepository;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,11 +1,11 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import java.sql.Time;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import Utils.CardsStatsCalculator;
+import com.javasampleapproach.springrest.mysql.entities.Matches;
+import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,7 +24,6 @@ import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
 
 import Utils.MyUtils;
-import Utils.CardsStatsCalculator;
 import Utils.GoalscorersCalculator;
 import Utils.TimeRangesMapper;
 
@@ -50,23 +49,27 @@ public class TeamController {
 	}
 	
 	
-	@GetMapping("/getAllTeamsWithLogo")
-	public List<TeamWithLogo> getAllCustomers() {
+	@GetMapping("/getAllTeamsWithLogo/{recalculate}")
+	public List<TeamWithLogo> getAllTeamsWithLogos(@PathVariable("recalculate") boolean recalculate) {
 		List<Team> teams = new ArrayList<>();
 		List<FileModel> logos = new ArrayList<>();
 		List<TeamWithLogo> finalTeams = new ArrayList<>();
 
 		teamRepository.findAll().forEach(teams::add);
-		fileRepository.findAll().forEach(logos::add);;
+		fileRepository.findAll().forEach(logos::add);
+
+		System.out.println("recalculate je nastavene na " +recalculate);
 
 		for(Team t : teams) {
-			if (t.getFirstSeasonCL() == null) {
-				t.setFirstSeasonCL("never");
+
+			if(recalculate) {
+				t.setFirstSeasonCL(matchesRepository.firstSeasonInCompetition(t.getTeamName(), MyUtils.CHAMPIONS_LEAGUE));
+				t.setFirstSeasonEL(matchesRepository.firstSeasonInCompetition(t.getTeamName(), MyUtils.EUROPEAN_LEAGUE));
+				teamRepository.save(t);
 			}
 
-			if (t.getFirstSeasonEL() == null) {
-				t.setFirstSeasonEL("never");
-			}
+			t.setFirstSeasonCL(setLabelToNeverIfNull(t.getFirstSeasonCL()));
+			t.setFirstSeasonEL(setLabelToNeverIfNull(t.getFirstSeasonEL()));
 
 			TeamWithLogo twl = new TeamWithLogo(t);
 
@@ -79,6 +82,13 @@ public class TeamController {
 		return finalTeams;
 	}
 
+	private String setLabelToNeverIfNull(String firstSeasonInCompetition){
+		if(firstSeasonInCompetition == null) {
+			return "never";
+		} else {
+			return firstSeasonInCompetition;
+		}
+	}
 
 	// TODO check for multiple times used basically the same condition, this may be improved
 
