@@ -1,0 +1,24 @@
+package com.javasampleapproach.springrest.mysql.model;
+
+import com.javasampleapproach.springrest.mysql.entities.Matches;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class FifaPlayerStatsPerSeason {
+    String seasonName;
+    String teamname;
+    int goalsCount = 0;
+    int yellowCardsCount = 0;
+    int redCardsCount = 0;
+    byte[] logoUrl;
+    Set<Matches> allMatches = new HashSet<>();
+}

@@ -72,4 +72,7 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 
 	@Query("SELECT MIN(m.season) FROM Matches m WHERE (m.awayteam = ?1 OR hometeam = ?1) AND competition = ?2")
 	String firstSeasonInCompetition(String teamName, String competition);
+
+	@Query("SELECT m FROM Matches m WHERE m.goalscorers LIKE %:playerName% OR m.yellowcards LIKE %:playerNameYC% OR m.redcards LIKE %:playerNameRC% ORDER BY SEASON")
+	List<Matches> getMatchesRelatedToSpecifiedPlayer(@Param("playerName") String playerName, @Param("playerNameYC") String playerNameYC, @Param("playerNameRC") String playerNameRC);
 }
