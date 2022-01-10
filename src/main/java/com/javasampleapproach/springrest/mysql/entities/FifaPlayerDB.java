@@ -10,6 +10,8 @@ import javax.persistence.*;
 @Entity
 @Table(name = "fifaplayer")
 public class FifaPlayerDB {
+
+    //TODO ked to raz precistim skusit pouzit onetomany, manytoone atd
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;

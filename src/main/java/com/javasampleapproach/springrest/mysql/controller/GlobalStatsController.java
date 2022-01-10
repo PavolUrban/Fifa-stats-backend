@@ -3,16 +3,13 @@ package com.javasampleapproach.springrest.mysql.controller;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.*;
-import com.javasampleapproach.springrest.mysql.repo.SeasonsRepository;
+import com.javasampleapproach.springrest.mysql.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import com.javasampleapproach.springrest.mysql.repo.FileRepository;
-import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
-import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
 
 import Utils.MyUtils;
 import Utils.CardsStatsCalculator;
@@ -171,6 +168,60 @@ public class GlobalStatsController {
 		return allGoalscorersByCompetition;
 	}
 
+	// TODO ---- method only for temporary usage - to generate fifaplayers into separate tables
+	@Autowired
+	FifaPlayerDBRepository fifaPlayerDBRepository;
+
+	@PostMapping("/insertGoalscorers")
+	public void insertGoalscorers(@RequestBody List<Goalscorer> goalscorersList){
+
+
+		goalscorersList.forEach(goalscorer -> {
+			goalscorer.setName(goalscorer.getName().replaceAll("(OG)","")); // toto budem riesit az v tabulke ako typ golu -vlastny, teraz len vytvaram hracov zaznam
+			goalscorer.setName(goalscorer.getName().replaceAll("\\.", " "));
+
+
+			FifaPlayerDB test = new FifaPlayerDB();
+			test.setPlayerName(goalscorer.getName());
+			test.setPlayerPosition("FW"); //todo in db
+			//System.out.println("Trying to insert  "+ test.getPlayerName());
+
+			//fifaPlayerDBRepository.save(test);
+		});
+	}
+//todo to remove sooon
+	@PostMapping("/insertPlayersWithCards")
+	public void insertPlayersWithCardsToTable(@RequestBody List<FifaPlayer> players){
+		List<String> namesToAdd = players.stream().map(p->p.getName()).collect(Collectors.toList());
+
+		List<FifaPlayerDB> alreadyExistingPlayers = fifaPlayerDBRepository.findByPlayerNameIn(namesToAdd);
+		List<String> alreadyExistingNames= alreadyExistingPlayers.stream().map(p->p.getPlayerName()).collect(Collectors.toList());
+
+
+		namesToAdd.forEach(nameToAdd -> {
+			//System.out.println(player.getName());
+
+			boolean playerAlreadyExists = false;
+
+			if(alreadyExistingNames.contains(nameToAdd)){
+				playerAlreadyExists = true;
+			}
+
+			if(playerAlreadyExists!=true) {
+				System.out.println("Tohto mozem pridat "+nameToAdd);
+
+				FifaPlayerDB test = new FifaPlayerDB();
+			test.setPlayerName(nameToAdd);
+			test.setPlayerPosition("FW"); //todo in db
+				System.out.println("Trying to insert  "+ test.getPlayerName());
+
+				//fifaPlayerDBRepository.save(test);
+			}
+
+		});
+	}
+
+
 	@GetMapping("/getAllCards")
 	public Map<String, List<FifaPlayer>> getAllCards()
 	{
@@ -258,7 +309,6 @@ public class GlobalStatsController {
 
 		for(Matches m : matches) {
 			if(m.getGoalscorers() != null) {
-				System.out.println(m);
 				String[] goalscorers = m.getGoalscorers().split("-");
 				addGoalsScorers(playerWithGoals, m, goalscorers[0], m.getHometeam()); //home
 				addGoalsScorers(playerWithGoals, m, goalscorers[1], m.getAwayteam()); //away

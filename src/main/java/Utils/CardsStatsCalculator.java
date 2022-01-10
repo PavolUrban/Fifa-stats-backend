@@ -46,7 +46,7 @@ public class CardsStatsCalculator {
     private static void setStatForCorrectFifaDataFormat (Matches m, String competition, String player, Map<String, List<FifaPlayer>> playersCardsStatisticsPerCompetition, String cardType, String teamName) {
         // in some old FIFA seasons there are not minutes provides within stats
 
-        System.out.println("Prave robim na " + m);
+        //System.out.println("Prave robim na " + m);
         if (MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(m.getSeason())) {
             updateStats(playersCardsStatisticsPerCompetition, competition, player, cardType, teamName);
         } else {
