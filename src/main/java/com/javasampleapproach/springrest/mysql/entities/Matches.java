@@ -16,6 +16,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "matches")
 public class Matches {
 
+	//rework this and use relations
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;

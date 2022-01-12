@@ -11,6 +11,8 @@ import javax.persistence.*;
 @Table(name = "recordsinmatches")
 public class RecordsInMatches {
 
+    //rework this and use relations
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
