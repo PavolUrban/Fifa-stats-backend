@@ -1,5 +1,6 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
+import Utils.NewestGoalscorersCalculator;
 import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
@@ -43,40 +44,45 @@ public class GoalscorersController {
             competition = null;
         }
 
-        List<RecordsInMatches> allGoals = recordsInMatchesRepository.getRecordsByCompetition(competition, teamName,"G", "Penalty");
+        List<RecordsInMatches> allGoals = recordsInMatchesRepository.getRecordsByCompetition(null, null, competition, teamName,"G", "Penalty");
 
-        List<Long> allIds = allGoals.stream().map(goal-> goal.getPlayerId()).collect(Collectors.toList());
-        System.out.println("allIds size "+allIds.size());
-        List<Long> distinctIDs = allIds.stream().distinct().collect(Collectors.toList());
-        System.out.println("distinct Ids size "+distinctIDs.size());
-        Iterable<FifaPlayerDB> allPlayers = fifaPlayerDBRepository.findByIdIn(distinctIDs);
+        NewestGoalscorersCalculator ngc = new NewestGoalscorersCalculator(fifaPlayerDBRepository);
+        return ngc.getGoalscorers(allGoals);
 
-        List<Goalscorer> allGoalscorers = new ArrayList<>();
-        allPlayers.forEach(player->{
-            List<RecordsInMatches> recordsRelatedToPlayer = allGoals.stream().filter(goals-> goals.getPlayerId() == player.getId()).collect(Collectors.toList());
-            Goalscorer goalscorer = new Goalscorer();
-            goalscorer.setName(player.getPlayerName());
-            goalscorer.setTotalGoalsCount(0);
+//        List<RecordsInMatches> allGoals = recordsInMatchesRepository.getRecordsByCompetition(null, null, competition, teamName,"G", "Penalty");
+//
+//        List<Long> allIds = allGoals.stream().map(goal-> goal.getPlayerId()).collect(Collectors.toList());
+//        List<Long> distinctIDs = allIds.stream().distinct().collect(Collectors.toList());
+//        Iterable<FifaPlayerDB> allPlayers = fifaPlayerDBRepository.findByIdIn(distinctIDs);
+//
+//        List<Goalscorer> allGoalscorers = new ArrayList<>();
+//        allPlayers.forEach(player->{
+//            List<RecordsInMatches> recordsRelatedToPlayer = allGoals.stream().filter(goals-> goals.getPlayerId() == player.getId()).collect(Collectors.toList());
+//            Goalscorer goalscorer = new Goalscorer();
+//            goalscorer.setName(player.getPlayerName());
+//            goalscorer.setTotalGoalsCount(0);
+//
+//            Set<String> teamsPlayerScoredFor = new HashSet<>();
+//
+//            recordsRelatedToPlayer.forEach(record->{
+//                teamsPlayerScoredFor.add(record.getTeamName());
+//                if(record.getMinuteOfRecord()!=null){
+//                    goalscorer.setTotalGoalsCount(goalscorer.getTotalGoalsCount() + 1);
+//                } else {
+//                    goalscorer.setTotalGoalsCount(goalscorer.getTotalGoalsCount() + record.getNumberOfGoalsForOldFormat());
+//                }
+//            });
+//
+//            goalscorer.setNumberOfTeamsPlayerScoredFor(teamsPlayerScoredFor.size());
+//            allGoalscorers.add(goalscorer);
+//        });
+//
+//
+//        allGoalscorers.sort((o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
+//
+//
+//        return allGoalscorers;
 
-            Set<String> teamsPlayerScoredFor = new HashSet<>();
-
-            recordsRelatedToPlayer.forEach(record->{
-                teamsPlayerScoredFor.add(record.getTeamName());
-                if(record.getMinuteOfRecord()!=null){
-                    goalscorer.setTotalGoalsCount(goalscorer.getTotalGoalsCount() + 1);
-                } else {
-                    goalscorer.setTotalGoalsCount(goalscorer.getTotalGoalsCount() + record.getNumberOfGoalsForOldFormat());
-                }
-            });
-
-            goalscorer.setNumberOfTeamsPlayerScoredFor(teamsPlayerScoredFor.size());
-            allGoalscorers.add(goalscorer);
-        });
-
-
-        allGoalscorers.sort((o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
-
-
-        return allGoalscorers;
+        //String competition, String teamName, String comeptitionPhase, String season
     }
 }

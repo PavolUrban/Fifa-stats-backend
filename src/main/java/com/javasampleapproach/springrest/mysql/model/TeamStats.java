@@ -19,7 +19,6 @@ public class TeamStats {
 
 	// player related stats
 	Map<String, Map<String, Integer>> goalScorers; // todo make this something similar to playersCardsStatisticsPerCompetition
-	Map<String, List<FifaPlayer>> playersCardsStatisticsPerCompetition;
 
 	// timeOfGoal, numberOfGoalsInThatMinute
 	Map<String, Integer> goalsByMinutesCount;
@@ -42,11 +41,6 @@ public class TeamStats {
 
 		this.goalScorers = new HashMap<>();
 		initializePlayerRelatedStats(this.goalScorers);
-
-		this.playersCardsStatisticsPerCompetition = new HashMap<>();
-		this.playersCardsStatisticsPerCompetition.put("Total", new ArrayList<>());
-		this.playersCardsStatisticsPerCompetition.put("CL", new ArrayList<>());
-		this.playersCardsStatisticsPerCompetition.put("EL", new ArrayList<>());
 
 		this.goalsByMinutesCount = new HashMap<>();
 		this.concededGoalsByMinutesCount = new HashMap<>();

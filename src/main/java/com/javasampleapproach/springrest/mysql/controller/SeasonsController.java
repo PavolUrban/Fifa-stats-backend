@@ -10,6 +10,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import Utils.MyUtils;
+import Utils.NewestGoalscorersCalculator;
+import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
+import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
+import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,12 +44,18 @@ public class SeasonsController {
 	@Autowired
 	FileRepository fileRepository;
 
+	@Autowired
+	FifaPlayerDBRepository fifaPlayerDBRepository;
+
+	@Autowired
+	RecordsInMatchesRepository recordsInMatchesRepository;
+
 	@GetMapping("/getAllPhases/{season}/{competition}")
-	public Object getAllPhasesForSeasondAndCompetition(@PathVariable("season") String season, @PathVariable("competition") String competition) {
+	public Object getAllPhasesForSeasonAndCompetition(@PathVariable("season") String season, @PathVariable("competition") String competition) {
 		List<FileModel> allLogos = new ArrayList<>();
-		Map<String, Object> finalTablesWithStats = new HashMap<String, Object>();
-		GlobalStatsController globalStats = new GlobalStatsController();
-		Map<String, List<TableTeam>> groupsWithTeams = new HashMap<String, List<TableTeam>>();
+		Map<String, Object> finalTablesWithStats = new HashMap<>();
+		Map<String, List<TableTeam>> groupsWithTeams = new HashMap<>();
+		NewestGoalscorersCalculator ngc = new NewestGoalscorersCalculator(fifaPlayerDBRepository);
 
 		/*  *********** GROUP STAGE *********** */
 		List<Matches> matches = matchesRepository.getAllMatchesBySeasonAndCompetitionGroupStage(season, competition);
@@ -64,12 +75,12 @@ public class SeasonsController {
 				teamNamesInCurrentGroup.add(a.getAwayteam());
 			});
 
-			//goalscorers !!
-			List<Goalscorer> goalscorers = globalStats.getAllGoalscorers(matches.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).collect(Collectors.toList()));
-			groupGoalscorers.put(groupName, goalscorers);
+			// goalscorers per group
+			List<RecordsInMatches> allGoalsInCurrentGroup = recordsInMatchesRepository.getRecordsByCompetition(groupName, season, competition, null,"G", "Penalty");
+			groupGoalscorers.put(groupName, ngc.getGoalscorers(allGoalsInCurrentGroup));
 
 			//player stats PavolJay vs Kotlik
-			Map<String, Integer> winsByPlayersInCurrentGroup = new HashMap<String, Integer>();
+			Map<String, Integer> winsByPlayersInCurrentGroup = new HashMap<>();
 			winsByPlayersInCurrentGroup.put("Pavol Jay", 0);
 			winsByPlayersInCurrentGroup.put("Kotlik", 0);
 			winsByPlayersInCurrentGroup.put("Draws", 0);
@@ -147,12 +158,6 @@ public class SeasonsController {
 
     	List<Matches> matchesPO = matchesRepository.getAllMatchesBySeasonAndCompetitionPlayOffs(season, competition);
     	int goalsPlayOffStage = matchesPO.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
-    	
-    	
-		List<Goalscorer> goalscorersPO = globalStats.getAllGoalscorers(matchesPO); //TODO this is complete list of play off goalscorers -> just store it somewhere to not do it again??
-
-    	
-    	
 		int goalsGroupStage = matches.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
 		
 		
@@ -160,10 +165,9 @@ public class SeasonsController {
 		PlayersController playersStatsController  = new PlayersController();
 	
 		String winner = "unknown";
-		if(finalMatch != null)
-		{
-			winner = playersStatsController.whoIsWinnerOfMatch(finalMatch, "Pavol Jay", "Kotlik");
-			
+		if(finalMatch != null) {
+			winner = playersStatsController.whoIsWinnerOfMatch(finalMatch, PAVOL_JAY, KOTLIK);
+			finalTablesWithStats.put("WinnerTeamLogo", fileRepository.findByTeamname(finalMatch.getWinner()));
 		}
 		
 		finalTablesWithStats.put("CLWinnerPlayer", winner);
@@ -173,166 +177,31 @@ public class SeasonsController {
 		finalTablesWithStats.put("MatchesCount", setCountsForDifferentStages(matches.size(), matchesPO.size()));
 		finalTablesWithStats.put("GoalsCount", setCountsForDifferentStages(goalsGroupStage, goalsPlayOffStage));
 		finalTablesWithStats.put("PlayOffs", playOffs);
-		
 		finalTablesWithStats.put("Final", finalMatch);
-		
-		if(finalMatch != null) {
-			finalTablesWithStats.put("WinnerTeamLogo", fileRepository.findByTeamname(finalMatch.getWinner()));
-		}
 
-		
-//		finalTablesWithStats.put("TotalGoalscorersGroupStage", getTotalGoalscorersFromGroups(groupGoalscorers, allLogos));
-		
-		
-		List<Goalscorer> groupStageGoalscorers = helperFunction(groupGoalscorers);
-		
-		finalTablesWithStats.put("TotalGoalscorersGroupStage", getTotalGoalscorers(groupStageGoalscorers, allLogos));
-		finalTablesWithStats.put("TotalGoalscorersPlayOffs", getTotalGoalscorers(goalscorersPO, allLogos));
-		
-		
-		
-		List<Goalscorer> goalScorersAllPhases = createTotalGoalscorersAllPhases(groupStageGoalscorers, goalscorersPO); // here is every player who score at least goal no matter if it was only in GS or PO
-		finalTablesWithStats.put("TotalGoalscorersAllPhases", getTotalGoalscorers(goalScorersAllPhases, allLogos));
-		
-		
+
+		List<RecordsInMatches> topGoalscorersGroupStage = recordsInMatchesRepository.getWholeGroupStageGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
+		finalTablesWithStats.put("TotalGoalscorersGroupStage", ngc.getGoalscorers(topGoalscorersGroupStage));
+
+		List<RecordsInMatches> topGoalscorersPlayOff = recordsInMatchesRepository.getWholePlayOffsGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
+		finalTablesWithStats.put("TotalGoalscorersPlayOffs",  ngc.getGoalscorers(topGoalscorersPlayOff));
+
+		List<RecordsInMatches> topGoalscorersAllPhases = recordsInMatchesRepository.getTotalGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
+		finalTablesWithStats.put("TotalGoalscorersAllPhases",  ngc.getGoalscorers(topGoalscorersAllPhases));
+
+		finalTablesWithStats.put("Logos", allLogos);
 		
 		return finalTablesWithStats;
 	}
 	
 	
-	
-	//remember both param list must be sorted!!
-	private List<Goalscorer> createTotalGoalscorersAllPhases(List<Goalscorer> groupStage, List<Goalscorer> playOffs)
-	{
-		List<Goalscorer> allPhasesGoalscorers = new ArrayList<Goalscorer>();
-		
-		for(Goalscorer g : groupStage)
-		{
-			Goalscorer gInPlayOffs = playOffs.stream().filter(p->p.getName().equalsIgnoreCase(g.getName())).findAny().orElse(null);
-			
-			if(gInPlayOffs != null) // if player scored in groups and play offs update his goals and add him in all cases to final list
-			{
-				Goalscorer scorerInGroupsAndPo = new Goalscorer();
-				scorerInGroupsAndPo.setName(g.getName());
-				scorerInGroupsAndPo.setTotalGoalsCount(g.getTotalGoalsCount() + gInPlayOffs.getTotalGoalsCount());
-				scorerInGroupsAndPo.setGoalsByTeams(g.getGoalsByTeams()); //TODO tuto treba updatnut, nebude to sediet v dialogu
-				allPhasesGoalscorers.add(scorerInGroupsAndPo);
-			}
-			
-			else
-				allPhasesGoalscorers.add(g);
-		}
-		
-		//we must check also if someone got to total goarscorers only by goals from 
-		for(Goalscorer gPO : playOffs)
-		{
-			Goalscorer gAlreadyAdded = allPhasesGoalscorers.stream().filter(a-> a.getName().equalsIgnoreCase(gPO.getName())).findAny().orElse(null); 
-			
-			//if this player is not in allPhasesGoalscorers, add him
-			if(gAlreadyAdded == null)
-				allPhasesGoalscorers.add(gPO);
-		}
-		
-		
-		Collections.sort(allPhasesGoalscorers, (o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
-		
-		return allPhasesGoalscorers;
-	}
-	
-	private List<Integer> setCountsForDifferentStages(int groupCount, int playOffCount)
-	{
+
+	private List<Integer> setCountsForDifferentStages(int groupCount, int playOffCount) {
 		List<Integer> counts = new ArrayList<>();
 		counts.add(groupCount);
 		counts.add(playOffCount);
 		
 		return counts;
-	}
-	
-	
-	//this runs when array with goalscorers is sorted
-	private List<Goalscorer> getTotalGoalscorers(List<Goalscorer> goalscorers, List<FileModel>logos)
-	{
-		
-		List<Goalscorer> finalGoalscorers = goalscorers;
-		
-		
-		//TODO this is used multiple times add it to function
-		  for(Goalscorer top : finalGoalscorers)
-		   {
-			   
-			   String goalscorersTeam = top.getGoalsByTeams().keySet().stream().findFirst().get();
-			   FileModel currentLogo = logos.stream().filter(l -> l.getTeamname().equalsIgnoreCase(goalscorersTeam)).findFirst().orElse(null);
-			   if(currentLogo == null) {
-				   currentLogo = fileRepository.findByTeamname(goalscorersTeam);
-			   }
-			   top.setTeamLogo(currentLogo);
-		   }
-		
-		return finalGoalscorers;
-	}
-	
-	//TODO rename and merge with getTotalGoalscorersFromGroups
-	private List<Goalscorer> helperFunction(Map<String, Object> groupGoalscorers)
-	{
-			List<Goalscorer> finalList = new ArrayList<>();
-		
-		  for (String name : groupGoalscorers.keySet())  
-		   {
-			   	List<Goalscorer> gg = (List<Goalscorer>) groupGoalscorers.get(name);
-				gg.stream().forEach(g->finalList.add(g));
-		   }
-		  
-		   Collections.sort(finalList, (o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
-		  
-		  return finalList;
-	}
-	
-	
-	//this goes throug groups e.g. A-H and get best goalscorers among these groups
-	private List<Goalscorer> getTotalGoalscorersFromGroups(Map<String, Object> groupGoalscorers, List<FileModel> logos)
-	{
-		
-		List<Goalscorer> topGoalscorers = new ArrayList<>();
-		
-	
-	   for (String name : groupGoalscorers.keySet())  
-	   {
-		   	List<Goalscorer> gg = (List<Goalscorer>) groupGoalscorers.get(name);
-			Collections.sort(gg, (o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
-	
-			for(Goalscorer g : gg)
-			{
-				if(topGoalscorers.size()<3) // add top 3 Goalscorers automatically
-					topGoalscorers.add(g);
-				
-				else
-				{
-					 int minTopGoals = topGoalscorers.stream().mapToInt(Goalscorer::getTotalGoalsCount).min().orElse(-1);
-					 
-					 if(g.getTotalGoalsCount()>minTopGoals) // if current goalscorer has more goals then min in Top goalscorers, remove all with min and add current
-					 {
-						 topGoalscorers.removeIf(obj -> obj.getTotalGoalsCount() == minTopGoals);
-						 topGoalscorers.add(g);
-					 }
-					 
-					 else if(g.getTotalGoalsCount() == minTopGoals) //if goalscorers has at least min top goals add him and do not remove anything
-						 topGoalscorers.add(g);
-				}
-			}
-
-	   }
-		   
-	   Collections.sort(topGoalscorers, (o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
-	   
-	   for(Goalscorer top : topGoalscorers)
-	   {
-		   
-		   String goalscorersTeam = top.getGoalsByTeams().keySet().stream().findFirst().get();
-		   FileModel currentLogo = logos.stream().filter(l -> l.getTeamname().equalsIgnoreCase(goalscorersTeam)).findFirst().orElse(null);
-		   top.setTeamLogo(currentLogo);
-	   }
-	   
-	   return topGoalscorers;
 	}
 	
 	@GetMapping("/getAllPlayOff/{season}/{competition}")

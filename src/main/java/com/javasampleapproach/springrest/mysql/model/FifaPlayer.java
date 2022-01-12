@@ -13,7 +13,7 @@ import java.util.Set;
 public class FifaPlayer {
 
     private String name;
-    private int cardsTotal = 0;
+    private Integer cardsTotal = 0;
     private int redCards = 0;
     private int yellowCards = 0;
     //todo as map, for now I only need to get length of this set

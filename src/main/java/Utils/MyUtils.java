@@ -27,7 +27,7 @@ public class MyUtils {
 	public static final String GROUP_K = "GROUP K";
 	public static final String GROUP_L = "GROUP L";
 	public static final String ROUND_OF_32 = "Round of 32";
-	public static final String ROUND_OF_16 = "Round of 16"; // todo translate this
+	public static final String ROUND_OF_16 = "Round of 16";
 	public static final String QUARTERFINALS = "Quarterfinals";
 	public static final String SEMIFINALS = "Semifinals";
 	public static final String FINAL = "Final";
@@ -43,4 +43,9 @@ public class MyUtils {
 	public static List<String> championsLeagueStagesListWithDefault = Arrays.asList(ALL_PHASES, GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, ROUND_OF_16, QUARTERFINALS, SEMIFINALS, FINAL);
 	public static List<String> europeanLeagueStagesListWithDefault =  Arrays.asList(ALL_PHASES, GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, GROUP_I, GROUP_J, GROUP_K, GROUP_L, ROUND_OF_32, ROUND_OF_16, QUARTERFINALS, SEMIFINALS, FINAL);
 
+	public static String RECORD_TYPE_GOAL = "G";
+	public static String RECORD_TYPE_PENALTY = "Penalty";
+	public static String RECORD_TYPE_OWN_GOAL = "OG";
+	public static String RECORD_TYPE_YELLOW_CARD = "YC";
+	public static String RECORD_TYPE_RED_CARD = "RC";
 }

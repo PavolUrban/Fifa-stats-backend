@@ -3,7 +3,6 @@ package com.javasampleapproach.springrest.mysql.controller;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import Utils.CardsStatsCalculator;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.*;
@@ -140,6 +139,7 @@ public class TeamController {
 			}
 
 			// TODO - this has to be removed, goalscorers are fetched from globalstats controller, goals per ranges are here goalscorers
+			// TODO rework this - this should not be used anymore - goalscorers are calculated separately now
 			if(m.getGoalscorers() != null) {
 				String[] goalscorers = m.getGoalscorers().split("-");
 				if(m.getHometeam().equalsIgnoreCase(teamName)) {
@@ -157,16 +157,6 @@ public class TeamController {
 				seasonsCL.add(m.getSeason());
 			} else if(m.getCompetition().equalsIgnoreCase("EL")) {
 				seasonsEL.add(m.getSeason());
-			}
-
-			// yellow cards
-			if(m.getYellowcards() != null) {
-				CardsStatsCalculator.getRedAndYellowCards(m, team.getPlayersCardsStatisticsPerCompetition(), m.getYellowcards(), m.getCompetition(), teamName, MyUtils.CARD_TYPE_YELLOW);
-			}
-
-			//red cards
-			if(m.getRedcards() != null) {
-				CardsStatsCalculator.getRedAndYellowCards(m, team.getPlayersCardsStatisticsPerCompetition(), m.getRedcards(), m.getCompetition(), teamName, MyUtils.CARD_TYPE_RED);
 			}
 		}
 
@@ -187,7 +177,6 @@ public class TeamController {
 
 		TimeRangesMapper.transformGoalMapToTimeRanges(team);
 
-		CardsStatsCalculator.sortCardsMap(team.getPlayersCardsStatisticsPerCompetition());
 
 		return team;
 	}

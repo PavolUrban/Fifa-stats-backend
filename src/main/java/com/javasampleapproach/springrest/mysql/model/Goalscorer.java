@@ -12,8 +12,9 @@ import lombok.NoArgsConstructor;
 public class Goalscorer {
 	private String name;
 	private Integer totalGoalsCount;
-	private Map<String, Integer> goalsByTeams;
+	private Map<String, Integer> goalsByTeams; // todo use in future
 	private int numberOfTeamsPlayerScoredFor;
+	private String teamPlayerScoredFor; // this will be as map in future - goalsByTeams
 	
 	private FileModel teamLogo;
 }

@@ -28,6 +28,8 @@ public class FifaPlayerController {
     @Autowired
     FileRepository fileRepository;
 
+    // todo use record in matches to calculate stats here!
+
     @GetMapping("/getStats/{playerName}")
     public FifaPlayerDialogStats getAllStatsForSpecifiedFifaPlayer(@PathVariable("playerName") String playerName) {
 
