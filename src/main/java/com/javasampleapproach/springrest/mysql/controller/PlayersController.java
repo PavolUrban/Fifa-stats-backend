@@ -49,7 +49,7 @@ public class PlayersController {
 			String winnerName = whoIsWinnerOfMatch(m, PAVOL_JAY, KOTLIK);
 			winnersCount.put(winnerName, winnersCount.get(winnerName) + 1);
 
-			List<Integer> goalsScoredANdConceeeded = getGoalsScoredAndConceded(m, pavolJay, kotlik);
+			List<Integer> goalsScoredANdConceeeded = getGoalsScoredAndConceded(m);
 			int goalsScored = goalsScoredANdConceeeded.get(0);
 			int goalsConceded = goalsScoredANdConceeeded.get(1);
 			setGoalsScoredAndConcededForPlayer(pavolJay, goalsScored, goalsConceded);
@@ -82,60 +82,21 @@ public class PlayersController {
 	}
 
 	// this function is calculated for PAVOL_JAY -> scored goals by him is conceded goals by KOTLIK etc.
-	private List<Integer> getGoalsScoredAndConceded(Matches match, PlayerStats mainPLayer, PlayerStats opositionPlayer) {
+	private List<Integer> getGoalsScoredAndConceded(Matches match) {
 		int goalsScored = 0;
 		int goalsConceded = 0;
 
 		if (match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) {
 			goalsScored = match.getScorehome();
 			goalsConceded = match.getScoreaway();
-			getCardsIfNotNull(match, 0,1, mainPLayer, opositionPlayer);
 		} else if (match.getPlayerA().equalsIgnoreCase(PAVOL_JAY)) {
 			goalsScored = match.getScoreaway();
 			goalsConceded = match.getScorehome();
-			getCardsIfNotNull(match, 1,0, mainPLayer, opositionPlayer);
 		}
 
 		return Arrays.asList(goalsScored, goalsConceded);
 	}
 
-	// todo this function contains duplicate code - remove it
-	private void getCardsIfNotNull(Matches match, int mainPlayerIndex, int opositionPlayerIndex, PlayerStats mainPlayer, PlayerStats opositionPlayer) {
-		if(match.getYellowcards() != null) {
-			String[] yellowCards = match.getYellowcards().split("-");
-			String cardsForCurrentPlayer = yellowCards[mainPlayerIndex];
-			String cardsForOpositionPlayer = yellowCards[opositionPlayerIndex];
-			mainPlayer.setNumberOfYellowCards( mainPlayer.getNumberOfYellowCards() + addProperCardCount(cardsForCurrentPlayer));
-			opositionPlayer.setNumberOfYellowCards(opositionPlayer.getNumberOfYellowCards() + addProperCardCount(cardsForOpositionPlayer));
-		}
-
-		if(match.getRedcards() != null) {
-			String[] redCards = match.getRedcards().split("-");
-			String cardsForCurrentPlayer = redCards[mainPlayerIndex];
-			String cardsForOpositionPlayer = redCards[opositionPlayerIndex];
-			mainPlayer.setNumberOfRedCards( mainPlayer.getNumberOfRedCards() + addProperCardCount(cardsForCurrentPlayer));
-			opositionPlayer.setNumberOfRedCards( opositionPlayer.getNumberOfRedCards() + addProperCardCount(cardsForOpositionPlayer));
-		}
-	}
-
-
-	private static int addProperCardCount (String allCurrentCards)
-	{
-		int numberOfCardsToAdd = 0;
-
-		// check for multiple players separated by delimiter
-		if (allCurrentCards.contains(";")) {
-			String[] playersWithCurrentCard = allCurrentCards.split(";");
-			numberOfCardsToAdd = playersWithCurrentCard.length;
-		} else {
-			// '/' is used for no goalscorer - if string contains this character no record for this stat is provided
-			if ( !allCurrentCards.equalsIgnoreCase("/") ) {
-				numberOfCardsToAdd =1;
-			}
-		}
-
-		return numberOfCardsToAdd;
-	}
 
 	private void prepareStats(PlayerStats player, Map<String, Integer> winnersCount, String playerWinner, String playerLooser) {
 		ArrayList<Integer> totalStats = new ArrayList<>(Arrays.asList(winnersCount.get(playerWinner), winnersCount.get(RESULT_DRAW), winnersCount.get(playerLooser)));

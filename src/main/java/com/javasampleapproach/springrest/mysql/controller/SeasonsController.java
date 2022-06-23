@@ -109,14 +109,13 @@ public class SeasonsController {
 
 
 				//todo for this table TeamsOwnerBySeason is prepared - USE IT SOON!
-				long currentTeamMatchesByPavolJay = allMatchesByTeam
-						.stream()
-						.filter(match->
-										(match.getHometeam().equalsIgnoreCase(teamName) && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
+				long currentTeamMatchesByPavolJay =
+						allMatchesByTeam.stream()
+						.filter(match-> (match.getHometeam().equalsIgnoreCase(teamName) && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
 										(match.getAwayteam().equalsIgnoreCase(teamName) && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY))
 						).count();
 
-				double playedByPavolJayPercentage = currentTeamMatchesByPavolJay/ (allMatchesByTeam.size() *1.0);
+				double playedByPavolJayPercentage = currentTeamMatchesByPavolJay/ (allMatchesByTeam.size() * 1.0);
 
 				if(playedByPavolJayPercentage>0.6){
 					tableTeam.setOwnedByPlayer(PAVOL_JAY);
@@ -186,34 +185,26 @@ public class SeasonsController {
 		
 		return counts;
 	}
-	
-	@GetMapping("/getAllPlayOff/{season}/{competition}")
+
 	private Map<String, List<PlayOffMatch>> getPlayOffs(@PathVariable("season") String season, @PathVariable("competition") String competition)
 	{
 		List<Matches> matches = matchesRepository.getAllMatchesBySeasonAndCompetitionPlayOffs(season, competition);
-
 		Set<String> phases = new HashSet<String>();
-		
 		matches.stream().filter(p ->  phases.add(p.getCompetitionPhase())).collect(Collectors.toList());
-		
-		
 		Map<String, List<PlayOffMatch>> matchesInAllPhases = new HashMap<String, List<PlayOffMatch>>();
 		
-		for(String phase: phases)
-		{
-			
+		for(String phase: phases) {
 			List<Matches> matchesInCurrentPhase = new ArrayList<>();
 			matches.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(phase)).filter(o -> matchesInCurrentPhase.add(o)).collect(Collectors.toList());
 			
 			List<PlayOffMatch> playOffMatches = new ArrayList<>();
-			
-			if( !phase.equalsIgnoreCase("Final") )// final is played only as single match not classic play off with two matches
-			{
+
+			// final is played only as single match not classic play off with two matches
+			if( !phase.equalsIgnoreCase("Final") ){
 				
 				int addedMatches = 0;
 				
-				for(Matches m : matchesInCurrentPhase)
-				{
+				for(Matches m : matchesInCurrentPhase) {
 					
 					
 					if(addedMatches >= matchesInCurrentPhase.size())

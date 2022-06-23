@@ -31,12 +31,6 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	//all matches
 	List<Matches> findBySeasonAndHometeamOrSeasonAndAwayteam(String season,String hometeam,String season1, String awayteam);
 	
-	//all home matches from specified season for single team
-	List<Matches> findByHometeamAndSeason(String hometeam, String season);
-	
-	//all away matches from specified season for single team
-	List<Matches> findByAwayteamAndSeason(String hometeam, String season);
-	
 	//all matches from specified season
 	List<Matches> findBySeason(String season);
 	
@@ -55,7 +49,6 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	List<Matches> findByCompetitionPhaseAndCompetitionOrderBySeason(String competitionPhase, String competition);
 
 
-	List<Matches> findByYellowcardsIsNotNullOrRedcardsIsNotNull();
 
 	//"SELECT c FROM Customer c WHERE (:name is null or c.name = :name) and (:email is null"
 	//			+ " or c.email = :email)"
@@ -73,6 +66,4 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	@Query("SELECT MIN(m.season) FROM Matches m WHERE (m.awayteam = ?1 OR hometeam = ?1) AND competition = ?2")
 	String firstSeasonInCompetition(String teamName, String competition);
 
-	@Query("SELECT m FROM Matches m WHERE m.goalscorers LIKE %:playerName% OR m.yellowcards LIKE %:playerNameYC% OR m.redcards LIKE %:playerNameRC% ORDER BY SEASON")
-	List<Matches> getMatchesRelatedToSpecifiedPlayer(@Param("playerName") String playerName, @Param("playerNameYC") String playerNameYC, @Param("playerNameRC") String playerNameRC);
 }

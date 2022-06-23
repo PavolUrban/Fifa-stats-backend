@@ -46,16 +46,6 @@ public class Matches {
 	@Column(name = "playera")
 	private String playerA;
 	
-	@Column(name = "goalscorers")
-	private String goalscorers;
-	
-	@Column(name = "yellowcards")
-	private String yellowcards;
-	
-	@Column(name = "redcards")
-	private String redcards;
-	
-	
 	@Column(name = "competition")
 	private String competition;
 	
@@ -65,8 +55,7 @@ public class Matches {
 
 // TODO both constructors probably can be deleted
 
-	public Matches(String hometeam, String awayTeam, int scoreHome, int scoreAway, String playerH, String playerA, String season, String competition, String competitionPhase, String yellowcards,
-				   String goalscorers, String redcards)
+	public Matches(String hometeam, String awayTeam, int scoreHome, int scoreAway, String playerH, String playerA, String season, String competition, String competitionPhase)
 	{
 		this.hometeam = hometeam;
 		this.awayteam = awayTeam;
@@ -77,9 +66,6 @@ public class Matches {
 		this.season = season;
 		this.competition = competition;
 		this.competitionPhase = competitionPhase;
-		this.yellowcards = yellowcards;
-		this.redcards = redcards;
-		this.goalscorers = goalscorers;
 	}
 
 	public Matches(Matches matchWithoutId){
@@ -92,9 +78,6 @@ public class Matches {
 		this.season = matchWithoutId.getSeason();
 		this.competition = matchWithoutId.getCompetition();
 		this.competitionPhase = matchWithoutId.getCompetitionPhase();
-		this.yellowcards = matchWithoutId.getYellowcards();
-		this.redcards = matchWithoutId.getRedcards();
-		this.goalscorers = matchWithoutId.getGoalscorers();
 	}
 
 

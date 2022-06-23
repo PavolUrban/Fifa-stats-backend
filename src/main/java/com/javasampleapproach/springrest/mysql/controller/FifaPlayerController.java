@@ -2,17 +2,14 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
-import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.model.FifaPlayerDialogStats;
 import com.javasampleapproach.springrest.mysql.model.FifaPlayerStatsPerSeason;
 import com.javasampleapproach.springrest.mysql.model.PlayerStatsInSeason;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
-import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,10 +19,11 @@ import java.util.stream.Collectors;
 public class FifaPlayerController {
 
     @Autowired
-    MatchesRepository matchesRepository;
+    RecordsInMatchesRepository recordsInMatchesRepository;
+
 
     @Autowired
-    RecordsInMatchesRepository recordsInMatchesRepository;
+    FifaPlayerDBRepository fifaPlayerDBRepository;
 
     @GetMapping("/getStats/{playerName}")
     public FifaPlayerDialogStats getAllStatsForSpecifiedFifaPlayerNEWEST(@PathVariable("playerName") String playerName) {
@@ -77,32 +75,4 @@ public class FifaPlayerController {
 
         return allStats;
     }
-
-
-
-
-    /*
-        TODO finish this
-        Note: this functionality is only temporary - it is used to switch from goalscorers in matches table to separate table for goalscorers
-     */
-
-    @Autowired
-    FifaPlayerDBRepository fifaPlayerDBRepository;
-
-    @GetMapping("/generateImprovedFifaPlayers/insert")
-    public void generateImprovedFifaPlayers(){
-        List<Matches> matches = new ArrayList<>();
-        matchesRepository.findAll().iterator().forEachRemaining(matches::add);
-
-        matches.forEach(match->{
-            // todo here check, goalscorers, yelllow and red cards and insert every new name into table (if name already there, do nothing)
-        }
-        );
-
-        FifaPlayerDB test = new FifaPlayerDB();
-        test.setPlayerName("test");
-        test.setPlayerPosition("GK");
-        //fifaPlayerDBRepository.save(test);
-    }
-
 }

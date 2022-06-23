@@ -115,35 +115,34 @@ public class MatchesController {
 	}
 
 	// TODO add some validation - e.g if provided goalscorers match up witch score
-	@PostMapping(value = "/newmatch/create")
+	// todo zrejme zjednotit s updateexisting
+	@PostMapping(value = "newmatch/create")
 	public Matches createMatch(@RequestBody Matches match) {
 
 		setWinningTeam(match);
-		if(match.getGoalscorers() == null) {
-			match.setGoalscorers("/-/"); //todo check if this is really needed
-		}
 
-		Matches newMatch = matchesRepository.save(match);
-		saveMatchesRecords(match);
+		System.out.println("toto chcem ulozit");
+		System.out.println(match);
 
-		return newMatch;
+
+		// todo 23.6.2020 zatial nic neukladam
+		//Matches newMatch = matchesRepository.save(match);
+		//saveMatchesRecords(match);
+
+		return null;
 	}
 
 	@PutMapping(value = "/update/existingMatch")
 	public Matches updateExistingMatch(@RequestBody Matches match) {
 
 		setWinningTeam(match);
-		if(match.getGoalscorers() == null) {
-			match.setGoalscorers("/-/");
-		}
-//here i have to firstly removed everything and only then i can update
-System.out.println("TODOOOOO");
-		saveMatchesRecords(match);
 
-		Matches newMatch = matchesRepository.save(match);
-		System.out.println("toto som ulozil");
-		System.out.println(newMatch);
-		return newMatch;
+		System.out.println("toto chcem ulozit");
+		System.out.println(match);
+		// saveMatchesRecords(match);
+		// Matches newMatch = matchesRepository.save(match);
+
+		return null;
 	}
 
 
@@ -190,143 +189,6 @@ System.out.println("TODOOOOO");
 		return name;
 	}
 
-	//TODo toto pojde prec a zostane to len v update existujuceho matchu
-	@GetMapping(value = "/prepareAllRecords/existingMatches")
-	public void prepareAllRecordsForMatches(){
-		Iterable<Matches> matches = matchesRepository.findAll();
-		matches.iterator().forEachRemaining(match->{
-			System.out.println("Saving match record for match ID"  + match.getId());
-			saveMatchesRecords(match);
-		});
-
-//		Matches m = matchesRepository.findById(39L).orElse(null);
-//		System.out.println("Toto je match " + m);
-//		saveMatchesRecords(m);
-	}
-
-	public void saveMatchesRecords(Matches match){
-		if(match.getGoalscorers()!= null){
-			String[] homeAway = match.getGoalscorers().split("-");
-			saveGoalscorers(homeAway[0],(int) match.getId(), match.getHometeam(), match.getSeason(), match.getAwayteam());
-			saveGoalscorers(homeAway[1], (int) match.getId(), match.getAwayteam(), match.getSeason(), match.getHometeam());
-		}
-
-		if(match.getYellowcards() !=null){
-			String[] homeAway = match.getYellowcards().split("-");
-			saveCards("YC", homeAway[0], (int) match.getId(), match.getHometeam(), match.getSeason());
-			saveCards("YC", homeAway[1], (int) match.getId(), match.getAwayteam(), match.getSeason());
-
-		}
-
-		if(match.getRedcards() != null){
-			String[] homeAway = match.getRedcards().split("-");
-			saveCards("RC", homeAway[0], (int) match.getId(), match.getHometeam(), match.getSeason());
-			saveCards("RC", homeAway[1], (int) match.getId(), match.getAwayteam(), match.getSeason());
-
-		}
-		System.out.println();
-	}
-
-	private void saveCards(String typeOfRecord, String cardsInTeam, int matchId, String teamName, String seasonName){
-
-		if(! cardsInTeam.equalsIgnoreCase("/")){
-			if(cardsInTeam.contains(";")){
-				String[] multiplePlayersWithCard = cardsInTeam.split(";");
-				for(int i=0;i<multiplePlayersWithCard.length;i++){
-					saveCardsForProperFormat(seasonName, multiplePlayersWithCard[i], teamName, typeOfRecord, matchId);
-				}
-			} else {
-				saveCardsForProperFormat(seasonName, cardsInTeam, teamName, typeOfRecord, matchId);
-			}
-		}
-	}
-
-	private void saveCardsForProperFormat(String seasonName, String playerName, String teamName, String typeOfRecord, int matchId){
-		if (MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(seasonName)) {
-			saveOrShowWarningIfPlayerNotExists(playerName, null, matchId, teamName, typeOfRecord);
-		} else{
-			String[] minuteAndName = playerName.split(" ");
-			saveOrShowWarningIfPlayerNotExists(minuteAndName[1], Integer.parseInt(minuteAndName[0]), matchId, teamName, typeOfRecord);
-		}
-	}
-
-	public void saveOrShowWarningIfPlayerNotExists(String playerName, Integer minute, int matchId, String teamName, String typeOfRecord){
-		String formattedName = playerName.replaceAll("\\."," ");
-		FifaPlayerDB player = fifaPlayerDBRepository.findByPlayerName(formattedName);
-		if(player == null){
-			System.out.println(formattedName + " does not exists and it has to be created at first, matchId " + matchId+ " typeOfRecord " + typeOfRecord);
-		} else {
-			RecordsInMatches rim = new RecordsInMatches(player.getId(), matchId, teamName, typeOfRecord, minute, null);
-			recordsInMatchesRepository.save(rim);
-		}
-	}
-
-
-	private void saveGoalscorers(String goalscorersInTeam, int matchId, String teamName, String seasonName, String opositionTeamName){
-		if(! goalscorersInTeam.equalsIgnoreCase("/")){
-			if(goalscorersInTeam.contains(";")){
-				String[] goalscorersArray = goalscorersInTeam.split(";");
-				for(int i=0;i<goalscorersArray.length;i++){
-					prepareSingleGoalscorer(seasonName, goalscorersArray[i], matchId, teamName, opositionTeamName);
-				}
-			} else {
-				prepareSingleGoalscorer(seasonName, goalscorersInTeam, matchId, teamName, opositionTeamName);
-			}
-		}
-
-	}
-
-	private void prepareSingleGoalscorer(String seasonName, String singleGoalscorer, int matchId, String teamName, String opositionTeamName){
-
-		if (MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(seasonName)) {
-			//check for multiple goals
-			if(singleGoalscorer.contains("*")){
-				String[] numberOfGoalsAndName = singleGoalscorer.split("\\*");
-				saveSingleGoalscorer(numberOfGoalsAndName[1],matchId, teamName, null, opositionTeamName, Integer.parseInt(numberOfGoalsAndName[0]));
-			} else {
-				saveSingleGoalscorer(singleGoalscorer, matchId, teamName, null, opositionTeamName, 1);
-			}
-		} else{
-			//check for multiple goals
-			if(singleGoalscorer.contains(",")){
-				String [] minutesAndPlayerName = singleGoalscorer.split(" ");
-				String minutes = minutesAndPlayerName[0];
-				String playerName = minutesAndPlayerName[1];
-				String[] minuteList = minutes.split(",");
-
-				for(int i=0; i<minuteList.length; i++){
-					saveSingleGoalscorer(playerName, matchId, teamName, Integer.parseInt(minuteList[i]), opositionTeamName, null);
-				}
-			} else {
-				String[] minuteAndPlayerName = singleGoalscorer.split(" ");
-				saveSingleGoalscorer(minuteAndPlayerName[1], matchId, teamName, Integer.parseInt(minuteAndPlayerName[0]), opositionTeamName, null);
-			}
-		}
-	}
-
-
-	private void saveSingleGoalscorer(String playerName, int matchId, String teamName, Integer minuteOfRecord, String opositionTeamName, Integer numberOfGoalsForOldFormat){
-		String playerNameFormatted = playerName.replaceAll("\\.", " ");
-
-		String typeOfGoal = "G";
-
-		if(playerName.contains("(OG)")){
-			playerNameFormatted = playerNameFormatted.replace("(OG)","");
-			typeOfGoal = "OG|" + opositionTeamName;
-		}
-
-		//ong playerId, int matchId, String teamName, String typeOfRecord, Integer minuteOfRecord, Integer numberOfGoalsForOldFormat
-		FifaPlayerDB player = fifaPlayerDBRepository.findByPlayerName(playerNameFormatted);
-
-		if(player == null){
-			System.out.println(playerName + " does not exists and it has to be created at first, matchId " + matchId+ " typeOfGoal " + typeOfGoal);
-		} else {
-
-			RecordsInMatches rim = new RecordsInMatches(player.getId(), matchId, teamName,typeOfGoal, minuteOfRecord, numberOfGoalsForOldFormat);
-			recordsInMatchesRepository.save(rim);
-		}
-
-	}
 
 	private void setWinningTeam(Matches match){
 		if (match.getScorehome() > match.getScoreaway()) {
@@ -390,15 +252,10 @@ System.out.println("TODOOOOO");
 			//teams statistics
 			overallStats.put(match.getWinner(), overallStats.get(match.getWinner()) + 1);
 		}
-
-		GlobalStatsController globalStats = new GlobalStatsController();
-		List<Goalscorer> goalscorers = globalStats.getAllGoalscorers(finalList);
-
 		
 		response.put("playersStats", convertMapToList(playersStats, "Pavol Jay", "Kotlik"));
 		response.put("matches", finalList);
 		response.put("overallStats",convertMapToList(overallStats,firstTeam, secondTeam));
-		response.put("goalscorers", goalscorers);
 
 		
 		return response;

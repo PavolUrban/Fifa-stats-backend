@@ -22,8 +22,6 @@ import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
 
 import Utils.MyUtils;
-import Utils.GoalscorersCalculator;
-import Utils.TimeRangesMapper;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -116,20 +114,6 @@ public class TeamController {
 				team.getMatchesStats().get(m.getCompetition()).put("GoalsConceded", team.getMatchesStats().get(m.getCompetition()).get("GoalsConceded") + m.getScorehome());
 			}
 
-			// TODO - this has to be removed, goalscorers are fetched from globalstats controller, goals per ranges are here goalscorers
-			// TODO rework this - this should not be used anymore - goalscorers are calculated separately now
-			if(m.getGoalscorers() != null) {
-				String[] goalscorers = m.getGoalscorers().split("-");
-				if(m.getHometeam().equalsIgnoreCase(teamName)) {
-					// 0 - home goalscorers (they are written before character '-')
-					GoalscorersCalculator.addHomeOrAwayGoalscorersProperly(true, team.getGoalsByMinutesCount(), m, goalscorers[0], team);
-					GoalscorersCalculator.addHomeOrAwayGoalscorersProperly(false, team.getConcededGoalsByMinutesCount(), m, goalscorers[1], team);
-				} else {
-					GoalscorersCalculator.addHomeOrAwayGoalscorersProperly(true, team.getGoalsByMinutesCount(), m, goalscorers[1], team);
-					GoalscorersCalculator.addHomeOrAwayGoalscorersProperly(false, team.getConcededGoalsByMinutesCount(), m, goalscorers[0], team);
-				}
-			}
-
 			// seasons in CL/EL
 			if (m.getCompetition().equalsIgnoreCase("CL")) {
 				seasonsCL.add(m.getSeason());
@@ -141,15 +125,10 @@ public class TeamController {
 		team.getMatchesStats().get("CL").put("Seasons", seasonsCL.size());
 		team.getMatchesStats().get("EL").put("Seasons", seasonsEL.size());
 
-		Map<String, Integer> sortedMapCL = GoalscorersCalculator.sortMap(team.getGoalScorers().get("CL"));
-		//printGoalscorersMap(sortedMapCL);
-		team.getGoalScorers().put("CL", sortedMapCL);
 
-		Map<String, Integer> sortedMapEL = GoalscorersCalculator.sortMap(team.getGoalScorers().get("EL"));
-		//printGoalscorersMap(sortedMapEL);
-		team.getGoalScorers().put("EL", sortedMapEL);
 
-		TimeRangesMapper.transformGoalMapToTimeRanges(team);
+		// TODO this may be partially reused transformGoalMapToTimeRanges
+		// TimeRangesMapper.transformGoalMapToTimeRanges(team);
 
 
 		return team;

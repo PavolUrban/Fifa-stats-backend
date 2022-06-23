@@ -19,3 +19,4 @@ public class TableTeam {
 	private int placeInGroup;
 	private String ownedByPlayer;
 }
+// checked - this is really used
