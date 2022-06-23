@@ -3,22 +3,17 @@ package com.javasampleapproach.springrest.mysql.controller;
 import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
-import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.FifaPlayerDialogStats;
 import com.javasampleapproach.springrest.mysql.model.FifaPlayerStatsPerSeason;
-import com.javasampleapproach.springrest.mysql.model.FileModel;
 import com.javasampleapproach.springrest.mysql.model.PlayerStatsInSeason;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
-import com.javasampleapproach.springrest.mysql.repo.FileRepository;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -28,9 +23,6 @@ public class FifaPlayerController {
 
     @Autowired
     MatchesRepository matchesRepository;
-
-    @Autowired
-    FileRepository fileRepository;
 
     @Autowired
     RecordsInMatchesRepository recordsInMatchesRepository;
@@ -68,8 +60,6 @@ public class FifaPlayerController {
                     playerStatsPerSeason.setRedCardsCount(playerStatsPerSeason.getRedCardsCount() + 1);
                 }
             });
-            FileModel logo = fileRepository.findByTeamname(playerStatsPerSeason.getTeamname());
-            playerStatsPerSeason.setLogoUrl(logo.getPic());
 
             allStats.getPlayerStatsPerSeason().add(playerStatsPerSeason);
         });

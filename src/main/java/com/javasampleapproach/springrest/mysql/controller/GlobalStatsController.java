@@ -20,9 +20,6 @@ public class GlobalStatsController {
 	
 	@Autowired
 	MatchesRepository matchesRepository;
-	
-	@Autowired
-	FileRepository fileRepository;
 
 	@Autowired
 	TeamRepository teamRepository;
@@ -374,7 +371,7 @@ public class GlobalStatsController {
 	}
 	
 	
-	public List<TopTeam> convertMapToListOfBestTeams(Map<String, Map<String, Integer>> map, List<FileModel> logos, Iterable<Team> teams)
+	public List<TopTeam> convertMapToListOfBestTeams(Map<String, Map<String, Integer>> map, Iterable<Team> teams)
 	{
 	
 		
@@ -391,30 +388,15 @@ public class GlobalStatsController {
 			int goalsConceded = teamStats.get("goalsConceded");
 			int matches = wins + losses + draws;
 			int goalDiff = goalsScored - goalsConceded;
-			
-			TopTeam currentTeam = new TopTeam(team, wins, losses, draws, matches, goalsScored, goalsConceded, goalDiff, null, null);
-			
-			for(FileModel logo : logos)
-			{
-				
-				if(logo.getTeamname().equalsIgnoreCase(team))
-				{
-					currentTeam.setFm(logo);
-					break;
-				}
-					
-			}
-			
-			
-			for(Team t: teams)
-			{
-				if(t.getTeamName().equalsIgnoreCase(team))
-				{
+
+			TopTeam currentTeam = new TopTeam(team,wins, losses,draws, matches, goalsScored, goalsConceded, goalDiff, null);
+
+			for(Team t: teams) {
+				if (t.getTeamName().equalsIgnoreCase(team)) {
 					currentTeam.setCountry(t.getCountry());
 					break;
 				}
 			}
-			
 		    allTeamsStats.add(currentTeam);
 		}
 		
@@ -425,21 +407,15 @@ public class GlobalStatsController {
 	public	List<TopTeam> getTopTeamStats() {
 
 		Iterable<Matches> matches = matchesRepository.findAll();
-		
-		
-		
 		Map<String, Map<String, Integer>> map = new HashMap<String, Map<String,Integer>>();
-		
-		
-		for(Matches m : matches)
-		{
+
+		for(Matches m : matches) {
 			doStuff(map, m.getHometeam() ,m);
 			doStuff(map,m.getAwayteam(),m);
 		}
 		
-		List<FileModel> logos = fileRepository.findAll();
 		Iterable<Team> teams = teamRepository.findAll();
-		List<TopTeam> topTeams = convertMapToListOfBestTeams(map, logos, teams);
+		List<TopTeam> topTeams = convertMapToListOfBestTeams(map, teams);
 		
 		topTeams.sort((o1, o2) -> o2.getWins().compareTo(o1.getWins()));
 		
@@ -456,39 +432,15 @@ public class GlobalStatsController {
 
 		List<ChampionsLeagueWinner> winnerList = new ArrayList<>();
 
-
-// TODO use this for CL and EL displayed together
-
-//		Iterable<Seasons> allSeasonList = seasonsRepository.findAll();
-//		allSeasonList.forEach(season-> {
-//			List<Matches> matchesFromCurrentSeason = finalMatches.stream().filter(m->m.getSeason().equalsIgnoreCase(season.getSeason())).collect(Collectors.toList());
-//
-//			ChampionsLeagueWinner clw = new ChampionsLeagueWinner();
-//			clw.setSeason(season.getSeason());
-//
-//			getMatchByCompetition(matchesFromCurrentSeason, "CL", clw);
-//			getMatchByCompetition(matchesFromCurrentSeason,"EL", clw);
-//
-//			winnerList.add(clw);
-//
-//		});
-
-
-			finalMatches.forEach(match ->{
+		finalMatches.forEach(match ->{
 			ChampionsLeagueWinner clw = new ChampionsLeagueWinner();
 			clw.setPlayerName(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
 			clw.setSeason(match.getSeason());
 			clw.setTeamName(match.getWinner());
 			clw.setRunnerUp(getRunnerUp(match));
-			clw.setTeamLogo(fileRepository.findByTeamname(match.getWinner()));
-			clw.setRunnerUpLogo(fileRepository.findByTeamname(clw.getRunnerUp()));
 
 			winnerList.add(clw);
 		});
-
-//		Collections.sort(winnerList, (ChampionsLeagueWinner w1, ChampionsLeagueWinner w2) ->{
-//			return w1.getSeason().compareToIgnoreCase(w2.getSeason());
-//		});
 
 		return winnerList;
 	}
@@ -503,29 +455,6 @@ public class GlobalStatsController {
 
 		return runnerUp;
 	}
-
-	//TODO Use this for view with both EL and CL
-//	private void getMatchByCompetition(List<Matches> finalMatches, String competition, ChampionsLeagueWinner clw){
-//		PlayersController pc = new PlayersController();
-//
-//		Matches matchBySeasonAndCompetition
-//				= finalMatches
-//					.stream()
-//					.filter(m -> m.getCompetition().equalsIgnoreCase(competition))
-//					.findAny().orElse(null);
-//
-//		if(matchBySeasonAndCompetition != null){
-//			if(matchBySeasonAndCompetition.getCompetition().equalsIgnoreCase("CL")){
-//				clw.setPlayerNameCL(pc.whoIsWinnerOfMatch(matchBySeasonAndCompetition, "Pavol Jay", "Kotlik"));
-//				clw.setTeamNameCL(matchBySeasonAndCompetition.getWinner());
-//				clw.setTeamLogoCL(fileRepository.findByTeamname(matchBySeasonAndCompetition.getWinner()));
-//			} else {
-//				clw.setPlayerNameEL(pc.whoIsWinnerOfMatch(matchBySeasonAndCompetition, "Pavol Jay", "Kotlik"));
-//				clw.setTeamNameEL(matchBySeasonAndCompetition.getWinner());
-//				clw.setTeamLogoEL(fileRepository.findByTeamname(matchBySeasonAndCompetition.getWinner()));
-//			}
-//		}
-//	}
 
 	@GetMapping("/trophyRoom")
 	public List<TitlesCount> getTrophyRoom(){

@@ -17,6 +17,4 @@ public class TopTeam {
 	private Integer goalsConceded;
 	private Integer goalDiff;
 	private String country;
-	
-	FileModel fm;
 }

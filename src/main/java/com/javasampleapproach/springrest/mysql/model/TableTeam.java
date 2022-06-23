@@ -18,6 +18,4 @@ public class TableTeam {
 	private Integer points;
 	private int placeInGroup;
 	private String ownedByPlayer;
-
-	private FileModel logo;
 }

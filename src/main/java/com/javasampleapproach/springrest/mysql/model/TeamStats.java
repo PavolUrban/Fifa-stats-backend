@@ -27,11 +27,6 @@ public class TeamStats {
 	private int unknownTimeGoals = 0;
 	private int unknownConcededGoalsTime = 0;
 	List<TimeRangeElement> goalsPerTimeRanges;
-
-	private List<FileModel> oponentsLogos;
-
-	FileModel fm;
-
 		
 	public TeamStats()
 	{
@@ -44,9 +39,7 @@ public class TeamStats {
 
 		this.goalsByMinutesCount = new HashMap<>();
 		this.concededGoalsByMinutesCount = new HashMap<>();
-
 		this.goalsPerTimeRanges = new ArrayList<>();
-		this.oponentsLogos = new ArrayList<>();
 
 		initializeMatchesStats("CL");
 		initializeMatchesStats("EL");

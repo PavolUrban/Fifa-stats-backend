@@ -29,5 +29,5 @@ public class Team {
 	private String firstSeasonEL;
 	
 	@Column(name = "country")
-	private String country;	
+	private String country;
 }

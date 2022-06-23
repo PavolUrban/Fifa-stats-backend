@@ -15,6 +15,4 @@ public class Goalscorer {
 	private Map<String, Integer> goalsByTeams; // todo use in future
 	private int numberOfTeamsPlayerScoredFor;
 	private String teamPlayerScoredFor; // this will be as map in future - goalsByTeams
-	
-	private FileModel teamLogo;
 }

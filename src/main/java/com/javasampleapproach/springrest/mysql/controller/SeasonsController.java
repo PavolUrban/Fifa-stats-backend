@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import Utils.MyUtils;
 import Utils.NewestGoalscorersCalculator;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
@@ -22,12 +21,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.javasampleapproach.springrest.mysql.model.FileModel;
-import com.javasampleapproach.springrest.mysql.model.Goalscorer;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.model.PlayOffMatch;
 import com.javasampleapproach.springrest.mysql.model.TableTeam;
-import com.javasampleapproach.springrest.mysql.repo.FileRepository;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 
 import static Utils.MyUtils.KOTLIK;
@@ -40,9 +36,6 @@ public class SeasonsController {
 	
 	@Autowired
 	MatchesRepository matchesRepository;
-	
-	@Autowired
-	FileRepository fileRepository;
 
 	@Autowired
 	FifaPlayerDBRepository fifaPlayerDBRepository;
@@ -52,7 +45,6 @@ public class SeasonsController {
 
 	@GetMapping("/getAllPhases/{season}/{competition}")
 	public Object getAllPhasesForSeasonAndCompetition(@PathVariable("season") String season, @PathVariable("competition") String competition) {
-		List<FileModel> allLogos = new ArrayList<>();
 		Map<String, Object> finalTablesWithStats = new HashMap<>();
 		Map<String, List<TableTeam>> groupsWithTeams = new HashMap<>();
 		NewestGoalscorersCalculator ngc = new NewestGoalscorersCalculator(fifaPlayerDBRepository);
@@ -115,12 +107,6 @@ public class SeasonsController {
 				tableTeam.setGoalsConceded(sumConcededHome + sumConcededAway);
 				tableTeam.setPoints(tableTeam.getWins()*3 + tableTeam.getDraws()*1);
 
-				FileModel test = fileRepository.findByTeamname(teamName);
-				if(test !=null)
-				{
-					tableTeam.setLogo(test);
-					allLogos.add(test);
-				}
 
 				//todo for this table TeamsOwnerBySeason is prepared - USE IT SOON!
 				long currentTeamMatchesByPavolJay = allMatchesByTeam
@@ -167,7 +153,6 @@ public class SeasonsController {
 		String winner = "unknown";
 		if(finalMatch != null) {
 			winner = playersStatsController.whoIsWinnerOfMatch(finalMatch, PAVOL_JAY, KOTLIK);
-			finalTablesWithStats.put("WinnerTeamLogo", fileRepository.findByTeamname(finalMatch.getWinner()));
 		}
 		
 		finalTablesWithStats.put("CLWinnerPlayer", winner);
@@ -189,8 +174,6 @@ public class SeasonsController {
 		List<RecordsInMatches> topGoalscorersAllPhases = recordsInMatchesRepository.getTotalGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
 		finalTablesWithStats.put("TotalGoalscorersAllPhases",  ngc.getGoalscorers(topGoalscorersAllPhases));
 
-		finalTablesWithStats.put("Logos", allLogos);
-		
 		return finalTablesWithStats;
 	}
 	

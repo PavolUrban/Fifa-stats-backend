@@ -26,9 +26,6 @@ public class MatchesController {
 	MatchesRepository matchesRepository;
 
 	@Autowired
-	FileRepository fileRepository;
-
-	@Autowired
 	SeasonsRepository seasonsRepository;
 
 	@Autowired
@@ -141,7 +138,7 @@ public class MatchesController {
 		}
 //here i have to firstly removed everything and only then i can update
 System.out.println("TODOOOOO");
-		//saveMatchesRecords(match);
+		saveMatchesRecords(match);
 
 		Matches newMatch = matchesRepository.save(match);
 		System.out.println("toto som ulozil");
@@ -397,17 +394,12 @@ System.out.println("TODOOOOO");
 		GlobalStatsController globalStats = new GlobalStatsController();
 		List<Goalscorer> goalscorers = globalStats.getAllGoalscorers(finalList);
 
-		Map<String, Object> logos = new HashMap<String, Object>();
-		
-		setLogoIfPresented(firstTeam, logos);
-		setLogoIfPresented(secondTeam, logos);
 		
 		response.put("playersStats", convertMapToList(playersStats, "Pavol Jay", "Kotlik"));
 		response.put("matches", finalList);
 		response.put("overallStats",convertMapToList(overallStats,firstTeam, secondTeam));
 		response.put("goalscorers", goalscorers);
-		response.put("logos", logos);
-		
+
 		
 		return response;
 	}
@@ -446,34 +438,25 @@ System.out.println("TODOOOOO");
 	public List<Matches> getFilteredMatches(@PathVariable("season") String season, @PathVariable("competition") String competition, @PathVariable("competitionPhase") String competitionPhase,
 										 @PathVariable("teamName") String teamName) {
 
-		if(season.equalsIgnoreCase(MyUtils.ALL_SEASONS)) {
+		if (season.equalsIgnoreCase(MyUtils.ALL_SEASONS)) {
 			season = null;
 		}
 
-		if(competition.equalsIgnoreCase("All competitions")){
+		if (competition.equalsIgnoreCase("All competitions")) {
 			competition = null;
 		}
 
-		if(competitionPhase.equalsIgnoreCase(MyUtils.ALL_PHASES)){
+		if (competitionPhase.equalsIgnoreCase(MyUtils.ALL_PHASES)) {
 			competitionPhase = null;
 		}
 
 		List<Matches> matches = matchesRepository.getMatchesWithCustomFilters(season, competition, competitionPhase);
 
-		if(teamName == null || teamName.equalsIgnoreCase("null")) {
+		if (teamName == null || teamName.equalsIgnoreCase("null")) {
 			return matches;
 		} else {
-			List<Matches> matchesForSelectedTeam = matches.stream().filter(match-> match.getHometeam().equalsIgnoreCase(teamName) || match.getAwayteam().equalsIgnoreCase(teamName)).collect(Collectors.toList());
+			List<Matches> matchesForSelectedTeam = matches.stream().filter(match -> match.getHometeam().equalsIgnoreCase(teamName) || match.getAwayteam().equalsIgnoreCase(teamName)).collect(Collectors.toList());
 			return matchesForSelectedTeam;
 		}
 	}
-
-
-	public void setLogoIfPresented(String teamName, Map<String, Object> logos) {
-		FileModel logo = fileRepository.findByTeamname(teamName);
-		if(logo !=null)
-			logos.put(teamName, logo);
-	}
-
-
 }
