@@ -162,23 +162,16 @@ public class TeamController {
 		return teams;
 	}
 
-	// TODO check if this one is used
+	// TODO check this
 	@PostMapping(value = "/create")
 	public void postCustomer(@RequestBody Team team) {
-
-
 		System.out.println("Ukladam team "+ team.getTeamName()+ " z krajiny " +team.getCountry());
-
-
-			Team newTeam =  teamRepository.save(new Team(team.getTeamName(), "2010", "2015", team.getCountry()));
-
-		// Team newTeam = teamRepository.save(new Team(team.getTeamName(), team.getFirstSeasonCL(), team.getFirstSeasonEL(), team.getCountry()));
-		// return newTeam;
+		//	Team newTeam =  teamRepository.save(new Team(team.getTeamName(), "2010", "2015", team.getCountry()));
 	}
 
 	// TODO check if this one is used
 	@PutMapping("/update/{tName}")
-	public ResponseEntity<Team> updateCustomer(@PathVariable("tName") String tName, @RequestBody Team team) {
+	public ResponseEntity<Team> updateTeam(@PathVariable("tName") String tName, @RequestBody Team team) {
 		Optional<Team> teamToUpdate = Optional.of(teamRepository.findByTeamName(tName));
 
 		if(teamToUpdate.isPresent()) {

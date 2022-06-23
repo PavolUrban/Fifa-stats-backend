@@ -23,67 +23,6 @@ public class GlobalStatsController {
 
 	@Autowired
 	TeamRepository teamRepository;
-
-	@Autowired
-	SeasonsRepository seasonsRepository;
-
-
-	// TODO ---- method only for temporary usage - to generate fifaplayers into separate tables
-	@Autowired
-	FifaPlayerDBRepository fifaPlayerDBRepository;
-
-	@PostMapping("/insertGoalscorers")
-	public void insertGoalscorers(@RequestBody List<Goalscorer> goalscorersList){
-
-
-		goalscorersList.forEach(goalscorer -> {
-			goalscorer.setName(goalscorer.getName().replaceAll("(OG)","")); // toto budem riesit az v tabulke ako typ golu -vlastny, teraz len vytvaram hracov zaznam
-			goalscorer.setName(goalscorer.getName().replaceAll("\\.", " "));
-
-
-			FifaPlayerDB test = new FifaPlayerDB();
-			test.setPlayerName(goalscorer.getName());
-			test.setPlayerPosition("FW"); //todo in db
-			//System.out.println("Trying to insert  "+ test.getPlayerName());
-
-			//fifaPlayerDBRepository.save(test);
-		});
-	}
-//todo to remove sooon
-	@PostMapping("/insertPlayersWithCards")
-	public void insertPlayersWithCardsToTable(@RequestBody List<FifaPlayer> players){
-		List<String> namesToAdd = players.stream().map(p->p.getName()).collect(Collectors.toList());
-
-		List<FifaPlayerDB> alreadyExistingPlayers = fifaPlayerDBRepository.findByPlayerNameIn(namesToAdd);
-		List<String> alreadyExistingNames= alreadyExistingPlayers.stream().map(p->p.getPlayerName()).collect(Collectors.toList());
-
-
-		namesToAdd.forEach(nameToAdd -> {
-			//System.out.println(player.getName());
-
-			boolean playerAlreadyExists = false;
-
-			if(alreadyExistingNames.contains(nameToAdd)){
-				playerAlreadyExists = true;
-			}
-
-			if(playerAlreadyExists!=true) {
-				System.out.println("Tohto mozem pridat "+nameToAdd);
-
-				FifaPlayerDB test = new FifaPlayerDB();
-			test.setPlayerName(nameToAdd);
-			test.setPlayerPosition("FW"); //todo in db
-				System.out.println("Trying to insert  "+ test.getPlayerName());
-
-				//fifaPlayerDBRepository.save(test);
-			}
-
-		});
-	}
-
-
-
-	
 	
 	private String resultOfTeamMatchByTeam(Matches m, String teamname)
 	{
@@ -167,9 +106,6 @@ public class GlobalStatsController {
 	
 	public List<TopTeam> convertMapToListOfBestTeams(Map<String, Map<String, Integer>> map, Iterable<Team> teams)
 	{
-	
-		
-		
 		List<TopTeam> allTeamsStats = new ArrayList<TopTeam>();
 		for(String team : map.keySet())
 		{

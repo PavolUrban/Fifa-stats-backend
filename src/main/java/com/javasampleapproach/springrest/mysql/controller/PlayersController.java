@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.model.PlayerStats;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
-import com.javasampleapproach.springrest.mysql.repo.PlayersRepository;
 
 import static Utils.MyUtils.*;
 
@@ -24,8 +23,6 @@ import static Utils.MyUtils.*;
 @RequestMapping("/playerStats")
 public class PlayersController {
 
-	@Autowired
-	PlayersRepository playersRepository;
 
 	@Autowired
 	MatchesRepository matchesRepository;
@@ -68,15 +65,14 @@ public class PlayersController {
 	public String whoIsWinnerOfMatch(Matches match, String playerFirst, String playerSecond) {
 		String winner;
 
-		if (match.getWinner().equalsIgnoreCase(RESULT_DRAW))
+		if (match.getWinner().equalsIgnoreCase(RESULT_DRAW)){
 			winner = RESULT_DRAW;
-
-		else if ((match.getHometeam().equalsIgnoreCase(match.getWinner()) && (match.getPlayerH().equalsIgnoreCase(playerFirst))) ||
-				(match.getAwayteam().equalsIgnoreCase(match.getWinner())) && (match.getPlayerA().equalsIgnoreCase(playerFirst)))
+		} else if ((match.getHometeam().equalsIgnoreCase(match.getWinner()) && (match.getPlayerH().equalsIgnoreCase(playerFirst))) ||
+				(match.getAwayteam().equalsIgnoreCase(match.getWinner())) && (match.getPlayerA().equalsIgnoreCase(playerFirst))) {
 			winner = playerFirst;
-
-		else
+		} else {
 			winner = playerSecond;
+		}
 
 		return winner;
 	}
@@ -96,7 +92,6 @@ public class PlayersController {
 
 		return Arrays.asList(goalsScored, goalsConceded);
 	}
-
 
 	private void prepareStats(PlayerStats player, Map<String, Integer> winnersCount, String playerWinner, String playerLooser) {
 		ArrayList<Integer> totalStats = new ArrayList<>(Arrays.asList(winnersCount.get(playerWinner), winnersCount.get(RESULT_DRAW), winnersCount.get(playerLooser)));

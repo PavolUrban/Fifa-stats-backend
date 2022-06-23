@@ -14,6 +14,7 @@ public class MyUtils {
 
 	public static final String ALL_SEASONS = "All seasons";
 	public static final String ALL_PHASES = "All phases";
+	public static final String ALL_COMPETITIONS = "All competitions";
 	public static final String GROUP_A = "GROUP A";
 	public static final String GROUP_B = "GROUP B";
 	public static final String GROUP_C = "GROUP C";
