@@ -24,7 +24,7 @@ public class NewestGoalscorersCalculator {
     public List<Goalscorer> getGoalscorers(List<RecordsInMatches> allGoals){
 
         List<Long> allIds = allGoals.stream().map(goal-> goal.getPlayerId()).collect(Collectors.toList());
-        List<Long> distinctIDs = allIds.stream().distinct().collect(Collectors.toList());
+        Set<Long> distinctIDs = allIds.stream().collect(Collectors.toSet());
         Iterable<FifaPlayerDB> allPlayers = fifaPlayerDBRepository.findByIdIn(distinctIDs);
 
         List<Goalscorer> allGoalscorers = new ArrayList<>();

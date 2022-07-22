@@ -22,7 +22,7 @@ public class NewestCardsCalculator {
     public  List<FifaPlayer> getCards(List<RecordsInMatches> allCards){
 
         List<Long> allIds = allCards.stream().map(cardRecord -> cardRecord.getPlayerId()).collect(Collectors.toList());
-        List<Long> distinctIDs = allIds.stream().distinct().collect(Collectors.toList());
+        Set<Long> distinctIDs = allIds.stream().collect(Collectors.toSet());
         Iterable<FifaPlayerDB> allPlayers = fifaPlayerDBRepository.findByIdIn(distinctIDs);
 
         List<FifaPlayer> allPlayersWithCard = new ArrayList<>();

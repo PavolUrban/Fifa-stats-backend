@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import Utils.NewestGoalscorersCalculator;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
+import com.javasampleapproach.springrest.mysql.model.H2HPlayers;
+import com.javasampleapproach.springrest.mysql.model.OverallStats;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,19 +52,19 @@ public class SeasonsController {
 		NewestGoalscorersCalculator ngc = new NewestGoalscorersCalculator(fifaPlayerDBRepository);
 
 		/*  *********** GROUP STAGE *********** */
-		List<Matches> matches = matchesRepository.getAllMatchesBySeasonAndCompetitionGroupStage(season, competition);
+		List<Matches> matchesGroupStage = matchesRepository.getAllMatchesBySeasonAndCompetitionGroupStage(season, competition);
 
 		Set<String> groupNames = new HashSet<>();
-		matches.stream().filter(p ->  groupNames.add(p.getCompetitionPhase())).collect(Collectors.toList());
+		matchesGroupStage.stream().filter(p ->  groupNames.add(p.getCompetitionPhase())).collect(Collectors.toList());
 
-		Map<String, Object> groupStatsForPlayers = new HashMap<>();
+		Map<String, H2HPlayers> groupStatsForPlayers = new HashMap<>();
 		Map<String, Object> groupGoalscorers = new HashMap<>();
 		
 		for(String groupName : groupNames) {
 			
 			Set<String> teamNamesInCurrentGroup = new HashSet<>();
 
-			matches.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).forEach(a->{
+			matchesGroupStage.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).forEach(a->{
 				teamNamesInCurrentGroup.add(a.getHometeam());
 				teamNamesInCurrentGroup.add(a.getAwayteam());
 			});
@@ -81,7 +83,7 @@ public class SeasonsController {
 			List<TableTeam> allTeamsInCurrentGroup = new ArrayList();
 			for(String teamName : teamNamesInCurrentGroup) {
 				TableTeam tableTeam = new TableTeam();
-				List<Matches> allMatchesByTeam = matches.stream().filter(s -> teamName.equalsIgnoreCase(s.getHometeam()) || s.getAwayteam().equalsIgnoreCase(teamName) ).collect(Collectors.toList());
+				List<Matches> allMatchesByTeam = matchesGroupStage.stream().filter(s -> teamName.equalsIgnoreCase(s.getHometeam()) || s.getAwayteam().equalsIgnoreCase(teamName) ).collect(Collectors.toList());
 			
 				Map<String, Integer> winsByPlayersByCurrentTeam = setnumberOfPlayersWins(allMatchesByTeam);
 				winsByPlayersInCurrentGroup.put("Pavol Jay", winsByPlayersByCurrentTeam.get("Pavol Jay") + winsByPlayersInCurrentGroup.get("Pavol Jay"));
@@ -127,10 +129,12 @@ public class SeasonsController {
 			}
 			
 			//players bilance
-			winsByPlayersInCurrentGroup.put("Pavol Jay", winsByPlayersInCurrentGroup.get("Pavol Jay")/2);
-			winsByPlayersInCurrentGroup.put("Kotlik", winsByPlayersInCurrentGroup.get("Kotlik")/2);
-			winsByPlayersInCurrentGroup.put("Draws", winsByPlayersInCurrentGroup.get("Draws")/2);	
-			groupStatsForPlayers.put(groupName, winsByPlayersInCurrentGroup);
+			H2HPlayers h2h = new H2HPlayers();
+			h2h.setPavolJay(winsByPlayersInCurrentGroup.get("Pavol Jay")/2);
+			h2h.setKotlik(winsByPlayersInCurrentGroup.get("Kotlik")/2);
+			h2h.setDraws(winsByPlayersInCurrentGroup.get("Draws")/2);
+
+			groupStatsForPlayers.put(groupName, h2h);
 			
 			Collections.sort(allTeamsInCurrentGroup, (o1, o2) -> o2.getPoints().compareTo(o1.getPoints()));
 			
@@ -138,32 +142,30 @@ public class SeasonsController {
 		
 		}
 	
-		//TODO fix this redundant call of playoffs
-    	Map<String, List<PlayOffMatch>> playOffs = getPlayOffs(season, competition);
-
+		// PlayOffs
     	List<Matches> matchesPO = matchesRepository.getAllMatchesBySeasonAndCompetitionPlayOffs(season, competition);
-    	int goalsPlayOffStage = matchesPO.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
-		int goalsGroupStage = matches.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
-		
-		
+		Map<String, List<PlayOffMatch>> playOffs = getPlayOffs(matchesPO);
+
 		Matches finalMatch = matchesPO.stream().filter(m-> m.getCompetitionPhase().equalsIgnoreCase("Final")).findFirst().orElse(null);
 		PlayersController playersStatsController  = new PlayersController();
-	
-		String winner = "unknown";
-		if(finalMatch != null) {
-			winner = playersStatsController.whoIsWinnerOfMatch(finalMatch, PAVOL_JAY, KOTLIK);
-		}
-		
-		finalTablesWithStats.put("CLWinnerPlayer", winner);
+
 		finalTablesWithStats.put("StatsByGroups", groupStatsForPlayers);
+
 		finalTablesWithStats.put("Tables", groupsWithTeams);
-		finalTablesWithStats.put("Goalscorers", groupGoalscorers);
-		finalTablesWithStats.put("MatchesCount", setCountsForDifferentStages(matches.size(), matchesPO.size()));
-		finalTablesWithStats.put("GoalsCount", setCountsForDifferentStages(goalsGroupStage, goalsPlayOffStage));
+		finalTablesWithStats.put("GoalscorersPerGroup", groupGoalscorers);
+
 		finalTablesWithStats.put("PlayOffs", playOffs);
 		finalTablesWithStats.put("Final", finalMatch);
 
+		// Overall stats
+		int goalsPlayOffStage = matchesPO.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
+		int goalsGroupStage = matchesGroupStage.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
+		OverallStats overallStats = getOverallStats(matchesGroupStage.size(), matchesPO.size(), goalsGroupStage, goalsPlayOffStage, groupStatsForPlayers);
+		overallStats.setWinnerPlayer(finalMatch != null ? playersStatsController.whoIsWinnerOfMatch(finalMatch, PAVOL_JAY, KOTLIK) : "unknown");
+		overallStats.setWinnerTeam(finalMatch != null ? finalMatch.getWinner() : "unknown");
+		finalTablesWithStats.put("overallStats", overallStats);
 
+		// Goalscorers
 		List<RecordsInMatches> topGoalscorersGroupStage = recordsInMatchesRepository.getWholeGroupStageGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
 		finalTablesWithStats.put("TotalGoalscorersGroupStage", ngc.getGoalscorers(topGoalscorersGroupStage));
 
@@ -175,20 +177,37 @@ public class SeasonsController {
 
 		return finalTablesWithStats;
 	}
-	
-	
 
-	private List<Integer> setCountsForDifferentStages(int groupCount, int playOffCount) {
-		List<Integer> counts = new ArrayList<>();
-		counts.add(groupCount);
-		counts.add(playOffCount);
-		
-		return counts;
+	private OverallStats getOverallStats(int matchesGroupStageCount, int matchesPlayOffsCount, int goalsGroupStageCount, int goalsPlayOffsCount, Map<String, H2HPlayers> groupStatsForPlayers) {
+		OverallStats os = new OverallStats();
+
+		// matches counts
+		os.getMatchesCount().add(matchesGroupStageCount);
+		os.getMatchesCount().add(matchesPlayOffsCount);
+		os.getMatchesCount().add(matchesGroupStageCount + matchesPlayOffsCount);
+
+		// goals counts
+		os.getGoalsCount().add(goalsGroupStageCount);
+		os.getGoalsCount().add(goalsPlayOffsCount);
+		os.getGoalsCount().add(goalsGroupStageCount + goalsPlayOffsCount);
+
+		H2HPlayers h2hGroupStage = new H2HPlayers();
+		groupStatsForPlayers.forEach((group, h2h)-> {
+			h2hGroupStage.setKotlik(h2hGroupStage.getKotlik() + h2h.getKotlik());
+			h2hGroupStage.setPavolJay(h2hGroupStage.getPavolJay() + h2h.getPavolJay());
+			h2hGroupStage.setDraws(h2hGroupStage.getDraws() + h2h.getDraws());
+		});
+
+		// Todo add playofss and total for h2h
+		// todo add red and yellow cards
+
+		os.getH2hPlayers().add(h2hGroupStage);
+		return os;
 	}
 
-	private Map<String, List<PlayOffMatch>> getPlayOffs(@PathVariable("season") String season, @PathVariable("competition") String competition)
+
+	private Map<String, List<PlayOffMatch>> getPlayOffs(List<Matches> matches)
 	{
-		List<Matches> matches = matchesRepository.getAllMatchesBySeasonAndCompetitionPlayOffs(season, competition);
 		Set<String> phases = new HashSet<String>();
 		matches.stream().filter(p ->  phases.add(p.getCompetitionPhase())).collect(Collectors.toList());
 		Map<String, List<PlayOffMatch>> matchesInAllPhases = new HashMap<String, List<PlayOffMatch>>();

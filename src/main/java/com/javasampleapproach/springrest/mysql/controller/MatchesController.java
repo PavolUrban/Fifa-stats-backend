@@ -1,10 +1,6 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import Utils.MyUtils;
@@ -152,28 +148,24 @@ public class MatchesController {
 		MatchDetail md = new MatchDetail();
 
 		List<RecordsInMatches> rims = recordsInMatchesRepository.findByMatchIdOrderByMinuteOfRecord(matchId);
-		rims.forEach(rim->{
-			System.out.println(rim);
-		});
-
-		//tu mam len IDcka a potrebujem ziskat mena hracov
-		List<Long> ids = rims.stream().map(rim-> rim.getPlayerId()).collect(Collectors.toList());
+		Set<Long> ids = rims.stream().map(rim-> rim.getPlayerId()).collect(Collectors.toSet());
 		List<FifaPlayerDB> players = fifaPlayerDBRepository.findByIdIn(ids);
 
-		System.out.println("tito hraci nieco spravili v zapase");
-		players.forEach(player->{
-			System.out.println(player);
-		});
-		String goals;
-		List<RecordsInMatches> homegoals = rims.stream().filter(rim-> rim.getTeamName().equalsIgnoreCase(hometeam) && (rim.getTypeOfRecord().equalsIgnoreCase("G") || rim.getTypeOfRecord().contains("OG|"))).collect(Collectors.toList());
-		System.out.println("goly domaci");
-		System.out.println(homegoals);
 
-		//chce to mat list objektov kde bude player name a list minut v ktorych dal gol
-		homegoals.forEach(hg->{
-			String homePlayerWithGoal = getPlayerNameById(hg.getPlayerId(), players);
-			System.out.println(homePlayerWithGoal);
+		rims.forEach(hr-> {
+			MatchEventDetail med = new MatchEventDetail();
+			String playerName = players.stream().filter(player-> player.getId() == hr.getPlayerId()).map(p->p.getPlayerName()).findFirst().orElse(null);
+			med.setPlayerName(playerName);
+			med.setRecordType(hr.getTypeOfRecord());
+			med.setTeamName(hr.getTeamName());
+			// todo handle minuteofrecord vs number of goals here - old FIFA problem
+			med.setMinute(hr.getMinuteOfRecord());
+			md.getEvents().add(med);
+
 		});
+
+
+		md.getEvents().sort((o1, o2) -> o1.getMinute().compareTo(o2.getMinute()));
 
 		return md;
 	}
@@ -252,6 +244,7 @@ public class MatchesController {
 			//teams statistics
 			overallStats.put(match.getWinner(), overallStats.get(match.getWinner()) + 1);
 		}
+
 		
 		response.put("playersStats", convertMapToList(playersStats, "Pavol Jay", "Kotlik"));
 		response.put("matches", finalList);

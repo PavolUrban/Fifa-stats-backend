@@ -6,11 +6,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;
+import java.util.Set;
 
 public interface FifaPlayerDBRepository  extends CrudRepository<FifaPlayerDB, Long> {
-    public FifaPlayerDB findByPlayerName(String playerName);
-    public List<FifaPlayerDB> findByPlayerNameIn(List<String> playerNames);
-    public List<FifaPlayerDB> findByIdIn(List<Long> ids);
+    FifaPlayerDB findByPlayerName(String playerName);
+    List<FifaPlayerDB> findByPlayerNameIn(List<String> playerNames);
+    List<FifaPlayerDB> findByIdIn(Set<Long> ids);
 
 
 
