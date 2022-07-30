@@ -7,7 +7,7 @@ public class MyUtils {
 
 	public static final String PAVOL_JAY = "Pavol Jay"; //todo use these in whole project
 	public static final String KOTLIK = "Kotlik";
-	public static String RESULT_DRAW = "D";
+	public static final String RESULT_DRAW = "D";
 
 	public static final String CHAMPIONS_LEAGUE = "CL";
 	public static final String EUROPEAN_LEAGUE = "EL";

@@ -27,16 +27,34 @@ public interface RecordsInMatchesRepository extends CrudRepository<RecordsInMatc
                     "FROM RecordsInMatches rec " +
                     "JOIN Matches m ON m.id = rec.matchId " +
                     "WHERE m.competitionPhase LIKE 'GROUP%' AND m.season = :season AND m.competition = :competition AND (rec.typeOfRecord = :typeOfRecord1 OR rec.typeOfRecord = :typeOfRecord2 )")
-    List<RecordsInMatches> getWholeGroupStageGoalscorersBySeasonAndCompetition(@Param("season") String season, @Param("competition") String competition,
-                                                                   @Param("typeOfRecord1") String typeOfRecord1, @Param("typeOfRecord2") String typeOfRecord2);
+    List<RecordsInMatches> getGroupStageRecordsBySeasonAndCompetition(@Param("season") String season, @Param("competition") String competition,
+                                                                      @Param("typeOfRecord1") String typeOfRecord1, @Param("typeOfRecord2") String typeOfRecord2);
 
     @Query(value =
             "SELECT rec " +
                     "FROM RecordsInMatches rec " +
                     "JOIN Matches m ON m.id = rec.matchId " +
                     "WHERE (m.competitionPhase LIKE '%inal%' OR m.competitionPhase LIKE '%Round of%') AND m.season = :season AND m.competition = :competition AND (rec.typeOfRecord = :typeOfRecord1 OR rec.typeOfRecord = :typeOfRecord2 )")
-    List<RecordsInMatches> getWholePlayOffsGoalscorersBySeasonAndCompetition(@Param("season") String season, @Param("competition") String competition,
-                                                                @Param("typeOfRecord1") String typeOfRecord1, @Param("typeOfRecord2") String typeOfRecord2);
+    List<RecordsInMatches> getPlayOffsRecordsBySeasonAndCompetition(@Param("season") String season, @Param("competition") String competition,
+                                                                    @Param("typeOfRecord1") String typeOfRecord1, @Param("typeOfRecord2") String typeOfRecord2);
+
+    @Query(value =
+            "SELECT count(rec) " +
+            "FROM RecordsInMatches rec " +
+            "JOIN Matches m ON m.id = rec.matchId " +
+            "WHERE m.competitionPhase LIKE 'GROUP%' AND m.season = :season AND m.competition = :competition AND rec.typeOfRecord = :typeOfRecord1 ")
+    int getGroupStageCardsCountBySeasonAndCompetition(@Param("season") String season, @Param("competition") String competition,
+                                                                      @Param("typeOfRecord1") String typeOfRecord1);
+
+    @Query(value =
+            "SELECT count(rec) " +
+                    "FROM RecordsInMatches rec " +
+                    "JOIN Matches m ON m.id = rec.matchId " +
+                    "WHERE (m.competitionPhase LIKE '%inal%' OR m.competitionPhase LIKE '%Round of%') AND m.season = :season AND m.competition = :competition AND rec.typeOfRecord = :typeOfRecord1 ")
+    int getPlayOffsCardsCountBySeasonAndCompetition(@Param("season") String season, @Param("competition") String competition,
+                                                      @Param("typeOfRecord1") String typeOfRecord1);
+
+
 
 
     @Query(value =
