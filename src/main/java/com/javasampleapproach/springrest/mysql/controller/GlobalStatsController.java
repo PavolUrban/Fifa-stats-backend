@@ -152,38 +152,15 @@ public class GlobalStatsController {
 		return topTeams;
 	}
 
-
 	@GetMapping("/winnersList/{competition}")
-	public List<ChampionsLeagueWinner> getWinnersList(@PathVariable("competition") String competition){
+	public List<Matches> getWinnersList(@PathVariable("competition") String competition){
 
 		List<Matches> finalMatches = matchesRepository.findByCompetitionPhaseAndCompetitionOrderBySeason("Final",competition);
-
 		PlayersController pc = new PlayersController();
-
-		List<ChampionsLeagueWinner> winnerList = new ArrayList<>();
-
-		finalMatches.forEach(match ->{
-			ChampionsLeagueWinner clw = new ChampionsLeagueWinner();
-			clw.setPlayerName(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
-			clw.setSeason(match.getSeason());
-			clw.setTeamName(match.getWinner());
-			clw.setRunnerUp(getRunnerUp(match));
-
-			winnerList.add(clw);
+		finalMatches.forEach(match -> {
+			match.setWinnerPlayer(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
 		});
-
-		return winnerList;
-	}
-
-	private String getRunnerUp(Matches match) {
-		String runnerUp;
-		if(match.getWinner().equalsIgnoreCase(match.getHometeam())) {
-			runnerUp = match.getAwayteam();
-		} else {
-			runnerUp = match.getHometeam();
-		}
-
-		return runnerUp;
+		return finalMatches;
 	}
 
 	@GetMapping("/trophyRoom")

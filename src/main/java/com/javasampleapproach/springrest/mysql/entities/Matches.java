@@ -52,6 +52,8 @@ public class Matches {
 	@Column(name = "competitionphase")
 	private String competitionPhase;
 
+	private String winnerPlayer;
+
 
 // TODO both constructors probably can be deleted
 

@@ -26,8 +26,14 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	
 	@Query("SELECT m FROM Matches m WHERE m.season = ?1 AND m.competition= ?2 AND ( m.competitionPhase LIKE '%final%' OR m.competitionPhase LIKE 'Round%' ) ORDER BY competitionPhase, id ASC")
 	List<Matches> getAllMatchesBySeasonAndCompetitionPlayOffs(String season, String competition);
-	
-	
+
+
+	@Query("SELECT m FROM Matches m WHERE m.competition= ?1 AND m.competitionPhase LIKE 'GROUP%'")
+	List<Matches> getGroupStageMatchesByCompetition(String competition);
+
+	@Query("SELECT m FROM Matches m WHERE m.competition= ?1 AND ( m.competitionPhase LIKE '%inal%' OR m.competitionPhase LIKE 'Round%' )")
+	List<Matches> getPlayOffsMatchesByCompetition(String season, String competition);
+
 	//all matches
 	List<Matches> findBySeasonAndHometeamOrSeasonAndAwayteam(String season,String hometeam,String season1, String awayteam);
 	
@@ -48,6 +54,7 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	// all final matches by competition
 	List<Matches> findByCompetitionPhaseAndCompetitionOrderBySeason(String competitionPhase, String competition);
 
+	List<Matches> findByCompetition(String competition);
 
 
 	//"SELECT c FROM Customer c WHERE (:name is null or c.name = :name) and (:email is null"

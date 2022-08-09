@@ -35,6 +35,10 @@ public class MatchesController {
 
 		List<Matches> matches = new ArrayList<>();
 		matchesRepository.findAll().forEach(matches::add);
+		PlayersController pc = new PlayersController();
+		matches.forEach(match -> {
+			match.setWinnerPlayer(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
+		});
 		
 		return matches;
 	}
@@ -193,9 +197,14 @@ public class MatchesController {
 	}
 	
 	
-	@GetMapping("/getCustomGroupMatches/{competition}/{season}/{competitionPhase}")
+	@GetMapping("/getCustomGroupMatches/{competition}/{season}/{competitinPhase}")
 	public List<Matches> getCustomGroupMatches(@PathVariable("competition") String competition, @PathVariable("season") String season,  @PathVariable("competitionPhase") String competitionPhase) {
-		return matchesRepository.findByCompetitionAndSeasonAndCompetitionPhase(competition, season, competitionPhase);
+		PlayersController pc = new PlayersController();
+		List<Matches> matches = matchesRepository.findByCompetitionAndSeasonAndCompetitionPhase(competition, season, competitionPhase);
+		matches.forEach(match -> {
+			match.setWinnerPlayer(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
+		});
+		return matches;
 	}
 
 	private List<Integer> convertMapToList(Map<String, Integer> playersStats, String homePlayerOrTeam, String awayPlayerOrTeam)
