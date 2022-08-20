@@ -4,16 +4,18 @@ import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
-import com.javasampleapproach.springrest.mysql.model.FifaPlayerDialogStats;
-import com.javasampleapproach.springrest.mysql.model.FifaPlayerStatsPerSeason;
-import com.javasampleapproach.springrest.mysql.model.PlayerStatToSave;
-import com.javasampleapproach.springrest.mysql.model.PlayerStatsInSeason;
+import com.javasampleapproach.springrest.mysql.model.*;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
+import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
+import com.javasampleapproach.springrest.mysql.repo.SeasonsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,25 +30,13 @@ public class FifaPlayerController {
 
     @Autowired
     FifaPlayerDBRepository fifaPlayerDBRepository;
-//    private long id;
-//
-//    @Column(name = "playerid")
-//    private long playerId;
-//
-//    @Column(name = "matchid")
-//    private int matchId;
-//
-//    @Column(name = "teamname")
-//    private String teamName;
-//
-//    @Column(name = "typeofrecord")
-//    private String typeOfRecord;
-//
-//    @Column(name = "minuteofrecord")
-//    private Integer minuteOfRecord;
-//
-//    @Column(name = "numberofgoalsforoldformat")
-//    private Integer numberOfGoalsForOldFormat;
+
+    @Autowired
+    SeasonsRepository seasonsRepository;
+
+    @Autowired
+    MatchesRepository matchesRepository;
+
     @PostMapping("/savePlayerRecord")
     public List<String> getPlayerNames(@RequestBody PlayerStatToSave player){
     System.out.println(" v db hladam hraca menom "+ player.getPlayerName());
@@ -129,4 +119,64 @@ public class FifaPlayerController {
 
         return allStats;
     }
+
+
+    @GetMapping("/getPlayersWithRecord/{recordType}/{competition}/{competitionPhase}")
+    public List<FifaPlayerWithRecord> getPlayersWithRecord(@PathVariable("recordType") String recordType, @PathVariable("competition") String competition,  @PathVariable("competitionPhase") String competitionPhase){
+        List<FifaPlayerWithRecord> players = new ArrayList<>();
+        String competitionPhase1 = null;
+        String competitionPhase2 = null;
+        if(competition.equalsIgnoreCase(MyUtils.ALL)) {
+            competition = null;
+        }
+
+        if(competitionPhase.equalsIgnoreCase(MyUtils.GROUP_STAGE)) {
+            competitionPhase1 = MyUtils.GROUP_STAGE_LIKE_VALUE;
+            competitionPhase2 = MyUtils.GROUP_STAGE_LIKE_VALUE;
+        } else if (competitionPhase.equalsIgnoreCase(MyUtils.PLAY_OFFS_STAGE)) {
+            competitionPhase1 = MyUtils.PLAY_OFFS_ROUND_LIKE_VALUE;
+            competitionPhase2 = MyUtils.PLAY_OFFS_FINAL_LIKE_VALUE;
+        }
+
+        switch (recordType) {
+            case MyUtils.PLAYER_MOST_GOALS_SINGLE_GAME:
+                players = fifaPlayerDBRepository.getPlayersWithMostGoals(competition, MyUtils.RECORD_TYPE_GOAL);
+                players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsOldFormat(competition, MyUtils.RECORD_TYPE_GOAL));
+                break;
+            case MyUtils.PLAYER_MOST_GOALS_SEASON:
+                List<String> seasons = seasonsRepository.getAvailableSeasonsList();
+                for (String season : seasons) {
+                    if(MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(season)){
+                        players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonOldFormat(season, competition, competitionPhase1, competitionPhase2));
+                    } else {
+                        players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonNewFormat(season, competition, competitionPhase1, competitionPhase2));
+                    }
+                }
+                break;
+        }
+
+        Collections.sort(players, Comparator.comparing(FifaPlayerWithRecord::getRecordEventCount).reversed());
+
+
+        return players.stream().limit(100).collect(Collectors.toList());
+    }
+
+//    public void test(List<String> seasons){
+//
+//        List<FifaPlayerWithRecord> finalGoalsScorers = new ArrayList<>();
+//        seasons.forEach(season -> {
+//            List<FifaPlayerWithRecord> seasonGoalsscorers = new ArrayList<>();
+//            List<Matches> matchesInCurrentSeason = matchesRepository.findBySeason(season);
+//            matchesInCurrentSeason.forEach(match ->{
+//                List<RecordsInMatches> goalsInMatch = recordsInMatchesRepository.getRecordsByCompetition(null, season, null, null, MyUtils.RECORD_TYPE_GOAL, null);
+//                goalsInMatch.forEach(record -> {
+//                    FifaPlayerDB player = fifaPlayerDBRepository.findById(record.getPlayerId()).orElse(null);
+//                    FifaPlayerWithRecord playerWithRecord = seasonGoalsscorers.stream().filter(goalscorer -> goalscorer.getPlayerId() == player.getId()).findFirst().orElse(null);
+//                    if(playerWithRecord == null) {
+//                        FifaPlayerWithRecord newPlayer = new FifaPlayerWithRecord();
+//                    }
+//                });
+//            });
+//        });
+//    }
 }

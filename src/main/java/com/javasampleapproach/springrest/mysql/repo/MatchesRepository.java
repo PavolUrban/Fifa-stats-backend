@@ -73,4 +73,15 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	@Query("SELECT MIN(m.season) FROM Matches m WHERE (m.awayteam = ?1 OR hometeam = ?1) AND competition = ?2")
 	String firstSeasonInCompetition(String teamName, String competition);
 
+	@Query(value = "SELECT * FROM Matches m where (:competition is null or m.competition = :competition) AND ( (:teamName is null or m.hometeam = :teamName) OR (:teamName is null or m.awayteam = :teamName) ) ORDER BY (m.scorehome + m.scoreaway) DESC, m.scorehome DESC, m.scoreaway DESC,  m.season LIMIT 100", nativeQuery = true)
+	List<Matches> getMatchesWithMostGoals(String competition, String teamName);
+
+	@Query(value = "SELECT * FROM Matches m  WHERE (:playerName is null or m.playerA = :playerName) AND (:competition is null or m.competition = :competition) AND (:teamName is null or m.winner = :teamName) ORDER BY (m.scoreaway - m.scorehome) DESC, m.scoreaway DESC, m.scorehome DESC,  m.season LIMIT 100", nativeQuery = true)
+	List<Matches> getBiggestAwayWins(String playerName, String competition, String teamName);
+
+	@Query(value = "SELECT * FROM Matches m WHERE (:playerName is null or m.playerH = :playerName) AND (:competition is null or m.competition = :competition) AND (:teamName is null or m.winner = :teamName) ORDER BY (m.scorehome - m.scoreaway) DESC, m.scorehome DESC, m.scoreaway DESC,  m.season LIMIT 100", nativeQuery = true)
+	List<Matches> getBiggestHomeWins(String playerName, String competition, String teamName);
+
+	@Query(value = "SELECT * FROM Matches m WHERE (:competition is null or m.competition = :competition) AND ( (:teamName is null or m.hometeam = :teamName) OR (:teamName is null or m.awayteam = :teamName) ) HAVING (m.scoreaway-m.scorehome) = 0 ORDER BY m.scorehome DESC LIMIT 100", nativeQuery = true)
+	List<Matches> getBiggestDraws(String competition, String teamName);
 }

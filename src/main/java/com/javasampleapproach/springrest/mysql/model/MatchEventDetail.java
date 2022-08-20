@@ -9,6 +9,7 @@ public class MatchEventDetail {
     private String playerName;
     private String recordType;
     private String teamName;
-    private Integer minute; // pozor funguje len na fify kde su minuty - musim to upravit
-    private String descriptionTimeOrCount;
+    private String minute;
+    private int recordCount;
+    private String typeOfFormat;
 }

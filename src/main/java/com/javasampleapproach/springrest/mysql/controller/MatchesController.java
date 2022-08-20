@@ -12,12 +12,15 @@ import com.javasampleapproach.springrest.mysql.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import static Utils.MyUtils.RECORD_TYPE_GOAL;
+import static Utils.MyUtils.seasonsWithGoalscorersWithoutMinutes;
+
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/matches")
 public class MatchesController {
-	
+
 	@Autowired
 	MatchesRepository matchesRepository;
 
@@ -29,7 +32,7 @@ public class MatchesController {
 
 	@Autowired
 	FifaPlayerDBRepository fifaPlayerDBRepository;
-	
+
 	@GetMapping("/getMatches")
 	public List<Matches> getAllCustomers() {
 
@@ -39,78 +42,76 @@ public class MatchesController {
 		matches.forEach(match -> {
 			match.setWinnerPlayer(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
 		});
-		
+
 		return matches;
 	}
 
-	
+
 	@GetMapping("/getMatchesForTeam/{teamname}")
 	public Map<String, Object> getMatchesForCustomTeam(@PathVariable("teamname") String teamName) {
 
 		List<Matches> matches = matchesRepository.findByHometeamOrAwayteam(teamName, teamName);
 
 		Map<String, Object> result = new HashMap();
-		result.put("Round of 16",null);
-		result.put("quarterfinals",null);
-		result.put("semifinals",null);
-		result.put("finals",null);
+		result.put("Round of 16", null);
+		result.put("quarterfinals", null);
+		result.put("semifinals", null);
+		result.put("finals", null);
 
 		List<Matches> roundOf16 = matches.stream().filter(o -> o.getCompetitionPhase().contains("Round of 16")).collect(Collectors.toList());
 		Iterable<Matches> quarterfinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Quarterfinals")).collect(Collectors.toList());
 		Iterable<Matches> semifinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Semifinals")).collect(Collectors.toList());
-		List<Matches> finals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Final")).sorted((x1,x2)-> x2.getSeason().compareTo(x1.getSeason())).collect(Collectors.toList());
+		List<Matches> finals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Final")).sorted((x1, x2) -> x2.getSeason().compareTo(x1.getSeason())).collect(Collectors.toList());
 
 		TeamGlobalStats teamGlobalStats = new TeamGlobalStats();
 		teamGlobalStats.setFinalsPlayed(finals.size());
-		
+
 		int winsInFinal = 0;
-		for(Matches finale : finals)
-		{
-			if(finale.getWinner().equalsIgnoreCase(teamName))
+		for (Matches finale : finals) {
+			if (finale.getWinner().equalsIgnoreCase(teamName))
 				winsInFinal++;
 		}
-		
+
 		teamGlobalStats.setTotalWinsCL(winsInFinal);
 		teamGlobalStats.setFinalsPlayed(finals.size());
-		
-		
-		result.put("final",finals);
+
+
+		result.put("final", finals);
 		result.put("finalStats", teamGlobalStats);
-		
+
 		return result;
 	}
-	
-	
+
+
 	@GetMapping("/getAllMatchesBySeason/{season}")
 	public List<Matches> getAllMatchesBySeason(@PathVariable("season") String season) {
 
 		List<Matches> matches = new ArrayList<>();
-		
-		
+
+
 		matches = matchesRepository.findBySeason(season);
-		
-		
-		
-		System.out.println("Matches in season "+season + " is "+matches.size()+" and teamname was ");
-		
+
+
+		System.out.println("Matches in season " + season + " is " + matches.size() + " and teamname was ");
+
 //		SingleSeasonStats.compute(matches);
-		
+
 		return matches;
 	}
-	
-	
+
+
 	@GetMapping("/getMatchesForTeamBySeason/{teamname}/{season}")
 	public List<Matches> getMatchesForCustomTeamNew(@PathVariable("teamname") String teamname, @PathVariable("season") String season) {
 
 		List<Matches> matches = new ArrayList<>();
-		
-		
-		matches = matchesRepository.findBySeasonAndHometeamOrSeasonAndAwayteam(season,teamname,season, teamname);
-		
-		System.out.println("Called and matches length is "+matches.size()+" and teamname was "+teamname);
-		
+
+
+		matches = matchesRepository.findBySeasonAndHometeamOrSeasonAndAwayteam(season, teamname, season, teamname);
+
+		System.out.println("Called and matches length is " + matches.size() + " and teamname was " + teamname);
+
 		//SingleSeasonStats.compute(matches);
-		
+
 		return matches;
 	}
 
@@ -148,37 +149,61 @@ public class MatchesController {
 
 	//TODO urban toto primarne dorobit
 	@GetMapping(value = "/getMatchDetails/{matchId}/{hometeam}/{awayteam}")
-	public MatchDetail getMatchDetails(@PathVariable("matchId") int matchId, @PathVariable("hometeam") String hometeam, @PathVariable("awayteam") String awayteam){
+	public MatchDetail getMatchDetails(@PathVariable("matchId") Long matchId, @PathVariable("hometeam") String hometeam, @PathVariable("awayteam") String awayteam) {
 		MatchDetail md = new MatchDetail();
 
-		List<RecordsInMatches> rims = recordsInMatchesRepository.findByMatchIdOrderByMinuteOfRecord(matchId);
-		Set<Long> ids = rims.stream().map(rim-> rim.getPlayerId()).collect(Collectors.toSet());
+
+		List<RecordsInMatches> rims = recordsInMatchesRepository.findByMatchIdOrderByMinuteOfRecord(matchId.intValue());
+		Set<Long> ids = rims.stream().map(rim -> rim.getPlayerId()).collect(Collectors.toSet());
 		List<FifaPlayerDB> players = fifaPlayerDBRepository.findByIdIn(ids);
 
+		Matches m = matchesRepository.findById(matchId).orElse(null);
 
-		rims.forEach(hr-> {
-			MatchEventDetail med = new MatchEventDetail();
-			String playerName = players.stream().filter(player-> player.getId() == hr.getPlayerId()).map(p->p.getPlayerName()).findFirst().orElse(null);
-			med.setPlayerName(playerName);
-			med.setRecordType(hr.getTypeOfRecord());
-			med.setTeamName(hr.getTeamName());
-			// todo handle minuteofrecord vs number of goals here - old FIFA problem
-			med.setMinute(hr.getMinuteOfRecord());
-			md.getEvents().add(med);
+		// old vs new format
+		if(seasonsWithGoalscorersWithoutMinutes.contains(m.getSeason())){
+			rims.forEach(hr -> {
+				MatchEventDetail med = new MatchEventDetail();
+				String playerName = players.stream().filter(player -> player.getId() == hr.getPlayerId()).map(p -> p.getPlayerName()).findFirst().orElse(null);
+				med.setPlayerName(playerName);
+				med.setRecordType(hr.getTypeOfRecord());
+				med.setTeamName(hr.getTeamName());
+				med.setRecordCount(hr.getTypeOfRecord().equalsIgnoreCase(RECORD_TYPE_GOAL) ? hr.getNumberOfGoalsForOldFormat() : 1);
+				med.setTypeOfFormat(MyUtils.OLD_FORMAT);
+				md.getEvents().add(med);
+			});
+		} else {
+			rims.forEach(hr -> {
+				MatchEventDetail med = new MatchEventDetail();
+				String playerName = players.stream().filter(player -> player.getId() == hr.getPlayerId()).map(p -> p.getPlayerName()).findFirst().orElse(null);
+				med.setPlayerName(playerName);
+				med.setRecordType(hr.getTypeOfRecord());
+				med.setTeamName(hr.getTeamName());
+				med.setTypeOfFormat(MyUtils.NEW_FORMAT);
+				med.setMinute(hr.getMinuteOfRecord() > 9 ? hr.getMinuteOfRecord().toString() : "0" + hr.getMinuteOfRecord());
+				md.getEvents().add(med);
 
-		});
+			});
+			md.getEvents().sort(Comparator.comparing(MatchEventDetail::getMinute));
+		}
 
 
-		md.getEvents().sort((o1, o2) -> o1.getMinute().compareTo(o2.getMinute()));
+
 
 		return md;
 	}
 
-	private String getPlayerNameById(long id, List<FifaPlayerDB> players){
-		String name = "UNKNOWN";
-		FifaPlayerDB playerDB = players.stream().filter(p-> p.getId() == id).findFirst().orElse(null);
+	@GetMapping(value = "/getMatchById/{matchId}")
+	public Matches getMatchById(@PathVariable("matchId") Long matchId) {
+		return matchesRepository.findById(matchId).orElse(null);
+	}
 
-		if(playerDB!=null){
+
+
+	private String getPlayerNameById(long id, List<FifaPlayerDB> players) {
+		String name = "UNKNOWN";
+		FifaPlayerDB playerDB = players.stream().filter(p -> p.getId() == id).findFirst().orElse(null);
+
+		if (playerDB != null) {
 			name = playerDB.getPlayerName();
 		}
 
@@ -186,7 +211,9 @@ public class MatchesController {
 	}
 
 
-	private void setWinningTeam(Matches match){
+
+
+	private void setWinningTeam(Matches match) {
 		if (match.getScorehome() > match.getScoreaway()) {
 			match.setWinner(match.getHometeam());
 		} else if (match.getScorehome() == match.getScoreaway()) {
@@ -195,10 +222,10 @@ public class MatchesController {
 			match.setWinner(match.getAwayteam());
 		}
 	}
-	
-	
-	@GetMapping("/getCustomGroupMatches/{competition}/{season}/{competitinPhase}")
-	public List<Matches> getCustomGroupMatches(@PathVariable("competition") String competition, @PathVariable("season") String season,  @PathVariable("competitionPhase") String competitionPhase) {
+
+
+	@GetMapping("/getCustomGroupMatches/{competition}/{season}/{competitionPhase}")
+	public List<Matches> getCustomGroupMatches(@PathVariable("competition") String competition, @PathVariable("season") String season, @PathVariable("competitionPhase") String competitionPhase) {
 		PlayersController pc = new PlayersController();
 		List<Matches> matches = matchesRepository.findByCompetitionAndSeasonAndCompetitionPhase(competition, season, competitionPhase);
 		matches.forEach(match -> {
@@ -207,64 +234,61 @@ public class MatchesController {
 		return matches;
 	}
 
-	private List<Integer> convertMapToList(Map<String, Integer> playersStats, String homePlayerOrTeam, String awayPlayerOrTeam)
-	{
+	private List<Integer> convertMapToList(Map<String, Integer> playersStats, String homePlayerOrTeam, String awayPlayerOrTeam) {
 		List<Integer> intValues = new ArrayList<Integer>();
-		
+
 		intValues.add(playersStats.get(homePlayerOrTeam));
 		intValues.add(playersStats.get("D")); //D stands always for draw
 		intValues.add(playersStats.get(awayPlayerOrTeam));
-		
+
 		return intValues;
 	}
-	
-	
-	
-	
+
+
 	@GetMapping("/getH2HStats/{firstTeam}/{secondTeam}")
 	public Map<String, Object> getCustomGroupMatches(@PathVariable("firstTeam") String firstTeam, @PathVariable("secondTeam") String secondTeam) {
-		
+
 		List<Matches> finalList = new ArrayList<>();
 		matchesRepository.findByHometeamAndAwayteam(firstTeam, secondTeam).forEach(finalList::add);
 		matchesRepository.findByHometeamAndAwayteam(secondTeam, firstTeam).forEach(finalList::add);
-		
+
 		finalList.sort(Comparator.comparing(Matches::getSeason).thenComparing(Matches::getCompetitionPhase));
-		
-		
+
+
 		Map<String, Object> response = new HashMap<String, Object>();
-		
+
 		Map<String, Integer> playersStats = new HashMap<String, Integer>();
 		playersStats.put("Pavol Jay", 0);
 		playersStats.put("Kotlik", 0);
 		playersStats.put("D", 0); //TODO nejak zjednotit raz je remiza D inokedy "Draws"
-		
+
 		PlayersController playersController = new PlayersController();
-		
+
 		Map<String, Integer> overallStats = new HashMap<String, Integer>();
 		overallStats.put(firstTeam, 0);
 		overallStats.put(secondTeam, 0);
 		overallStats.put("D", 0);
 
-		for(Matches match : finalList) {
+		for (Matches match : finalList) {
 			//players statistics
 			String winner = playersController.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik");
 			playersStats.put(winner, playersStats.get(winner) + 1);
-			
+
 			//teams statistics
 			overallStats.put(match.getWinner(), overallStats.get(match.getWinner()) + 1);
 		}
 
-		
+
 		response.put("playersStats", convertMapToList(playersStats, "Pavol Jay", "Kotlik"));
 		response.put("matches", finalList);
-		response.put("overallStats",convertMapToList(overallStats,firstTeam, secondTeam));
+		response.put("overallStats", convertMapToList(overallStats, firstTeam, secondTeam));
 
-		
+
 		return response;
 	}
 
 	@GetMapping("/getDataToCreateMatch/")
-	public Map<String, List<String>> getDataToCreateMatch(){
+	public Map<String, List<String>> getDataToCreateMatch() {
 
 		Map<String, List<String>> dataToCreateMatch = new HashMap<>();
 
@@ -274,11 +298,11 @@ public class MatchesController {
 		dataToCreateMatch.put("competitionsPhasesEL", MyUtils.europeanLeagueStagesList);
 		dataToCreateMatch.put("seasonsList", seasonsRepository.getAvailableSeasonsList());
 
-		return  dataToCreateMatch;
+		return dataToCreateMatch;
 	}
 
 	@GetMapping("/getCompetitionPhasesAndSeasonsList/")
-	public Map<String, List<String>> getCompetitionPhasesAndSeasonsList(){
+	public Map<String, List<String>> getCompetitionPhasesAndSeasonsList() {
 
 		Map<String, List<String>> competitionPhases = new HashMap<>();
 
@@ -287,7 +311,7 @@ public class MatchesController {
 		competitionPhases.put("defaultCompetitionPhases", MyUtils.europeanLeagueStagesListWithDefault);
 
 		List<String> allSeasons = seasonsRepository.getAvailableSeasonsList();
-		allSeasons.add(0,MyUtils.ALL_SEASONS);
+		allSeasons.add(0, MyUtils.ALL_SEASONS);
 		competitionPhases.put("seasonsList", allSeasons);
 
 		return competitionPhases;
@@ -295,7 +319,7 @@ public class MatchesController {
 
 	@GetMapping("/getFilteredMatches/{season}/{competition}/{competitionPhase}/{teamName}")
 	public List<Matches> getFilteredMatches(@PathVariable("season") String season, @PathVariable("competition") String competition, @PathVariable("competitionPhase") String competitionPhase,
-										 @PathVariable("teamName") String teamName) {
+											@PathVariable("teamName") String teamName) {
 
 		if (season.equalsIgnoreCase(MyUtils.ALL_SEASONS)) {
 			season = null;
@@ -318,4 +342,49 @@ public class MatchesController {
 			return matchesForSelectedTeam;
 		}
 	}
+
+	@GetMapping("/topMatches/{recordType}/{selectedPlayer}/{selectedCompetition}/{teamName}")
+	public List<Matches> getTopMatches(@PathVariable("recordType") String recordType, @PathVariable("selectedPlayer") String selectedPlayer, @PathVariable("selectedCompetition") String selectedCompetition, @PathVariable("teamName") String teamName) {
+		List<Matches> matches = new ArrayList<>();
+
+		if(selectedPlayer.equalsIgnoreCase(MyUtils.ALL)) {
+			selectedPlayer = null;
+		}
+
+		if(selectedCompetition.equalsIgnoreCase(MyUtils.ALL)){
+			selectedCompetition = null;
+		}
+
+		if(teamName.equalsIgnoreCase(MyUtils.ALL)) {
+			teamName = null;
+		}
+
+		switch (recordType) {
+			case MyUtils.MOST_GOALS_IN_MATCH:
+				matches = matchesRepository.getMatchesWithMostGoals(selectedCompetition, teamName);
+				break;
+			case MyUtils.BIGGEST_AWAY_WINS:
+				matches = matchesRepository.getBiggestAwayWins(selectedPlayer, selectedCompetition, teamName);
+				break;
+			case MyUtils.BIGGEST_HOME_WINS:
+				matches = matchesRepository.getBiggestHomeWins(selectedPlayer, selectedCompetition, teamName);
+				break;
+			case MyUtils.BIGGEST_DRAWS:
+				matches = matchesRepository.getBiggestDraws(selectedCompetition, teamName);
+				break;
+		}
+
+		return setWinners(matches);
+	}
+
+	private List<Matches> setWinners(List<Matches> matches) {
+		PlayersController pc = new PlayersController();
+		matches.forEach(match -> {
+			match.setWinnerPlayer(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
+		});
+		return matches;
+	}
+
+
+
 }

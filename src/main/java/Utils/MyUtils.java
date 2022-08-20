@@ -8,6 +8,7 @@ public class MyUtils {
 	public static final String PAVOL_JAY = "Pavol Jay"; //todo use these in whole project
 	public static final String KOTLIK = "Kotlik";
 	public static final String RESULT_DRAW = "D";
+	public static final String ALL = "ALL";
 
 	public static final String CHAMPIONS_LEAGUE = "CL";
 	public static final String EUROPEAN_LEAGUE = "EL";
@@ -49,4 +50,24 @@ public class MyUtils {
 	public static String RECORD_TYPE_OWN_GOAL = "OG";
 	public static String RECORD_TYPE_YELLOW_CARD = "YC";
 	public static String RECORD_TYPE_RED_CARD = "RC";
+
+	// Historic matches
+	public static final String MOST_GOALS_IN_MATCH = "Most goals in match";
+	public static final String BIGGEST_AWAY_WINS = "Biggest Away Wins";
+	public static final String BIGGEST_HOME_WINS = "Biggest Home Wins";
+	public static final String BIGGEST_DRAWS = "Biggest Draws";
+
+	// Players with records
+	public static final String PLAYER_MOST_GOALS_SINGLE_GAME = "Most goals in single game";
+	public static final String PLAYER_MOST_GOALS_SEASON = "Most goals in the season";
+
+	// format
+	public static final String OLD_FORMAT = "Old format";
+	public static final String NEW_FORMAT = "New format";
+
+	public static final String GROUP_STAGE = "Group stage";
+	public static final String GROUP_STAGE_LIKE_VALUE = "GROUP";
+	public static final String PLAY_OFFS_STAGE = "Play offs";
+	public static final String PLAY_OFFS_ROUND_LIKE_VALUE = "Round";
+	public static final String PLAY_OFFS_FINAL_LIKE_VALUE = "Final";
 }

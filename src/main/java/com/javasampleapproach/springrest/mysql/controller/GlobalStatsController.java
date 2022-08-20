@@ -163,6 +163,55 @@ public class GlobalStatsController {
 		return finalMatches;
 	}
 
+	@GetMapping("/teamTrophiesCount/allCompetitions")
+	public List<TeamForTrophyRoom> getTeamTrophiesCount(){
+
+		List<TeamForTrophyRoom> trophyRoom = new ArrayList<>();
+		List<Matches> finalMatches = matchesRepository.findByCompetitionPhase("Final");
+		finalMatches.forEach(match-> {
+			insertOrUpdateTrophyRoom(trophyRoom, match.getHometeam(), match);
+			insertOrUpdateTrophyRoom(trophyRoom, match.getAwayteam(), match);
+		});
+
+		trophyRoom.forEach(team-> {
+			team.setWinCountTotal(team.getWinCountCL() + team.getWinCountEL());
+			team.setRunnersUpTotal(team.getRunnersUpCL() + team.getRunnersUpEL());
+		});
+
+		Collections.sort(trophyRoom, (t1, t2) -> t2.getWinCountTotal().compareTo(t1.getWinCountTotal()));
+
+
+		return trophyRoom;
+	}
+
+	private void insertOrUpdateTrophyRoom (List<TeamForTrophyRoom> trophyRoom, String teamName, Matches match){
+		TeamForTrophyRoom teamAlreadyInRoom = trophyRoom.stream().filter(team-> team.getTeamName().equalsIgnoreCase(teamName)).findFirst().orElse(null);
+
+		if(teamAlreadyInRoom == null) {
+			TeamForTrophyRoom newTeam = new TeamForTrophyRoom(teamName);
+			addStatsForProperCompetition(newTeam, match);
+			trophyRoom.add(newTeam);
+		} else {
+			addStatsForProperCompetition(teamAlreadyInRoom, match);
+		}
+	}
+
+	private void addStatsForProperCompetition(TeamForTrophyRoom team, Matches match){
+		if(match.getCompetition().equalsIgnoreCase(MyUtils.CHAMPIONS_LEAGUE)){
+			if (match.getWinner().equalsIgnoreCase(team.getTeamName())) {
+				team.setWinCountCL(team.getWinCountCL() + 1);
+			} else {
+				team.setRunnersUpCL(team.getRunnersUpCL() + 1);
+			}
+		} else {
+			if (match.getWinner().equalsIgnoreCase(team.getTeamName())) {
+				team.setWinCountEL(team.getWinCountEL() + 1);
+			} else {
+				team.setRunnersUpEL(team.getRunnersUpEL() + 1);
+			}
+		}
+	}
+
 	@GetMapping("/trophyRoom")
 	public List<TitlesCount> getTrophyRoom(){
 		List<Matches> finalMatches = matchesRepository.findByCompetitionPhase("Final");
