@@ -157,26 +157,6 @@ public class FifaPlayerController {
 
         Collections.sort(players, Comparator.comparing(FifaPlayerWithRecord::getRecordEventCount).reversed());
 
-
         return players.stream().limit(100).collect(Collectors.toList());
     }
-
-//    public void test(List<String> seasons){
-//
-//        List<FifaPlayerWithRecord> finalGoalsScorers = new ArrayList<>();
-//        seasons.forEach(season -> {
-//            List<FifaPlayerWithRecord> seasonGoalsscorers = new ArrayList<>();
-//            List<Matches> matchesInCurrentSeason = matchesRepository.findBySeason(season);
-//            matchesInCurrentSeason.forEach(match ->{
-//                List<RecordsInMatches> goalsInMatch = recordsInMatchesRepository.getRecordsByCompetition(null, season, null, null, MyUtils.RECORD_TYPE_GOAL, null);
-//                goalsInMatch.forEach(record -> {
-//                    FifaPlayerDB player = fifaPlayerDBRepository.findById(record.getPlayerId()).orElse(null);
-//                    FifaPlayerWithRecord playerWithRecord = seasonGoalsscorers.stream().filter(goalscorer -> goalscorer.getPlayerId() == player.getId()).findFirst().orElse(null);
-//                    if(playerWithRecord == null) {
-//                        FifaPlayerWithRecord newPlayer = new FifaPlayerWithRecord();
-//                    }
-//                });
-//            });
-//        });
-//    }
 }

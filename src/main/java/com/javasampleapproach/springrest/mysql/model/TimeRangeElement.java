@@ -11,6 +11,6 @@ public class TimeRangeElement {
     private String label;
     private int lowBorder;
     private int upBorder;
-    private int numberOfGoals;
-    private int numberOfConcededGoals;
+    private int numberOfGoals = 0;
+    private int numberOfConcededGoals = 0;
 }

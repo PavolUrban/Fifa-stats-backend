@@ -1,16 +1,12 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import Utils.MyUtils;
-import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.GoalDistributionModel;
-import com.javasampleapproach.springrest.mysql.model.GoalInMinuteModel;
-import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
+import com.javasampleapproach.springrest.mysql.model.TimeRangeElement;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -34,24 +30,30 @@ public class RecordsInMatchesController {
                     gdm.setConcededGoalsUnknownTime(gdm.getConcededGoalsUnknownTime() + record.getNumberOfGoalsForOldFormat());
                 }
             } else {
-                GoalInMinuteModel gimm;
+                TimeRangeElement tre;
                 if(record.getMinuteOfRecord() > 90) {
-                    gimm = gdm.getGoalsInMinutesCount().stream().filter(model-> model.getMinuteLabel().equalsIgnoreCase("90+")).findFirst().orElse(null);
+                    System.out.println("pozor na tento " + record.getId()); // zatial davam k poslednemu
+                    tre = gdm.getAllRanges().get(gdm.getAllRanges().size() - 1);
                 } else {
-                    gimm = gdm.getGoalsInMinutesCount().stream().filter(model-> model.getMinuteLabel().equalsIgnoreCase(record.getMinuteOfRecord().toString())).findFirst().orElse(null);
+                    tre = gdm.getAllRanges().stream().filter(range -> record.getMinuteOfRecord() <= range.getUpBorder() && record.getMinuteOfRecord() >= range.getLowBorder()).findFirst().orElse(null);
                 }
 
-
-                System.out.println("totot je on ");
-                System.out.println(gimm);
                 if(record.getTeamName().equalsIgnoreCase(teamName)){
-                    gimm.setScoredGoalsCount(gimm.getScoredGoalsCount() + 1);
+                    tre.setNumberOfGoals(tre.getNumberOfGoals() + 1);
                 } else {
-                    gimm.setConcededGoalsCount(gimm.getConcededGoalsCount() + 1);
+                    tre.setNumberOfConcededGoals(tre.getNumberOfConcededGoals() + 1);
                 }
             }
         });
 
+        // Prepare arrays to display in GUI
+        gdm.getAllRanges().forEach(range -> {
+            gdm.getConcededGoalsList().add(range.getNumberOfConcededGoals());
+            gdm.getScoredGoalsList().add(range.getNumberOfGoals());
+            gdm.getMinutesAsLabels().add(range.getLabel());
+        });
+
         return gdm;
     }
+
 }

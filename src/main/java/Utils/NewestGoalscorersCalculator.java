@@ -5,6 +5,7 @@ import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.Goalscorer;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashSet;
