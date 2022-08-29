@@ -146,7 +146,6 @@ public class MatchesController {
 		return null;
 	}
 
-
 	//TODO urban toto primarne dorobit
 	@GetMapping(value = "/getMatchDetails/{matchId}/{hometeam}/{awayteam}")
 	public MatchDetail getMatchDetails(@PathVariable("matchId") Long matchId, @PathVariable("hometeam") String hometeam, @PathVariable("awayteam") String awayteam) {
@@ -168,9 +167,9 @@ public class MatchesController {
 				med.setRecordType(hr.getTypeOfRecord());
 				med.setTeamName(hr.getTeamName());
 				med.setRecordCount(hr.getTypeOfRecord().equalsIgnoreCase(RECORD_TYPE_GOAL) ? hr.getNumberOfGoalsForOldFormat() : 1);
-				med.setTypeOfFormat(MyUtils.OLD_FORMAT);
-				md.getEvents().add(med);
+				md.getEventsWithoutTime().add(med);
 			});
+			md.setTypeOfFormat(MyUtils.OLD_FORMAT);
 		} else {
 			rims.forEach(hr -> {
 				MatchEventDetail med = new MatchEventDetail();
@@ -178,12 +177,15 @@ public class MatchesController {
 				med.setPlayerName(playerName);
 				med.setRecordType(hr.getTypeOfRecord());
 				med.setTeamName(hr.getTeamName());
-				med.setTypeOfFormat(MyUtils.NEW_FORMAT);
-				med.setMinute(hr.getMinuteOfRecord() > 9 ? hr.getMinuteOfRecord().toString() : "0" + hr.getMinuteOfRecord());
-				md.getEvents().add(med);
-
+				med.setMinute(hr.getMinuteOfRecord());
+				med.setMinuteLabel(hr.getMinuteOfRecord() > 9 ? hr.getMinuteOfRecord().toString() + "'" : "0" + hr.getMinuteOfRecord() + "'");
+				addEventToProperHalfTime(md, hr, med);
 			});
-			md.getEvents().sort(Comparator.comparing(MatchEventDetail::getMinute));
+
+			md.setTypeOfFormat(MyUtils.NEW_FORMAT);
+
+			//todo sort
+			//md.getEvents().sort(Comparator.comparing(MatchEventDetail::getMinute));
 		}
 
 
@@ -191,6 +193,61 @@ public class MatchesController {
 
 		return md;
 	}
+
+	public void addEventToProperHalfTime(MatchDetail md, RecordsInMatches record, MatchEventDetail med){
+		if (record.getMinuteOfRecord() <= 45) {
+			md.getEventsFirstHalf().add(med);
+		} else if (record.getMinuteOfRecord() <= 90) {
+			md.getEventsSecondHalf().add(med);
+		} else {
+			md.getEventsOverTime().add(med);
+		}
+	}
+//	//TODO urban toto primarne dorobit
+//	@GetMapping(value = "/getMatchDetails/{matchId}/{hometeam}/{awayteam}")
+//	public MatchDetail getMatchDetails(@PathVariable("matchId") Long matchId, @PathVariable("hometeam") String hometeam, @PathVariable("awayteam") String awayteam) {
+//		MatchDetail md = new MatchDetail();
+//
+//
+//		List<RecordsInMatches> rims = recordsInMatchesRepository.findByMatchIdOrderByMinuteOfRecord(matchId.intValue());
+//		Set<Long> ids = rims.stream().map(rim -> rim.getPlayerId()).collect(Collectors.toSet());
+//		List<FifaPlayerDB> players = fifaPlayerDBRepository.findByIdIn(ids);
+//
+//		Matches m = matchesRepository.findById(matchId).orElse(null);
+//
+//		// old vs new format
+//		if(seasonsWithGoalscorersWithoutMinutes.contains(m.getSeason())){
+//			rims.forEach(hr -> {
+//				MatchEventDetail med = new MatchEventDetail();
+//				String playerName = players.stream().filter(player -> player.getId() == hr.getPlayerId()).map(p -> p.getPlayerName()).findFirst().orElse(null);
+//				med.setPlayerName(playerName);
+//				med.setRecordType(hr.getTypeOfRecord());
+//				med.setTeamName(hr.getTeamName());
+//				med.setRecordCount(hr.getTypeOfRecord().equalsIgnoreCase(RECORD_TYPE_GOAL) ? hr.getNumberOfGoalsForOldFormat() : 1);
+//				med.setTypeOfFormat(MyUtils.OLD_FORMAT);
+//				md.getEvents().add(med);
+//			});
+//		} else {
+//			rims.forEach(hr -> {
+//				MatchEventDetail med = new MatchEventDetail();
+//				String playerName = players.stream().filter(player -> player.getId() == hr.getPlayerId()).map(p -> p.getPlayerName()).findFirst().orElse(null);
+//				med.setPlayerName(playerName);
+//				med.setRecordType(hr.getTypeOfRecord());
+//				med.setTeamName(hr.getTeamName());
+//				med.setTypeOfFormat(MyUtils.NEW_FORMAT);
+//				med.setMinute(hr.getMinuteOfRecord());
+//				med.setMinuteLabel(hr.getMinuteOfRecord() > 9 ? hr.getMinuteOfRecord().toString() + "'" : "0" + hr.getMinuteOfRecord() + "'");
+//				md.getEvents().add(med);
+//
+//			});
+//			md.getEvents().sort(Comparator.comparing(MatchEventDetail::getMinute));
+//		}
+//
+//
+//
+//
+//		return md;
+//	}
 
 	@GetMapping(value = "/getMatchById/{matchId}")
 	public Matches getMatchById(@PathVariable("matchId") Long matchId) {

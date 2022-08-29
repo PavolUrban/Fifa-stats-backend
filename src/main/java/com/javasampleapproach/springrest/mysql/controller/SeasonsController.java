@@ -152,12 +152,12 @@ public class SeasonsController {
 
 		Matches finalMatch = matchesPO.stream().filter(m-> m.getCompetitionPhase().equalsIgnoreCase("Final")).findFirst().orElse(null);
 
-		finalTablesWithStats.put("StatsByGroups", groupStatsForPlayers);
+		finalTablesWithStats.put("statsByGroups", groupStatsForPlayers);
 
-		finalTablesWithStats.put("Tables", groupsWithTeams);
-		finalTablesWithStats.put("GoalscorersPerGroup", groupGoalscorers);
+		finalTablesWithStats.put("groupStageTables", groupsWithTeams);
+		finalTablesWithStats.put("goalscorersPerGroup", groupGoalscorers);
 
-		finalTablesWithStats.put("PlayOffs", playOffs);
+		finalTablesWithStats.put("playOffs", playOffs);
 		finalTablesWithStats.put("Final", finalMatch);
 
 		// Overall stats
@@ -175,13 +175,13 @@ public class SeasonsController {
 
 		// Goalscorers
 		List<RecordsInMatches> topGoalscorersGroupStage = recordsInMatchesRepository.getGroupStageRecordsBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("TotalGoalscorersGroupStage", ngc.getGoalscorers(topGoalscorersGroupStage));
+		finalTablesWithStats.put("totalGoalscorersGroupStage", ngc.getGoalscorers(topGoalscorersGroupStage));
 
 		List<RecordsInMatches> topGoalscorersPlayOff = recordsInMatchesRepository.getPlayOffsRecordsBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("TotalGoalscorersPlayOffs",  ngc.getGoalscorers(topGoalscorersPlayOff));
+		finalTablesWithStats.put("totalGoalscorersPlayOffs",  ngc.getGoalscorers(topGoalscorersPlayOff));
 
 		List<RecordsInMatches> topGoalscorersAllPhases = recordsInMatchesRepository.getTotalGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("TotalGoalscorersAllPhases",  ngc.getGoalscorers(topGoalscorersAllPhases));
+		finalTablesWithStats.put("totalGoalscorersAllPhases",  ngc.getGoalscorers(topGoalscorersAllPhases));
 
 		return finalTablesWithStats;
 	}

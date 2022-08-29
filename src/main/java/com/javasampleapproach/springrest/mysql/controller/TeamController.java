@@ -125,12 +125,6 @@ public class TeamController {
 		team.getMatchesStats().get("CL").put("Seasons", seasonsCL.size());
 		team.getMatchesStats().get("EL").put("Seasons", seasonsEL.size());
 
-
-
-		// TODO this may be partially reused transformGoalMapToTimeRanges
-		// TimeRangesMapper.transformGoalMapToTimeRanges(team);
-
-
 		return team;
 	}
 

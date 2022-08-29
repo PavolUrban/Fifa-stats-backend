@@ -11,7 +11,7 @@ import javax.persistence.*;
 @Table(name = "fifaplayer")
 public class FifaPlayerDB {
 
-    //TODO ked to raz precistim skusit pouzit onetomany, manytoone atd
+    //TODO use relations one-to-many etc.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;

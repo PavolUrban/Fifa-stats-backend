@@ -9,7 +9,7 @@ public class MatchEventDetail {
     private String playerName;
     private String recordType;
     private String teamName;
-    private String minute;
+    private int minute;
+    private String minuteLabel;
     private int recordCount;
-    private String typeOfFormat;
 }

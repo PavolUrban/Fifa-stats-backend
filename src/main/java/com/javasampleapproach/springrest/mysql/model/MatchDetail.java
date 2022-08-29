@@ -12,5 +12,9 @@ import java.util.List;
 @AllArgsConstructor
 public class MatchDetail {
     private int matchId;
-    List<MatchEventDetail> events = new ArrayList<>();
+    private String typeOfFormat;
+    List<MatchEventDetail> eventsFirstHalf = new ArrayList<>();
+    List<MatchEventDetail> eventsSecondHalf = new ArrayList<>();
+    List<MatchEventDetail> eventsOverTime = new ArrayList<>();
+    List<MatchEventDetail> eventsWithoutTime = new ArrayList<>();
 }
