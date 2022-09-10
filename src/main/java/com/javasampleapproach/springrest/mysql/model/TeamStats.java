@@ -1,70 +1,62 @@
 package com.javasampleapproach.springrest.mysql.model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.javasampleapproach.springrest.mysql.entities.Matches;
 import lombok.Data;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 public class TeamStats {
+    private int wins = 0;
+    private int losses = 0;
+    private int draws = 0;
+    private int goalsScored = 0;
+    private int goalsConceded = 0;
+    private int goalDiff = 0;
+    private int matchesCount = 0;
+    private int finalMatchesCount = 0;
+    private int titlesCount = 0;
+    private int runnersUpCount = 0;
 
-	List<Matches> matches;
-	Map<String, Map<String, List<Matches>>> finalMatches;
+    private Set<String> seasonsList = new HashSet<>();
 
-	// values that are not directly presented in db and must be computed
-	Map<String, Map<String, Integer>> matchesStats;
+    public void incrementWins(int number){
+        this.wins = this.wins + number;
+    }
 
-	// player related stats
-	Map<String, Map<String, Integer>> goalScorers; // todo make this something similar to playersCardsStatisticsPerCompetition
+    public void incrementDraws(int number){
+        this.draws = this.draws + number;
+    }
 
-	// timeOfGoal, numberOfGoalsInThatMinute
-	Map<String, Integer> goalsByMinutesCount;
-	Map<String, Integer> concededGoalsByMinutesCount;
+    public void incrementLosses(int number){
+        this.losses = this.losses + number;
+    }
 
-	private int unknownTimeGoals = 0;
-	private int unknownConcededGoalsTime = 0;
-	List<TimeRangeElement> goalsPerTimeRanges;
-		
-	public TeamStats()
-	{
-		this.matches = new ArrayList<>();
-		this.finalMatches = new HashMap<>();
-		this.matchesStats = new HashMap<>();
+    public void incrementGoalsScored(int number){
+        this.goalsScored = this.goalsScored + number;
+    }
 
-		this.goalScorers = new HashMap<>();
-		initializePlayerRelatedStats(this.goalScorers);
+    public void incrementGoalsConceded(int number){
+        this.goalsConceded = this.goalsConceded + number;
+    }
 
-		this.goalsByMinutesCount = new HashMap<>();
-		this.concededGoalsByMinutesCount = new HashMap<>();
-		this.goalsPerTimeRanges = new ArrayList<>();
+    public void incrementMatchesCount(int number){
+        this.matchesCount = this.matchesCount + number;
+    }
 
-		initializeMatchesStats("CL");
-		initializeMatchesStats("EL");
+    public void incrementFinalMatchesCount(int number){
+        this.finalMatchesCount = this.finalMatchesCount + number;
+    }
 
-		this.finalMatches.put("CL", new HashMap<>());
-		this.finalMatches.put("EL", new HashMap<>());
-		this.finalMatches.put("Total", new HashMap<>());
-	}
+    public void incrementTitlesCount(int number){
+        this.titlesCount = this.titlesCount + number;
+    }
 
+    public void incrementRunnersUpCount(int number){
+        this.runnersUpCount = this.runnersUpCount + number;
+    }
 
-	private void initializeMatchesStats(String competition){
-		this.matchesStats.put(competition, new HashMap<>());
-		this.matchesStats.get(competition).put("Wins", 0);
-		this.matchesStats.get(competition).put("Losses", 0);
-		this.matchesStats.get(competition).put("Draws", 0);
-		this.matchesStats.get(competition).put("GoalsScored", 0);
-		this.matchesStats.get(competition).put("GoalsConceded", 0);
-		this.matchesStats.get(competition).put("Seasons", 0);
-	}
-
-	// TODO - maybe rename? this is not very accurate
-	private void initializePlayerRelatedStats(Map<String, Map<String, Integer>> playerRelatedStat) {
-		playerRelatedStat.put("CL", new HashMap<>());
-		playerRelatedStat.put("EL", new HashMap<>());
-		playerRelatedStat.put("Total", new HashMap<>());
-	}
-
+    public void calculateGoalDiff(){
+        this.goalDiff = this.goalsScored - this.goalsConceded;
+    }
 }

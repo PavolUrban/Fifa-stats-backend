@@ -4,24 +4,25 @@ import com.javasampleapproach.springrest.mysql.entities.Matches;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 public class PlayOffMatch {
 
-	Matches firstMatch;
-	Matches secondMatch;
-	
+	List<Matches> matchesList = new ArrayList<>();
 	String qualifiedTeam;
 	int qualifiedTeamGoals;
-	
 	String nonQualifiedTeam;
 	int nonQualifiedTeamGoals;
-	
-	public PlayOffMatch(Matches first, Matches second, String qualifiedTeam, String nonQualifiedTeam)
+	String qualifiedPlayer;
+
+	public PlayOffMatch(List<Matches> matchesList, String qualifiedTeam, String nonQualifiedTeam, String qualifiedPlayer)
 	{
-		this.firstMatch = first;
-		this.secondMatch = second;
+		this.matchesList = matchesList;
 		this.qualifiedTeam  = qualifiedTeam;
 		this.nonQualifiedTeam = nonQualifiedTeam;
+		this.qualifiedPlayer = qualifiedPlayer;
 	}
 }

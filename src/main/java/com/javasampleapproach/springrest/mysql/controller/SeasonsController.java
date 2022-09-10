@@ -257,13 +257,16 @@ public class SeasonsController {
 					
 					Matches match1 = matchesInCurrentPhase.get(addedMatches);
 					Matches match2 = matchesInCurrentPhase.get(addedMatches+1);
-					
+					PlayersController pc = new PlayersController();
+					match1.setWinnerPlayer(pc.whoIsWinnerOfMatch(match1, PAVOL_JAY, KOTLIK));
+					match2.setWinnerPlayer(pc.whoIsWinnerOfMatch(match2, PAVOL_JAY, KOTLIK));
 
 					ArrayList<String> teamNames = new ArrayList<>(Arrays.asList(match1.getHometeam(), match1.getAwayteam()));
 					String qualifiedTeam = whoIsQualified(match1, match2);
 					String nonQualifiedTeam = getNonQualified(teamNames, qualifiedTeam);
+					String qualifiedPlayer = getQualifiedPlayer(qualifiedTeam, match1);
 			
-					PlayOffMatch playOff = new PlayOffMatch(match1, match2, qualifiedTeam, nonQualifiedTeam);
+					PlayOffMatch playOff = new PlayOffMatch(new ArrayList<>(Arrays.asList(match1, match2)), qualifiedTeam, nonQualifiedTeam, qualifiedPlayer);
 					
 					playOff.setQualifiedTeamGoals(getPlayOffGoalsForTeam(playOff, qualifiedTeam));
 					playOff.setNonQualifiedTeamGoals(getPlayOffGoalsForTeam(playOff, nonQualifiedTeam));
@@ -283,16 +286,27 @@ public class SeasonsController {
 		
 	}
 
+	// since players can for the same team in both play off matches we can just check one of them to get proper result
+	private String getQualifiedPlayer(String qualifiedTeam, Matches match){
+		String qualifiedPlayer;
+		if(match.getHometeam().equalsIgnoreCase(qualifiedTeam)){
+			qualifiedPlayer = match.getPlayerH();
+		} else {
+			qualifiedPlayer = match.getPlayerA();
+		}
+
+		return qualifiedPlayer;
+	}
 	
 	private int getPlayOffGoalsForTeam(PlayOffMatch pom, String teamToGetScore) 
 	{
 		int score = 0;
 		
-		if(teamToGetScore.equalsIgnoreCase(pom.getFirstMatch().getHometeam()))
-			score = pom.getFirstMatch().getScorehome() + pom.getSecondMatch().getScoreaway();
+		if(teamToGetScore.equalsIgnoreCase(pom.getMatchesList().get(0).getHometeam()))
+			score = pom.getMatchesList().get(0).getScorehome() + pom.getMatchesList().get(1).getScoreaway();
 		
-		else if(teamToGetScore.equalsIgnoreCase(pom.getFirstMatch().getAwayteam()))
-			score = pom.getFirstMatch().getScoreaway() + pom.getSecondMatch().getScorehome();
+		else if(teamToGetScore.equalsIgnoreCase(pom.getMatchesList().get(0).getAwayteam()))
+			score = pom.getMatchesList().get(0).getScoreaway() + pom.getMatchesList().get(1).getScorehome();
 		
 		return score;
 	}

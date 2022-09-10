@@ -73,59 +73,83 @@ public class TeamController {
 
 	// TODO check for multiple times used basically the same condition, this may be improved
 	@GetMapping("/getTeamStats/{teamname}")
-	public TeamStats singleTeamStats(@PathVariable("teamname") String teamName) {
-		Set<String> seasonsCL = new LinkedHashSet<>();
-		Set<String> seasonsEL = new LinkedHashSet<>();
+	public TeamStatsWithMatches singleTeamStats(@PathVariable("teamname") String teamName) {
 
 		List<Matches> matches  = matchesRepository.getAllMatchesForTeam(teamName);
-		Team t = teamRepository.findByTeamName(teamName);
+		//Team t = teamRepository.findByTeamName(teamName);
 
-		TeamStats team = new TeamStats();
+		TeamStatsWithMatches team = new TeamStatsWithMatches();
+		team.setTeamName(teamName);
 		team.setMatches(matches);
 
-		List<Matches> finalMatches = matches.stream().filter(m->m.getCompetitionPhase().equalsIgnoreCase("Final")).collect(Collectors.toList());
-		List<Matches> lostFinalMatches = finalMatches.stream().filter(m-> ! (m.getWinner().equalsIgnoreCase(teamName))).collect(Collectors.toList());
-		List<Matches> wonFinalMatches = finalMatches.stream().filter(m-> m.getWinner().equalsIgnoreCase(teamName)).collect(Collectors.toList());
-
-		team.getFinalMatches().get("Total").put("Won", wonFinalMatches);
-		team.getFinalMatches().get("Total").put("Lost", lostFinalMatches);
-		getMatchesByCompetition(lostFinalMatches, "CL", "Lost", team);
-		getMatchesByCompetition(wonFinalMatches, "CL", "Won", team);
-		getMatchesByCompetition(lostFinalMatches, "EL", "Lost", team);
-		getMatchesByCompetition(wonFinalMatches, "EL", "Won", team);
-
 		for(Matches m : matches)  {
-
-			// wins, draws, losses counter
-			if (m.getWinner().equalsIgnoreCase("D")) {
-				team.getMatchesStats().get(m.getCompetition()).put("Draws", team.getMatchesStats().get(m.getCompetition()).get("Draws") + 1);
-			} else if (m.getWinner().equalsIgnoreCase(teamName)) {
-				team.getMatchesStats().get(m.getCompetition()).put("Wins", team.getMatchesStats().get(m.getCompetition()).get("Wins") + 1);
+			if(m.getCompetition().equalsIgnoreCase(MyUtils.CHAMPIONS_LEAGUE)){
+				setWDLGoalsAndSeasons(m, team.getTeamStatsCL(), teamName);
 			} else {
-				team.getMatchesStats().get(m.getCompetition()).put("Losses", team.getMatchesStats().get(m.getCompetition()).get("Losses") + 1);
-			}
-
-			// goalScored and goalsConceded counter
-			if(m.getHometeam().equalsIgnoreCase(teamName)) {
-				team.getMatchesStats().get(m.getCompetition()).put("GoalsScored", team.getMatchesStats().get(m.getCompetition()).get("GoalsScored") + m.getScorehome());
-				team.getMatchesStats().get(m.getCompetition()).put("GoalsConceded", team.getMatchesStats().get(m.getCompetition()).get("GoalsConceded") + m.getScoreaway());
-			} else if(m.getAwayteam().equalsIgnoreCase(teamName)) {
-				team.getMatchesStats().get(m.getCompetition()).put("GoalsScored", team.getMatchesStats().get(m.getCompetition()).get("GoalsScored") + m.getScoreaway());
-				team.getMatchesStats().get(m.getCompetition()).put("GoalsConceded", team.getMatchesStats().get(m.getCompetition()).get("GoalsConceded") + m.getScorehome());
-			}
-
-			// seasons in CL/EL
-			if (m.getCompetition().equalsIgnoreCase("CL")) {
-				seasonsCL.add(m.getSeason());
-			} else if(m.getCompetition().equalsIgnoreCase("EL")) {
-				seasonsEL.add(m.getSeason());
+				setWDLGoalsAndSeasons(m, team.getTeamStatsEL(), teamName);
 			}
 		}
 
-		team.getMatchesStats().get("CL").put("Seasons", seasonsCL.size());
-		team.getMatchesStats().get("EL").put("Seasons", seasonsEL.size());
+		setBilance(team);
+		team.getTeamStatsEL().calculateGoalDiff();
+		team.getTeamStatsCL().calculateGoalDiff();
+		team.calculateTeamStatsTotal();
+
 
 		return team;
+	}
+
+	private void setBilance(TeamStatsWithMatches team){
+		TeamStats statsCL = team.getTeamStatsCL();
+		TeamStats statsEL = team.getTeamStatsEL();
+		List<Integer> bilance = team.getBilance();
+
+		// W
+		bilance.add(statsCL.getWins() + statsEL.getWins());
+
+		// D
+		bilance.add(statsCL.getDraws() + statsEL.getDraws());
+
+		// L
+		bilance.add(statsCL.getLosses() + statsEL.getLosses());
+	}
+
+
+	private void setWDLGoalsAndSeasons(Matches m, TeamStats teamStats, String teamName) {
+		// W-D-L setter
+		if (m.getWinner().equalsIgnoreCase("D")) {
+			teamStats.incrementDraws(1);
+		} else if (m.getWinner().equalsIgnoreCase(teamName)) {
+			System.out.println(teamStats.getWins());
+			teamStats.incrementWins(1);
+		} else {
+			teamStats.incrementLosses(1);
+		}
+
+		// GS and GC setter
+		if(m.getHometeam().equalsIgnoreCase(teamName)) {
+			teamStats.incrementGoalsScored(m.getScorehome());
+			teamStats.incrementGoalsConceded(m.getScoreaway());
+		} else if(m.getAwayteam().equalsIgnoreCase(teamName)) {
+			teamStats.incrementGoalsScored(m.getScoreaway());
+			teamStats.incrementGoalsConceded(m.getScorehome());
+		}
+
+		// seasons - represented as set - no duplicates
+		teamStats.getSeasonsList().add(m.getSeason());
+
+		// matches count
+		teamStats.incrementMatchesCount(1);
+
+		// finals
+		if(m.getCompetitionPhase().equalsIgnoreCase(MyUtils.FINAL)){
+			teamStats.incrementFinalMatchesCount(1);
+			if(m.getWinner().equalsIgnoreCase(teamName)){
+				teamStats.incrementTitlesCount(1);
+			} else {
+				teamStats.incrementRunnersUpCount(1);
+			}
+		}
 	}
 
 	// TODO - who has won the most games, most red cards ...
@@ -178,11 +202,6 @@ public class TeamController {
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-	}
-
-	private void getMatchesByCompetition(List<Matches> matchesToFilter, String competition, String result, TeamStats team){
-		List<Matches> filteredMatches = matchesToFilter.stream().filter(m->m.getCompetition().equalsIgnoreCase(competition)).collect(Collectors.toList());
-		team.getFinalMatches().get(competition).put(result, filteredMatches);
 	}
 
 }
