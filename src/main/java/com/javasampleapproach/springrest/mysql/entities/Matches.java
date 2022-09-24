@@ -24,19 +24,19 @@ public class Matches {
 
 	@Column(name = "hometeam")
 	private String hometeam; // TODO delete this once it will be removed from the DB
-	
+
 	@Column(name = "awayteam")
 	private String awayteam; // TODO delete this once it will be removed from the DB
-	
+
 	@Column(name = "scorehome")
 	private int scorehome;
 	
 	@Column(name = "scoreaway")
 	private int scoreaway;
-	
+
 	@Column(name = "winner")
 	private String winner; // TODO delete this once it will be removed from the DB
-	
+
 	@Column(name = "season")
 	private String season;
 	
@@ -53,13 +53,13 @@ public class Matches {
 	private String competitionPhase;
 
 	@Column(name = "idhometeam")
-	private int idAwayTeam;
+	private long idHomeTeam;
 
 	@Column(name = "idawayteam")
-	private int idHomeTeam;
+	private long idAwayTeam;
 
 	@Column(name = "winnerid")
-	private int winnerId;
+	private long winnerId;
 
 
 	private String winnerPlayer;

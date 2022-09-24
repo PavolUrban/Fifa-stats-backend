@@ -27,15 +27,11 @@ public class FifaPlayerController {
     @Autowired
     RecordsInMatchesRepository recordsInMatchesRepository;
 
-
     @Autowired
     FifaPlayerDBRepository fifaPlayerDBRepository;
 
     @Autowired
     SeasonsRepository seasonsRepository;
-
-    @Autowired
-    MatchesRepository matchesRepository;
 
     @PostMapping("/savePlayerRecord")
     public List<String> getPlayerNames(@RequestBody PlayerStatToSave player){

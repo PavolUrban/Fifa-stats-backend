@@ -70,4 +70,6 @@ public class MyUtils {
 	public static final String PLAY_OFFS_STAGE = "Play offs";
 	public static final String PLAY_OFFS_ROUND_LIKE_VALUE = "Round";
 	public static final String PLAY_OFFS_FINAL_LIKE_VALUE = "Final";
+
+	public static final int drawResultId = -1;
 }

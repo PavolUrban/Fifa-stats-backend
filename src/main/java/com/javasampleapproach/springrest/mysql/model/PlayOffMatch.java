@@ -17,12 +17,16 @@ public class PlayOffMatch {
 	String nonQualifiedTeam;
 	int nonQualifiedTeamGoals;
 	String qualifiedPlayer;
+	long qualifiedTeamId;
+	long nonQualifiedTeamId;
 
-	public PlayOffMatch(List<Matches> matchesList, String qualifiedTeam, String nonQualifiedTeam, String qualifiedPlayer)
+	public PlayOffMatch(List<Matches> matchesList, String qualifiedTeam, long qualifiedTeamId, String nonQualifiedTeam, long nonQualifiedTeamId, String qualifiedPlayer)
 	{
 		this.matchesList = matchesList;
 		this.qualifiedTeam  = qualifiedTeam;
 		this.nonQualifiedTeam = nonQualifiedTeam;
 		this.qualifiedPlayer = qualifiedPlayer;
+		this.qualifiedTeamId = qualifiedTeamId;
+		this.nonQualifiedTeamId = nonQualifiedTeamId;
 	}
 }

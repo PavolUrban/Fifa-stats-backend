@@ -7,6 +7,7 @@ import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
+import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.*;
 import com.javasampleapproach.springrest.mysql.repo.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ public class MatchesController {
 	@Autowired
 	FifaPlayerDBRepository fifaPlayerDBRepository;
 
+	@Autowired
+	TeamController teamController;
+
 	@GetMapping("/getMatches")
 	public List<Matches> getAllCustomers() {
 
@@ -49,8 +53,8 @@ public class MatchesController {
 
 	@GetMapping("/getMatchesForTeam/{teamname}")
 	public Map<String, Object> getMatchesForCustomTeam(@PathVariable("teamname") String teamName) {
-
-		List<Matches> matches = matchesRepository.findByHometeamOrAwayteam(teamName, teamName);
+		long teamId = teamController.findByTeamName(teamName).getId();
+		List<Matches> matches = matchesRepository.findByIdHomeTeamOrIdAwayTeam(teamId, teamId);
 
 		Map<String, Object> result = new HashMap();
 		result.put("Round of 16", null);
@@ -68,7 +72,7 @@ public class MatchesController {
 
 		int winsInFinal = 0;
 		for (Matches finale : finals) {
-			if (finale.getWinner().equalsIgnoreCase(teamName))
+			if (finale.getWinnerId() == teamId)
 				winsInFinal++;
 		}
 
@@ -267,16 +271,13 @@ public class MatchesController {
 		return name;
 	}
 
-
-
-
 	private void setWinningTeam(Matches match) {
 		if (match.getScorehome() > match.getScoreaway()) {
-			match.setWinner(match.getHometeam());
+			match.setWinnerId(match.getIdHomeTeam());
 		} else if (match.getScorehome() == match.getScoreaway()) {
-			match.setWinner(MyUtils.RESULT_DRAW);
+			match.setWinnerId(MyUtils.drawResultId);
 		} else {
-			match.setWinner(match.getAwayteam());
+			match.setWinnerId(match.getIdAwayTeam());
 		}
 	}
 
@@ -305,12 +306,14 @@ public class MatchesController {
 	@GetMapping("/getH2HStats/{firstTeam}/{secondTeam}")
 	public Map<String, Object> getCustomGroupMatches(@PathVariable("firstTeam") String firstTeam, @PathVariable("secondTeam") String secondTeam) {
 
+		long firstTeamId = teamController.findByTeamName(firstTeam).getId();
+		long secondTeamId = teamController.findByTeamName(secondTeam).getId();
+
 		List<Matches> finalList = new ArrayList<>();
-		matchesRepository.findByHometeamAndAwayteam(firstTeam, secondTeam).forEach(finalList::add);
-		matchesRepository.findByHometeamAndAwayteam(secondTeam, firstTeam).forEach(finalList::add);
-
+		matchesRepository.findByIdHomeTeamAndIdAwayTeam(firstTeamId, secondTeamId).forEach(finalList::add);
+		matchesRepository.findByIdHomeTeamAndIdAwayTeam(secondTeamId, firstTeamId).forEach(finalList::add);
 		finalList.sort(Comparator.comparing(Matches::getSeason).thenComparing(Matches::getCompetitionPhase));
-
+		List<Team> allTeams = teamController.getAllTeams();
 
 		Map<String, Object> response = new HashMap<String, Object>();
 
@@ -332,7 +335,8 @@ public class MatchesController {
 			playersStats.put(winner, playersStats.get(winner) + 1);
 
 			//teams statistics
-			overallStats.put(match.getWinner(), overallStats.get(match.getWinner()) + 1);
+			String winnerTeamName = teamController.getTeamNameById(allTeams, match.getWinnerId());
+			overallStats.put(winnerTeamName, overallStats.get(winnerTeamName) + 1);
 		}
 
 
@@ -342,6 +346,10 @@ public class MatchesController {
 
 
 		return response;
+	}
+
+	private String getTeamNameById(List<Team> allTeams, int teamId){
+		return allTeams.stream().filter(team-> team.getId() == teamId).map(team -> team.getTeamName()).findFirst().orElse(null);
 	}
 
 	@GetMapping("/getDataToCreateMatch/")
@@ -378,6 +386,8 @@ public class MatchesController {
 	public List<Matches> getFilteredMatches(@PathVariable("season") String season, @PathVariable("competition") String competition, @PathVariable("competitionPhase") String competitionPhase,
 											@PathVariable("teamName") String teamName) {
 
+		long teamId = teamController.findByTeamName(teamName).getId();
+
 		if (season.equalsIgnoreCase(MyUtils.ALL_SEASONS)) {
 			season = null;
 		}
@@ -395,7 +405,7 @@ public class MatchesController {
 		if (teamName == null || teamName.equalsIgnoreCase("null")) {
 			return matches;
 		} else {
-			List<Matches> matchesForSelectedTeam = matches.stream().filter(match -> match.getHometeam().equalsIgnoreCase(teamName) || match.getAwayteam().equalsIgnoreCase(teamName)).collect(Collectors.toList());
+			List<Matches> matchesForSelectedTeam = matches.stream().filter(match -> match.getIdHomeTeam() == teamId || match.getIdAwayTeam() == teamId).collect(Collectors.toList());
 			return matchesForSelectedTeam;
 		}
 	}

@@ -23,15 +23,18 @@ public class GlobalStatsController {
 
 	@Autowired
 	TeamRepository teamRepository;
-	
-	private String resultOfTeamMatchByTeam(Matches m, String teamname)
+
+	@Autowired
+	TeamController teamController;
+
+	private String resultOfTeamMatchByTeam(Matches m, long teamId)
 	{
 		String resultOfMatch = "unknown";
-		
-		if(m.getWinner().equalsIgnoreCase("D"))
+
+		if(m.getWinnerId() == MyUtils.drawResultId)
 			resultOfMatch = "draw";
 		
-		else if(m.getWinner().equalsIgnoreCase(teamname))
+		else if(m.getWinnerId() == teamId)
 			resultOfMatch = "win";
 		
 		else
@@ -42,17 +45,17 @@ public class GlobalStatsController {
 		
 	}
 	
-	private List<Integer> getGoals(Matches m, String teamname)
+	private List<Integer> getGoals(Matches m, long teamId)
 	{
-		List<Integer> teamStats = new ArrayList<Integer>();
+		List<Integer> teamStats = new ArrayList<>();
 		
-		if(m.getHometeam().equalsIgnoreCase(teamname))
+		if(m.getIdHomeTeam() == teamId)
 		{
 			teamStats.add(m.getScorehome());
 			teamStats.add(m.getScoreaway());
 		}	
 		
-		else if(m.getAwayteam().equalsIgnoreCase(teamname))
+		else if(m.getIdAwayTeam() == teamId)
 		{
 			teamStats.add(m.getScoreaway());
 			teamStats.add(m.getScorehome());
@@ -62,17 +65,18 @@ public class GlobalStatsController {
 	}
 	
 	
-	
-	private void doStuff(Map<String, Map<String, Integer>> map, String teamname, Matches m)
+	// TODO all of this will need to be totally re-worked
+	private void doStuff(Map<String, Map<String, Integer>> map, Team team, Matches m)
 	{
+
+		String resultOfMatch = resultOfTeamMatchByTeam(m, team.getId());
+		List<Integer> teamGoals = getGoals(m, team.getId());
+
+
 		
-		String resultOfMatch = resultOfTeamMatchByTeam(m, teamname);
-		List<Integer> teamGoals = getGoals(m, teamname);
-		
-		
-		if(map.containsKey(teamname))
+		if(map.containsKey(team.getTeamName()))
 		{
-			Map<String, Integer> teamStats = map.get(teamname);
+			Map<String, Integer> teamStats = map.get(team.getTeamName());
 			
 			//team stats W,L,D
 			teamStats.put(resultOfMatch, teamStats.get(resultOfMatch) + 1);
@@ -99,7 +103,7 @@ public class GlobalStatsController {
 			teamStats.put("goalsScored", teamStats.get("goalsScored") + teamGoals.get(0)); //0 - goalsScored, 1- goalsConceded
 			teamStats.put("goalsConceded", teamStats.get("goalsConceded") + teamGoals.get(1));
 			
-			map.put(teamname, teamStats);
+			map.put(team.getTeamName(), teamStats);
 		}
 	}
 	
@@ -139,9 +143,13 @@ public class GlobalStatsController {
 		Iterable<Matches> matches = matchesRepository.findAll();
 		Map<String, Map<String, Integer>> map = new HashMap<String, Map<String,Integer>>();
 
+		List<Team> allTeams = teamController.getAllTeams();
+
 		for(Matches m : matches) {
-			doStuff(map, m.getHometeam() ,m);
-			doStuff(map,m.getAwayteam(),m);
+			Team homeTeam = teamRepository.findById(m.getIdHomeTeam()).orElse(null);
+			doStuff(map, homeTeam ,m);
+			Team awayTeam = teamRepository.findById(m.getIdAwayTeam()).orElse(null);
+			doStuff(map, awayTeam ,m);
 		}
 		
 		Iterable<Team> teams = teamRepository.findAll();
@@ -169,8 +177,8 @@ public class GlobalStatsController {
 		List<TeamForTrophyRoom> trophyRoom = new ArrayList<>();
 		List<Matches> finalMatches = matchesRepository.findByCompetitionPhase("Final");
 		finalMatches.forEach(match-> {
-			insertOrUpdateTrophyRoom(trophyRoom, match.getHometeam(), match);
-			insertOrUpdateTrophyRoom(trophyRoom, match.getAwayteam(), match);
+			insertOrUpdateTrophyRoom(trophyRoom, match.getIdHomeTeam(), match);
+			insertOrUpdateTrophyRoom(trophyRoom, match.getIdAwayTeam(), match);
 		});
 
 		trophyRoom.forEach(team-> {
@@ -184,11 +192,10 @@ public class GlobalStatsController {
 		return trophyRoom;
 	}
 
-	private void insertOrUpdateTrophyRoom (List<TeamForTrophyRoom> trophyRoom, String teamName, Matches match){
-		TeamForTrophyRoom teamAlreadyInRoom = trophyRoom.stream().filter(team-> team.getTeamName().equalsIgnoreCase(teamName)).findFirst().orElse(null);
-
+	private void insertOrUpdateTrophyRoom (List<TeamForTrophyRoom> trophyRoom, long teamId, Matches match){
+		TeamForTrophyRoom teamAlreadyInRoom = trophyRoom.stream().filter(team-> team.getTeamId() == teamId).findFirst().orElse(null);
 		if(teamAlreadyInRoom == null) {
-			TeamForTrophyRoom newTeam = new TeamForTrophyRoom(teamName);
+			TeamForTrophyRoom newTeam = new TeamForTrophyRoom(teamId);
 			addStatsForProperCompetition(newTeam, match);
 			trophyRoom.add(newTeam);
 		} else {
@@ -198,13 +205,13 @@ public class GlobalStatsController {
 
 	private void addStatsForProperCompetition(TeamForTrophyRoom team, Matches match){
 		if(match.getCompetition().equalsIgnoreCase(MyUtils.CHAMPIONS_LEAGUE)){
-			if (match.getWinner().equalsIgnoreCase(team.getTeamName())) {
+			if (match.getWinnerId() == team.getTeamId()) {
 				team.setWinCountCL(team.getWinCountCL() + 1);
 			} else {
 				team.setRunnersUpCL(team.getRunnersUpCL() + 1);
 			}
 		} else {
-			if (match.getWinner().equalsIgnoreCase(team.getTeamName())) {
+			if (match.getWinnerId() == team.getTeamId()) {
 				team.setWinCountEL(team.getWinCountEL() + 1);
 			} else {
 				team.setRunnersUpEL(team.getRunnersUpEL() + 1);

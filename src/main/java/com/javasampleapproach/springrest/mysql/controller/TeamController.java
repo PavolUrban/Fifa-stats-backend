@@ -35,7 +35,7 @@ public class TeamController {
 	MatchesRepository matchesRepository;
 
 	@GetMapping("/getAllTeamNames")
-	public List<String> getTeamnames() {
+	public List<String> getAllTeamNames() {
 		List<String> teamNames = new ArrayList<>();
 		teamRepository.findAll().forEach(p -> teamNames.add(p.getTeamName()));
 		return teamNames;
@@ -74,29 +74,28 @@ public class TeamController {
 	// TODO check for multiple times used basically the same condition, this may be improved
 	@GetMapping("/getTeamStats/{teamname}")
 	public TeamStatsWithMatches singleTeamStats(@PathVariable("teamname") String teamName) {
-
+		Team team = teamRepository.findByTeamName(teamName);
 		List<Matches> matches  = matchesRepository.getAllMatchesForTeam(teamName);
-		//Team t = teamRepository.findByTeamName(teamName);
 
-		TeamStatsWithMatches team = new TeamStatsWithMatches();
-		team.setTeamName(teamName);
-		team.setMatches(matches);
+		TeamStatsWithMatches teamStats = new TeamStatsWithMatches();
+		teamStats.setTeamName(teamName);
+		teamStats.setMatches(matches);
 
 		for(Matches m : matches)  {
 			if(m.getCompetition().equalsIgnoreCase(MyUtils.CHAMPIONS_LEAGUE)){
-				setWDLGoalsAndSeasons(m, team.getTeamStatsCL(), teamName);
+				setWDLGoalsAndSeasons(m, teamStats.getTeamStatsCL(), team.getId());
 			} else {
-				setWDLGoalsAndSeasons(m, team.getTeamStatsEL(), teamName);
+				setWDLGoalsAndSeasons(m, teamStats.getTeamStatsEL(), team.getId());
 			}
 		}
 
-		setBilance(team);
-		team.getTeamStatsEL().calculateGoalDiff();
-		team.getTeamStatsCL().calculateGoalDiff();
-		team.calculateTeamStatsTotal();
+		setBilance(teamStats);
+		teamStats.getTeamStatsEL().calculateGoalDiff();
+		teamStats.getTeamStatsCL().calculateGoalDiff();
+		teamStats.calculateTeamStatsTotal();
 
 
-		return team;
+		return teamStats;
 	}
 
 	private void setBilance(TeamStatsWithMatches team){
@@ -115,22 +114,21 @@ public class TeamController {
 	}
 
 
-	private void setWDLGoalsAndSeasons(Matches m, TeamStats teamStats, String teamName) {
+	private void setWDLGoalsAndSeasons(Matches m, TeamStats teamStats, long teamId) {
 		// W-D-L setter
-		if (m.getWinner().equalsIgnoreCase("D")) {
+		if (m.getWinnerId() == MyUtils.drawResultId) {
 			teamStats.incrementDraws(1);
-		} else if (m.getWinner().equalsIgnoreCase(teamName)) {
-			System.out.println(teamStats.getWins());
+		} else if (m.getWinnerId() == teamId) {
 			teamStats.incrementWins(1);
 		} else {
 			teamStats.incrementLosses(1);
 		}
 
 		// GS and GC setter
-		if(m.getHometeam().equalsIgnoreCase(teamName)) {
+		if(m.getIdHomeTeam() == teamId) {
 			teamStats.incrementGoalsScored(m.getScorehome());
 			teamStats.incrementGoalsConceded(m.getScoreaway());
-		} else if(m.getAwayteam().equalsIgnoreCase(teamName)) {
+		} else if(m.getIdAwayTeam() == teamId) {
 			teamStats.incrementGoalsScored(m.getScoreaway());
 			teamStats.incrementGoalsConceded(m.getScorehome());
 		}
@@ -144,7 +142,7 @@ public class TeamController {
 		// finals
 		if(m.getCompetitionPhase().equalsIgnoreCase(MyUtils.FINAL)){
 			teamStats.incrementFinalMatchesCount(1);
-			if(m.getWinner().equalsIgnoreCase(teamName)){
+			if(m.getWinnerId() == teamId){
 				teamStats.incrementTitlesCount(1);
 			} else {
 				teamStats.incrementRunnersUpCount(1);
@@ -202,6 +200,20 @@ public class TeamController {
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
+	}
+
+	public List<Team> getAllTeams(){
+		List<Team> allTeams = new ArrayList<>();
+		teamRepository.findAll().forEach(allTeams::add);
+		return allTeams;
+	}
+
+	public String getTeamNameById(List<Team> allTeams, Long teamId){
+		return allTeams.stream().filter(team-> team.getId() == teamId).map(team -> team.getTeamName()).findFirst().orElse(null);
+	}
+
+	public Team findByTeamName(String teamName){
+		return teamRepository.findByTeamName(teamName);
 	}
 
 }

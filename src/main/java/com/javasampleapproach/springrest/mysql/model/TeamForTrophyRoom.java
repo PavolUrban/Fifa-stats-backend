@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TeamForTrophyRoom {
     private String teamName;
+    private long teamId;
     private int winCountCL = 0;
     private int winCountEL = 0;
     private Integer winCountTotal = 0;
@@ -14,7 +15,7 @@ public class TeamForTrophyRoom {
     private int runnersUpEL = 0;
     private int runnersUpTotal = 0;
 
-    public TeamForTrophyRoom(String teamName){
-        this.teamName = teamName;
+    public TeamForTrophyRoom(long teamId){
+        this.teamId = teamId;
     }
 }

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import Utils.MyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -65,10 +66,10 @@ public class PlayersController {
 	public String whoIsWinnerOfMatch(Matches match, String playerFirst, String playerSecond) {
 		String winner;
 
-		if (match.getWinner().equalsIgnoreCase(RESULT_DRAW)){
+		if (match.getWinnerId() == drawResultId){
 			winner = RESULT_DRAW;
-		} else if ((match.getHometeam().equalsIgnoreCase(match.getWinner()) && (match.getPlayerH().equalsIgnoreCase(playerFirst))) ||
-				(match.getAwayteam().equalsIgnoreCase(match.getWinner())) && (match.getPlayerA().equalsIgnoreCase(playerFirst))) {
+		} else if ( (match.getIdHomeTeam() == match.getWinnerId() && match.getPlayerH().equalsIgnoreCase(playerFirst) ) ||
+				    (match.getIdAwayTeam() == match.getWinnerId() && match.getPlayerA().equalsIgnoreCase(playerFirst) ) ) {
 			winner = playerFirst;
 		} else {
 			winner = playerSecond;

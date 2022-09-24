@@ -22,7 +22,7 @@ public class OverallStats {
     private List<Float> avgGoalsPerMatch = new ArrayList<>();
     private List<Integer> yellowCardsCount = new ArrayList<>();
     private List<Integer> redCardsCount = new ArrayList<>();
-    private String winnerTeam;
+    private String winnerTeam = "unknown";
     private String winnerPlayer;
     private String seasonName;
 
