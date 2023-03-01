@@ -1,13 +1,12 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.*;
 import com.javasampleapproach.springrest.mysql.repo.*;
+import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,15 +16,12 @@ import Utils.MyUtils;
 @RestController
 @RequestMapping("/globalStats")
 public class GlobalStatsController {
-	
+	// do not wire repo
 	@Autowired
 	MatchesRepository matchesRepository;
 
 	@Autowired
-	TeamRepository teamRepository;
-
-	@Autowired
-	TeamController teamController;
+	TeamService teamService;
 
 	private String resultOfTeamMatchByTeam(Matches m, long teamId)
 	{
@@ -139,20 +135,17 @@ public class GlobalStatsController {
 	
 	@GetMapping("/getTopTeamStats")
 	public	List<TopTeam> getTopTeamStats() {
-
 		Iterable<Matches> matches = matchesRepository.findAll();
-		Map<String, Map<String, Integer>> map = new HashMap<String, Map<String,Integer>>();
-
-		List<Team> allTeams = teamController.getAllTeams();
+		Map<String, Map<String, Integer>> map = new HashMap<>();
 
 		for(Matches m : matches) {
-			Team homeTeam = teamRepository.findById(m.getIdHomeTeam()).orElse(null);
+			Team homeTeam = teamService.findById(m.getIdHomeTeam()).orElse(null);
 			doStuff(map, homeTeam ,m);
-			Team awayTeam = teamRepository.findById(m.getIdAwayTeam()).orElse(null);
+			Team awayTeam = teamService.findById(m.getIdAwayTeam()).orElse(null);
 			doStuff(map, awayTeam ,m);
 		}
 		
-		Iterable<Team> teams = teamRepository.findAll();
+		Iterable<Team> teams = teamService.getAllTeamsIterable();
 		List<TopTeam> topTeams = convertMapToListOfBestTeams(map, teams);
 		
 		topTeams.sort((o1, o2) -> o2.getWins().compareTo(o1.getWins()));
@@ -194,8 +187,12 @@ public class GlobalStatsController {
 
 	private void insertOrUpdateTrophyRoom (List<TeamForTrophyRoom> trophyRoom, long teamId, Matches match){
 		TeamForTrophyRoom teamAlreadyInRoom = trophyRoom.stream().filter(team-> team.getTeamId() == teamId).findFirst().orElse(null);
+
 		if(teamAlreadyInRoom == null) {
+			// TODO improve this quick fix
+			Team team = teamService.findById(teamId).get();
 			TeamForTrophyRoom newTeam = new TeamForTrophyRoom(teamId);
+			newTeam.setTeamName(team.getTeamName());
 			addStatsForProperCompetition(newTeam, match);
 			trophyRoom.add(newTeam);
 		} else {

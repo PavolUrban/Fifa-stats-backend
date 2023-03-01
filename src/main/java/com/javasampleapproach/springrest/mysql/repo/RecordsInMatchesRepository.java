@@ -69,7 +69,7 @@ public interface RecordsInMatchesRepository extends CrudRepository<RecordsInMatc
 //    @Query(value = "SELECT user.firstname AS firstname, user.lastname AS lastname FROM SD_User user WHERE id = ?1", nativeQuery = true)
 //    NameOnly findByNativeQuery(Integer id);
 
-    @Query(value = "SELECT rim.typeOfRecord, rim.numberOfGoalsForOldFormat, rim.teamName, m.season FROM RECORDSINMATCHES rim JOIN Matches m ON m.id = rim.matchId WHERE playerid = ?1 ORDER BY m.season", nativeQuery = true)
+    @Query(value = "SELECT rim.typeOfRecord, rim.numberOfGoalsForOldFormat, rim.teamName, m.season FROM RECORDSINMATCHES rim JOIN Matches m ON m.id = rim.matchId WHERE playerid = ?1 AND rim.typeOfRecord NOT LIKE 'OG|%' ORDER BY m.season", nativeQuery = true)
     List<PlayerStatsInSeason> findRecordsRelatedToPlayer(long id);
 
     @Query(value = "SELECT rim.* FROM MATCHES m JOIN RecordsInMatches rim ON m.id = rim.matchId WHERE (m.awayteam = :teamName OR m.hometeam = :teamName) AND rim.typeOfRecord = 'G'", nativeQuery = true)

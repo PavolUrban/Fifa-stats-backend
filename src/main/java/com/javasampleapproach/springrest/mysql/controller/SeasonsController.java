@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import Utils.HelperMethods;
-import Utils.MyUtils;
 import Utils.NewestGoalscorersCalculator;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
@@ -19,7 +18,7 @@ import com.javasampleapproach.springrest.mysql.model.H2HPlayers;
 import com.javasampleapproach.springrest.mysql.model.OverallStats;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
-import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
+import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,7 +37,7 @@ import static Utils.MyUtils.*;
 @RestController
 @RequestMapping("/completeSeasons")
 public class SeasonsController {
-	
+	// do not import repos here, same for controllers!
 	@Autowired
 	MatchesRepository matchesRepository;
 
@@ -49,13 +48,10 @@ public class SeasonsController {
 	RecordsInMatchesRepository recordsInMatchesRepository;
 
 	@Autowired
-	TeamRepository teamRepository;
-
-	@Autowired
 	PlayersController playersStatsController  = new PlayersController();
 
 	@Autowired
-	TeamController teamController;
+	TeamService teamService;
 
 	@GetMapping("/getAllPhases/{season}/{competition}")
 	public Object getAllPhasesForSeasonAndCompetition(@PathVariable("season") String season, @PathVariable("competition") String competition) {
@@ -63,8 +59,7 @@ public class SeasonsController {
 		Map<String, List<TableTeam>> groupsWithTeams = new HashMap<>();
 		NewestGoalscorersCalculator ngc = new NewestGoalscorersCalculator(fifaPlayerDBRepository);
 
-		List<Team> allTeams = new ArrayList<>();
-		teamRepository.findAll().forEach(allTeams::add);
+		List<Team> allTeams = teamService.getAllTeams();
 
 		/*  *********** GROUP STAGE *********** */
 		List<Matches> matchesGroupStage = matchesRepository.getAllMatchesBySeasonAndCompetitionGroupStage(season, competition);
@@ -114,7 +109,7 @@ public class SeasonsController {
 				long draws = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == drawResultId).count();
 				long losses = allMatchesByTeam.size()- wins - draws;
 
-				tableTeam.setTeamname(teamController.getTeamNameById(allTeams, teamId));
+				tableTeam.setTeamname(teamService.getTeamNameById(allTeams, teamId));
 				tableTeam.setWins((int) wins);
 				tableTeam.setDraws((int) draws);
 				tableTeam.setLosses((int) losses);
@@ -179,7 +174,7 @@ public class SeasonsController {
 
 
 
-		overallStats.setWinnerTeam(finalMatch != null ? teamController.getTeamNameById(allTeams, finalMatch.getWinnerId()) : "unknown");
+		overallStats.setWinnerTeam(finalMatch != null ? teamService.getTeamNameById(allTeams, finalMatch.getWinnerId()) : "unknown");
 		setCardsForOverallStats(overallStats.getYellowCardsCount(), season, competition, "YC");
 		setCardsForOverallStats(overallStats.getRedCardsCount(), season, competition, "RC");
 
@@ -253,8 +248,7 @@ public class SeasonsController {
 		matches.stream().filter(p ->  phases.add(p.getCompetitionPhase())).collect(Collectors.toList());
 		Map<String, List<PlayOffMatch>> matchesInAllPhases = new HashMap<String, List<PlayOffMatch>>();
 
-		List<Team> allTeams = new ArrayList<>();
-		teamRepository.findAll().forEach(allTeams::add);
+		List<Team> allTeams = teamService.getAllTeams();
 
 		for(String phase: phases) {
 			List<Matches> matchesInCurrentPhase = new ArrayList<>();
@@ -283,8 +277,8 @@ public class SeasonsController {
 					long nonQualifiedTeamId = getNonQualified(teamIds, qualifiedTeamId);
 					String qualifiedPlayer = getQualifiedPlayer(qualifiedTeamId, match1);
 
-					String qualifiedTeamName = teamController.getTeamNameById(allTeams, qualifiedTeamId);
-					String nonQualifiedTeamName = teamController.getTeamNameById(allTeams, nonQualifiedTeamId);
+					String qualifiedTeamName = teamService.getTeamNameById(allTeams, qualifiedTeamId);
+					String nonQualifiedTeamName = teamService.getTeamNameById(allTeams, nonQualifiedTeamId);
 
 					PlayOffMatch playOff = new PlayOffMatch(new ArrayList<>(Arrays.asList(match1, match2)), qualifiedTeamName, qualifiedTeamId, nonQualifiedTeamName, nonQualifiedTeamId, qualifiedPlayer);
 					

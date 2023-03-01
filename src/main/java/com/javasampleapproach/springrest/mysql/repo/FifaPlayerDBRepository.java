@@ -11,6 +11,8 @@ import java.util.Set;
 public interface FifaPlayerDBRepository  extends CrudRepository<FifaPlayerDB, Long> {
     
     FifaPlayerDB findByPlayerName(String playerName);
+
+    List<FifaPlayerDB> findByPlayerNameContainingIgnoreCase(final String playerNameSubstring);
     
     List<FifaPlayerDB> findByPlayerNameIn(List<String> playerNames);
     

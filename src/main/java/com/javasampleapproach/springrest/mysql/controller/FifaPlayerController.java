@@ -2,15 +2,13 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
-import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.*;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
-import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.SeasonsRepository;
+import com.javasampleapproach.springrest.mysql.services.FifaPlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -24,6 +22,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/fifaPlayer")
 public class FifaPlayerController {
 
+    // remove repos use services!
     @Autowired
     RecordsInMatchesRepository recordsInMatchesRepository;
 
@@ -33,36 +32,40 @@ public class FifaPlayerController {
     @Autowired
     SeasonsRepository seasonsRepository;
 
+    @Autowired
+    FifaPlayerService fifaPlayerService;
+
+
+    @GetMapping("/getPlayersByName/{nameSubstring}")
+    public List<FifaPlayerDB> getPlayerByName(@PathVariable("nameSubstring") String nameSubstring) {
+        return fifaPlayerService.getPlayersByName(nameSubstring);
+    }
+
+
+    // todo move to recordsInMatchesController + renamePlayerStatTOSave
     @PostMapping("/savePlayerRecord")
-    public List<String> getPlayerNames(@RequestBody PlayerStatToSave player){
-    System.out.println(" v db hladam hraca menom "+ player.getPlayerName());
-       FifaPlayerDB fifaPlayer = fifaPlayerDBRepository.findByPlayerName(player.getPlayerName());
+    public List<String> getPlayerNames(@RequestBody NewRecordToSave newRecordToSave){
+        System.out.println("TOto chcem ulozit");
+        System.out.println(newRecordToSave);
+
         RecordsInMatches rim = new RecordsInMatches();
+        rim.setPlayerId(newRecordToSave.getPlayerId());
+        rim.setMatchId(newRecordToSave.getMatchId());
+        rim.setTeamName(newRecordToSave.getTeamName());
+        // todo rim.setTeamId()
+        rim.setTypeOfRecord(newRecordToSave.getRecordType());
 
-        rim.setPlayerId(fifaPlayer.getId());
-        rim.setMatchId(player.getMatchId());
-        rim.setTeamName(player.getTeamName());
-        rim.setTypeOfRecord(player.getRecordType());
 
-        int numericValue = Integer.parseInt(player.getDetails());
-        if(player.getRecordSignature().equalsIgnoreCase("minutes")){
-            rim.setMinuteOfRecord(numericValue);
+        if(newRecordToSave.getRecordSignature().equalsIgnoreCase("minutes")){
+            rim.setMinuteOfRecord(newRecordToSave.getNumericDetail());
         } else {
-            rim.setNumberOfGoalsForOldFormat(numericValue);
+            rim.setNumberOfGoalsForOldFormat(newRecordToSave.getNumericDetail());
         }
 
         recordsInMatchesRepository.save(rim);
         return null;
     }
 
-
-    @GetMapping("/getPlayerNames")
-    public List<String> getPlayerNames(){
-        List<String> playerNames = new ArrayList<>();
-        fifaPlayerDBRepository.findAll().forEach(fifaPlayerDB -> playerNames.add(fifaPlayerDB.getPlayerName()));
-
-        return playerNames;
-    }
     @GetMapping("/getStats/{playerName}")
     public FifaPlayerDialogStats getAllStatsForSpecifiedFifaPlayerNEWEST(@PathVariable("playerName") String playerName) {
 
@@ -70,8 +73,9 @@ public class FifaPlayerController {
         // pozor vznika problem ked hrac prestupil v ramci sezony!! check haaland - 3g za salzburg + 2za dormund su zobrazene ako 5 za salzburg
         FifaPlayerDialogStats allStats = new FifaPlayerDialogStats();
         allStats.setName(playerName);
-
+        System.out.println("hladam hraca menom " + playerName);
         FifaPlayerDB fifaPlayer = fifaPlayerDBRepository.findByPlayerName(playerName);
+        System.out.println(fifaPlayer);
         List<PlayerStatsInSeason> allRecordsForCurrentPlayer = recordsInMatchesRepository.findRecordsRelatedToPlayer(fifaPlayer.getId());
         List<String> playersSeasonsList = allRecordsForCurrentPlayer.stream().map(stat-> stat.getSeason()).distinct().collect(Collectors.toList());
 
@@ -85,7 +89,7 @@ public class FifaPlayerController {
 
             recordsInCurrentSeason.forEach(singleRecord->{
                 System.out.println(singleRecord.getTypeOfRecord() + " for " + singleRecord.getTeamName());
-                if(singleRecord.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_GOAL)){
+                if(singleRecord.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_GOAL) || singleRecord.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_PENALTY)){
                     if(singleRecord.getNumberOfGoalsForOldFormat()!=null){
                         System.out.println("old format detected");
                         playerStatsPerSeason.setGoalsCount(playerStatsPerSeason.getGoalsCount() + singleRecord.getNumberOfGoalsForOldFormat());

@@ -10,6 +10,7 @@ import lombok.Data;
 public class TeamStatsWithMatches {
 
 	private String teamName;
+	private long teamId;
 	private List<Matches> matches;
 	private TeamStats teamStatsCL;
 	private TeamStats teamStatsEL;
