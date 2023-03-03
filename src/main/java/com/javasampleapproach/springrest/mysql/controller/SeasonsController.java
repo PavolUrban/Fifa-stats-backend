@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import Utils.HelperMethods;
+import Utils.MyUtils;
 import Utils.NewestGoalscorersCalculator;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
@@ -18,6 +19,7 @@ import com.javasampleapproach.springrest.mysql.model.H2HPlayers;
 import com.javasampleapproach.springrest.mysql.model.OverallStats;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
+import com.javasampleapproach.springrest.mysql.services.MatchesService;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -29,17 +31,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.model.PlayOffMatch;
 import com.javasampleapproach.springrest.mysql.model.TableTeam;
-import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
-
-import static Utils.MyUtils.*;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/completeSeasons")
 public class SeasonsController {
 	// do not import repos here, same for controllers!
-	@Autowired
-	MatchesRepository matchesRepository;
 
 	@Autowired
 	FifaPlayerDBRepository fifaPlayerDBRepository;
@@ -48,10 +45,10 @@ public class SeasonsController {
 	RecordsInMatchesRepository recordsInMatchesRepository;
 
 	@Autowired
-	PlayersController playersStatsController  = new PlayersController();
+	TeamService teamService;
 
 	@Autowired
-	TeamService teamService;
+	MatchesService matchesService;
 
 	@GetMapping("/getAllPhases/{season}/{competition}")
 	public Object getAllPhasesForSeasonAndCompetition(@PathVariable("season") String season, @PathVariable("competition") String competition) {
@@ -62,7 +59,7 @@ public class SeasonsController {
 		List<Team> allTeams = teamService.getAllTeams();
 
 		/*  *********** GROUP STAGE *********** */
-		List<Matches> matchesGroupStage = matchesRepository.getAllMatchesBySeasonAndCompetitionGroupStage(season, competition);
+		List<Matches> matchesGroupStage = matchesService.getAllMatchesBySeasonAndCompetitionGroupStage(season, competition);
 
 		Set<String> groupNames = new HashSet<>();
 		matchesGroupStage.stream().filter(p ->  groupNames.add(p.getCompetitionPhase())).collect(Collectors.toList());
@@ -106,7 +103,7 @@ public class SeasonsController {
 				int sumConcededAway = allMatchesByTeam.stream().filter(o -> o.getIdAwayTeam() == teamId).mapToInt(o -> o.getScorehome()).sum();
 				
 				long wins = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == teamId).count();
-				long draws = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == drawResultId).count();
+				long draws = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == MyUtils.drawResultId).count();
 				long losses = allMatchesByTeam.size()- wins - draws;
 
 				tableTeam.setTeamname(teamService.getTeamNameById(allTeams, teamId));
@@ -122,16 +119,16 @@ public class SeasonsController {
 				//todo for this table TeamsOwnerBySeason is prepared - USE IT SOON!
 				long currentTeamMatchesByPavolJay =
 						allMatchesByTeam.stream()
-						.filter(match-> (match.getIdHomeTeam() == teamId && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
-										(match.getIdAwayTeam() == teamId && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY))
+						.filter(match-> (match.getIdHomeTeam() == teamId && match.getPlayerH().equalsIgnoreCase(MyUtils.PAVOL_JAY)) ||
+										(match.getIdAwayTeam() == teamId && match.getPlayerA().equalsIgnoreCase(MyUtils.PAVOL_JAY))
 						).count();
 
 				double playedByPavolJayPercentage = currentTeamMatchesByPavolJay/ (allMatchesByTeam.size() * 1.0);
 
 				if(playedByPavolJayPercentage>0.6){
-					tableTeam.setOwnedByPlayer(PAVOL_JAY);
+					tableTeam.setOwnedByPlayer(MyUtils.PAVOL_JAY);
 				} else {
-					tableTeam.setOwnedByPlayer(KOTLIK);
+					tableTeam.setOwnedByPlayer(MyUtils.KOTLIK);
 				}
 				
 				allTeamsInCurrentGroup.add(tableTeam);
@@ -152,7 +149,7 @@ public class SeasonsController {
 		}
 	
 		// PlayOffs
-    	List<Matches> matchesPO = matchesRepository.getAllMatchesBySeasonAndCompetitionPlayOffs(season, competition);
+    	List<Matches> matchesPO = matchesService.getAllMatchesBySeasonAndCompetitionPlayOffs(season, competition);
 		Map<String, List<PlayOffMatch>> playOffs = getPlayOffs(matchesPO);
 
 		Matches finalMatch = matchesPO.stream().filter(m-> m.getCompetitionPhase().equalsIgnoreCase("Final")).findFirst().orElse(null);
@@ -170,7 +167,7 @@ public class SeasonsController {
 		int goalsGroupStage = matchesGroupStage.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
 		Map<String, Integer> playoffStats = HelperMethods.setnumberOfPlayersWins(matchesPO);
 		OverallStats overallStats = getOverallStats(matchesGroupStage.size(), matchesPO.size(), goalsGroupStage, goalsPlayOffStage, groupStatsForPlayers, playoffStats);
-		overallStats.setWinnerPlayer(finalMatch != null ? playersStatsController.whoIsWinnerOfMatch(finalMatch, PAVOL_JAY, KOTLIK) : "unknown");
+		overallStats.setWinnerPlayer(finalMatch != null ? HelperMethods.whoIsWinnerOfMatch(finalMatch) : "unknown");
 
 
 
@@ -227,8 +224,8 @@ public class SeasonsController {
 
 		// todo this will have to be updated to String, H2H to have stats from distinct playoff stage
 		H2HPlayers h2hPlayOffs = new H2HPlayers();
-		h2hPlayOffs.setPavolJay(playoffStats.get(PAVOL_JAY));
-		h2hPlayOffs.setKotlik(playoffStats.get(KOTLIK));
+		h2hPlayOffs.setPavolJay(playoffStats.get(MyUtils.PAVOL_JAY));
+		h2hPlayOffs.setKotlik(playoffStats.get(MyUtils.KOTLIK));
 		h2hPlayOffs.setDraws(playoffStats.get("Draws"));
 		os.getH2hPlayers().add(h2hPlayOffs);
 
@@ -268,9 +265,8 @@ public class SeasonsController {
 					
 					Matches match1 = matchesInCurrentPhase.get(addedMatches);
 					Matches match2 = matchesInCurrentPhase.get(addedMatches+1);
-					PlayersController pc = new PlayersController();
-					match1.setWinnerPlayer(pc.whoIsWinnerOfMatch(match1, PAVOL_JAY, KOTLIK));
-					match2.setWinnerPlayer(pc.whoIsWinnerOfMatch(match2, PAVOL_JAY, KOTLIK));
+					match1.setWinnerPlayer(HelperMethods.whoIsWinnerOfMatch(match1));
+					match2.setWinnerPlayer(HelperMethods.whoIsWinnerOfMatch(match2));
 
 					ArrayList<Long> teamIds = new ArrayList<>(Arrays.asList(match1.getIdHomeTeam(), match1.getIdAwayTeam()));
 					long qualifiedTeamId = whoIsQualified(match1, match2);

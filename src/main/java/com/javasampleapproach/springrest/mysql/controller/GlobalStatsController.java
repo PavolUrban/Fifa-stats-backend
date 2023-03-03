@@ -1,30 +1,38 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import java.util.*;
 
+import Utils.HelperMethods;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
-import com.javasampleapproach.springrest.mysql.model.*;
-import com.javasampleapproach.springrest.mysql.repo.*;
+import com.javasampleapproach.springrest.mysql.model.TeamForTrophyRoom;
+import com.javasampleapproach.springrest.mysql.model.TitlesCount;
+import com.javasampleapproach.springrest.mysql.model.TopTeam;
+import com.javasampleapproach.springrest.mysql.services.MatchesService;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import Utils.MyUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/globalStats")
 public class GlobalStatsController {
-	// do not wire repo
+
 	@Autowired
-	MatchesRepository matchesRepository;
+	MatchesService matchesService;
 
 	@Autowired
 	TeamService teamService;
 
-	private String resultOfTeamMatchByTeam(Matches m, long teamId)
-	{
+	private String resultOfTeamMatchByTeam(Matches m, long teamId) {
 		String resultOfMatch = "unknown";
 
 		if(m.getWinnerId() == MyUtils.drawResultId)
@@ -41,18 +49,13 @@ public class GlobalStatsController {
 		
 	}
 	
-	private List<Integer> getGoals(Matches m, long teamId)
-	{
+	private List<Integer> getGoals(Matches m, long teamId) {
 		List<Integer> teamStats = new ArrayList<>();
 		
-		if(m.getIdHomeTeam() == teamId)
-		{
+		if(m.getIdHomeTeam() == teamId) {
 			teamStats.add(m.getScorehome());
 			teamStats.add(m.getScoreaway());
-		}	
-		
-		else if(m.getIdAwayTeam() == teamId)
-		{
+		} else if(m.getIdAwayTeam() == teamId) {
 			teamStats.add(m.getScoreaway());
 			teamStats.add(m.getScorehome());
 		}
@@ -62,16 +65,11 @@ public class GlobalStatsController {
 	
 	
 	// TODO all of this will need to be totally re-worked
-	private void doStuff(Map<String, Map<String, Integer>> map, Team team, Matches m)
-	{
-
+	private void doStuff(Map<String, Map<String, Integer>> map, Team team, Matches m) {
 		String resultOfMatch = resultOfTeamMatchByTeam(m, team.getId());
 		List<Integer> teamGoals = getGoals(m, team.getId());
 
-
-		
-		if(map.containsKey(team.getTeamName()))
-		{
+		if(map.containsKey(team.getTeamName())) {
 			Map<String, Integer> teamStats = map.get(team.getTeamName());
 			
 			//team stats W,L,D
@@ -80,10 +78,7 @@ public class GlobalStatsController {
 			//team stats GS,GC
 			teamStats.put("goalsScored", teamStats.get("goalsScored") + teamGoals.get(0)); //0 - goalsScored, 1- goalsConceded
 			teamStats.put("goalsConceded", teamStats.get("goalsConceded") + teamGoals.get(1));
-		}
-
-		else
-		{
+		} else {
 			Map<String, Integer> teamStats= new HashMap<String, Integer>();
 			
 			teamStats.put("win", 0);
@@ -104,8 +99,7 @@ public class GlobalStatsController {
 	}
 	
 	
-	public List<TopTeam> convertMapToListOfBestTeams(Map<String, Map<String, Integer>> map, Iterable<Team> teams)
-	{
+	public List<TopTeam> convertMapToListOfBestTeams(Map<String, Map<String, Integer>> map, Iterable<Team> teams) {
 		List<TopTeam> allTeamsStats = new ArrayList<TopTeam>();
 		for(String team : map.keySet())
 		{
@@ -135,7 +129,7 @@ public class GlobalStatsController {
 	
 	@GetMapping("/getTopTeamStats")
 	public	List<TopTeam> getTopTeamStats() {
-		Iterable<Matches> matches = matchesRepository.findAll();
+		Iterable<Matches> matches = matchesService.getAllMatches();
 		Map<String, Map<String, Integer>> map = new HashMap<>();
 
 		for(Matches m : matches) {
@@ -156,10 +150,10 @@ public class GlobalStatsController {
 	@GetMapping("/winnersList/{competition}")
 	public List<Matches> getWinnersList(@PathVariable("competition") String competition){
 
-		List<Matches> finalMatches = matchesRepository.findByCompetitionPhaseAndCompetitionOrderBySeason("Final",competition);
+		List<Matches> finalMatches = matchesService.getMatchesByCompetitionPhaseAndSeason("Final", competition);
 		PlayersController pc = new PlayersController();
 		finalMatches.forEach(match -> {
-			match.setWinnerPlayer(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik"));
+			match.setWinnerPlayer(HelperMethods.whoIsWinnerOfMatch(match));
 		});
 		return finalMatches;
 	}
@@ -168,7 +162,7 @@ public class GlobalStatsController {
 	public List<TeamForTrophyRoom> getTeamTrophiesCount(){
 
 		List<TeamForTrophyRoom> trophyRoom = new ArrayList<>();
-		List<Matches> finalMatches = matchesRepository.findByCompetitionPhase("Final");
+		List<Matches> finalMatches = matchesService.getMatchesByCompetitionPhase("Final");
 		finalMatches.forEach(match-> {
 			insertOrUpdateTrophyRoom(trophyRoom, match.getIdHomeTeam(), match);
 			insertOrUpdateTrophyRoom(trophyRoom, match.getIdAwayTeam(), match);
@@ -218,7 +212,7 @@ public class GlobalStatsController {
 
 	@GetMapping("/trophyRoom")
 	public List<TitlesCount> getTrophyRoom(){
-		List<Matches> finalMatches = matchesRepository.findByCompetitionPhase("Final");
+		List<Matches> finalMatches = matchesService.getMatchesByCompetitionPhase("Final");
 
 		TitlesCount tcPavol = new TitlesCount();
 		tcPavol.setPlayerName("Pavol Jay");
@@ -232,16 +226,13 @@ public class GlobalStatsController {
 	}
 
 	private void calculateTitlesForPlayerPerCompetition(List<Matches> finalMatches, TitlesCount tcPavol, TitlesCount tcKotlik){
-		PlayersController pc = new PlayersController();
-
 		finalMatches.forEach(match->{
-			if(pc.whoIsWinnerOfMatch(match, "Pavol Jay", "Kotlik").equalsIgnoreCase("Pavol Jay")){
+			if(HelperMethods.whoIsWinnerOfMatch(match).equalsIgnoreCase(MyUtils.PAVOL_JAY)){
 				addTitleInProperCompetition(match, tcPavol);
 			} else {
 				addTitleInProperCompetition(match, tcKotlik);
 			}
 		});
-
 	}
 
 	private void addTitleInProperCompetition(Matches match, TitlesCount tc){

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class FifaPlayerService {
@@ -15,5 +16,9 @@ public class FifaPlayerService {
 
     public List<FifaPlayerDB> getPlayersByName(final String nameSubstring) {
         return fifaPlayerDBRepository.findByPlayerNameContainingIgnoreCase(nameSubstring);
+    }
+
+    public List<FifaPlayerDB> findByIdIn(Set<Long> ids){
+        return fifaPlayerDBRepository.findByIdIn(ids);
     }
 }
