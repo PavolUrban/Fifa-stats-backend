@@ -10,6 +10,6 @@ import java.util.List;
 @AllArgsConstructor
 public class TeamGoalscorers {
     private String teamName;
-    private List<FifaPlayer> playersStats;
+    private List<PlayerWithCards> playersStats;
 
 }

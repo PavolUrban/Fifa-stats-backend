@@ -18,9 +18,9 @@ public interface RecordsInMatchesRepository extends CrudRepository<RecordsInMatc
             "SELECT rec " +
             "FROM RecordsInMatches rec " +
             "JOIN Matches m ON m.id = rec.matchId " +
-            "WHERE (:competitionPhase is null or m.competitionPhase = :competitionPhase) AND (:season is null or m.season = :season) AND (:competition is null or m.competition = :competition) AND (:teamName is null or rec.teamName = :teamName) AND (rec.typeOfRecord = :typeOfRecord1 OR rec.typeOfRecord = :typeOfRecord2 )"
+            "WHERE (:competitionPhase is null or m.competitionPhase = :competitionPhase) AND (:season is null or m.season = :season) AND (:competition is null or m.competition = :competition) AND (:teamId is null or rec.teamRecordId = :teamId) AND (rec.typeOfRecord = :typeOfRecord1 OR rec.typeOfRecord = :typeOfRecord2 )"
     )
-    List<RecordsInMatches> getRecordsByCompetition(@Param("competitionPhase") String competitionPhase, @Param("season") String season, @Param("competition") String competition, @Param("teamName") String teamname, @Param("typeOfRecord1") String typeOfRecord1, @Param("typeOfRecord2") String typeOfRecord2);
+    List<RecordsInMatches> getRecordsByCompetition(@Param("competitionPhase") String competitionPhase, @Param("season") String season, @Param("competition") String competition, @Param("teamId") Integer teamId, @Param("typeOfRecord1") String typeOfRecord1, @Param("typeOfRecord2") String typeOfRecord2);
 
     @Query(value =
                     "SELECT rec " +
@@ -69,10 +69,20 @@ public interface RecordsInMatchesRepository extends CrudRepository<RecordsInMatc
 //    @Query(value = "SELECT user.firstname AS firstname, user.lastname AS lastname FROM SD_User user WHERE id = ?1", nativeQuery = true)
 //    NameOnly findByNativeQuery(Integer id);
 
-    @Query(value = "SELECT rim.typeOfRecord, rim.numberOfGoalsForOldFormat, rim.teamName, m.season FROM RECORDSINMATCHES rim JOIN Matches m ON m.id = rim.matchId WHERE playerid = ?1 AND rim.typeOfRecord NOT LIKE 'OG|%' ORDER BY m.season", nativeQuery = true)
+    @Query(value = "" +
+            "SELECT new com.javasampleapproach.springrest.mysql.model.PlayerStatsInSeason(rim.typeOfRecord, rim.playerTeamId, m.season, t.teamName) " +
+            "FROM RecordsInMatches rim " +
+            "JOIN Matches m ON m.id = rim.matchId " +
+            "JOIN Team t ON t.id = rim.playerTeamId " +
+            "WHERE rim.playerId = ?1 AND rim.typeOfRecord NOT LIKE 'OG|%' " +
+            "ORDER BY m.season")
     List<PlayerStatsInSeason> findRecordsRelatedToPlayer(long id);
 
-    @Query(value = "SELECT rim.* FROM MATCHES m JOIN RecordsInMatches rim ON m.id = rim.matchId WHERE (m.awayteam = :teamName OR m.hometeam = :teamName) AND rim.typeOfRecord = 'G'", nativeQuery = true)
-    List<RecordsInMatches> getScoredAndConcededGoalsByTeam(String teamName);
+
+    @Query(value = "" +
+            "SELECT rim.* FROM MATCHES m " +
+            "JOIN RecordsInMatches rim ON m.id = rim.match_id " +
+            "WHERE (m.idHomeTeam = :teamId OR m.idAwayTeam = :teamId) AND (rim.type_of_record = 'G' OR rim.type_of_record = 'Penalty')", nativeQuery = true)
+    List<RecordsInMatches> getScoredAndConcededGoalsByTeam(Integer teamId);
 
 }

@@ -1,13 +1,14 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import Utils.MyUtils;
-import Utils.NewestCardsCalculator;
-import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
-import com.javasampleapproach.springrest.mysql.model.FifaPlayer;
-import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
-import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
+import com.javasampleapproach.springrest.mysql.model.PlayerWithCards;
+import com.javasampleapproach.springrest.mysql.model.records_in_matches.RecordsInMatchesRequest;
+import com.javasampleapproach.springrest.mysql.services.FifaPlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -17,24 +18,12 @@ import java.util.List;
 public class CardsController {
 
     @Autowired
-    FifaPlayerDBRepository fifaPlayerDBRepository;
+    FifaPlayerService fifaPlayerService;
 
-    @Autowired
-    RecordsInMatchesRepository recordsInMatchesRepository;
+    // todo merge with getGoalscorers
 
-    @GetMapping("/getAllCards/{competition}/{teamname}")
-    public List<FifaPlayer> getCardsRecords(@PathVariable("competition") String competition, @PathVariable("teamname") String teamName)
-    {
-        if(teamName.equalsIgnoreCase("null")) {
-            teamName = null;
-        }
-
-        if(competition.equalsIgnoreCase("Total")) {
-            competition = null;
-        }
-
-        List<RecordsInMatches> allCards = recordsInMatchesRepository.getRecordsByCompetition(null, null, competition, teamName, MyUtils.RECORD_TYPE_YELLOW_CARD, MyUtils.RECORD_TYPE_RED_CARD);
-        NewestCardsCalculator ngc = new NewestCardsCalculator(fifaPlayerDBRepository);
-        return ngc.getCards(allCards);
+    @PostMapping("/getAllCards")
+    public List<PlayerWithCards> getCardsRecords(@RequestBody RecordsInMatchesRequest recordsInMatchesRequest) {
+        return fifaPlayerService.getCards(recordsInMatchesRequest.getCompetition(), recordsInMatchesRequest.getTeamId());
     }
 }

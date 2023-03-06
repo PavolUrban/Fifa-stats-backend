@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 public class MatchEventDetail {
     private String playerName;
     private String recordType;
-    private String teamName;
+    private Integer teamRecordId;
     private int minute;
     private String minuteLabel;
-    private int recordCount;
+   // private int recordCount;
 }

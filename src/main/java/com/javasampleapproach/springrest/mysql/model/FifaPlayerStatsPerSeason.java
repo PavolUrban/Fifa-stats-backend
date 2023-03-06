@@ -13,7 +13,8 @@ import java.util.Set;
 @AllArgsConstructor
 public class FifaPlayerStatsPerSeason {
     String seasonName;
-    String teamname; // todo for now working only for one team + logo - others are ignored
+    String teamname;
+    Integer teamId;
     int goalsCount = 0;
     int yellowCardsCount = 0;
     int redCardsCount = 0;

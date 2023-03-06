@@ -2,7 +2,6 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
-import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.*;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
@@ -42,30 +41,7 @@ public class FifaPlayerController {
     }
 
 
-    // todo move to recordsInMatchesController + renamePlayerStatTOSave
-    @PostMapping("/savePlayerRecord")
-    public List<String> getPlayerNames(@RequestBody NewRecordToSave newRecordToSave){
-        System.out.println("TOto chcem ulozit");
-        System.out.println(newRecordToSave);
-
-        RecordsInMatches rim = new RecordsInMatches();
-        rim.setPlayerId(newRecordToSave.getPlayerId());
-        rim.setMatchId(newRecordToSave.getMatchId());
-        rim.setTeamName(newRecordToSave.getTeamName());
-        // todo rim.setTeamId()
-        rim.setTypeOfRecord(newRecordToSave.getRecordType());
-
-
-        if(newRecordToSave.getRecordSignature().equalsIgnoreCase("minutes")){
-            rim.setMinuteOfRecord(newRecordToSave.getNumericDetail());
-        } else {
-            rim.setNumberOfGoalsForOldFormat(newRecordToSave.getNumericDetail());
-        }
-
-        recordsInMatchesRepository.save(rim);
-        return null;
-    }
-
+    // rework to use ID
     @GetMapping("/getStats/{playerName}")
     public FifaPlayerDialogStats getAllStatsForSpecifiedFifaPlayerNEWEST(@PathVariable("playerName") String playerName) {
 
@@ -77,6 +53,10 @@ public class FifaPlayerController {
         FifaPlayerDB fifaPlayer = fifaPlayerDBRepository.findByPlayerName(playerName);
         System.out.println(fifaPlayer);
         List<PlayerStatsInSeason> allRecordsForCurrentPlayer = recordsInMatchesRepository.findRecordsRelatedToPlayer(fifaPlayer.getId());
+        System.out.println("toto este mam");
+        System.out.println(allRecordsForCurrentPlayer);
+
+        allRecordsForCurrentPlayer.forEach(a -> System.out.println(a.getPlayerTeamId() + " " + a.getSeason() + " " + a.getTypeOfRecord() + " "+ a.getTeamName()));
         List<String> playersSeasonsList = allRecordsForCurrentPlayer.stream().map(stat-> stat.getSeason()).distinct().collect(Collectors.toList());
 
         playersSeasonsList.forEach(season->{
@@ -86,16 +66,12 @@ public class FifaPlayerController {
 
             String teamname = recordsInCurrentSeason.stream().map(rec-> rec.getTeamName()).findFirst().orElse("Inspect this, it is not possible to have no teamname here");
             playerStatsPerSeason.setTeamname(teamname);
-
+            Integer teamId = recordsInCurrentSeason.stream().map(rec-> rec.getPlayerTeamId()).findFirst().orElse(null);
+            playerStatsPerSeason.setTeamId(teamId);
             recordsInCurrentSeason.forEach(singleRecord->{
-                System.out.println(singleRecord.getTypeOfRecord() + " for " + singleRecord.getTeamName());
+
                 if(singleRecord.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_GOAL) || singleRecord.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_PENALTY)){
-                    if(singleRecord.getNumberOfGoalsForOldFormat()!=null){
-                        System.out.println("old format detected");
-                        playerStatsPerSeason.setGoalsCount(playerStatsPerSeason.getGoalsCount() + singleRecord.getNumberOfGoalsForOldFormat());
-                    } else {
-                        playerStatsPerSeason.setGoalsCount(playerStatsPerSeason.getGoalsCount() + 1);
-                    }
+                    playerStatsPerSeason.setGoalsCount(playerStatsPerSeason.getGoalsCount() + 1);
                 } else if(singleRecord.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_YELLOW_CARD)){
                     playerStatsPerSeason.setYellowCardsCount(playerStatsPerSeason.getYellowCardsCount() + 1);
                 } else if(singleRecord.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_RED_CARD)){
@@ -123,6 +99,8 @@ public class FifaPlayerController {
 
     @GetMapping("/getPlayersWithRecord/{recordType}/{competition}/{competitionPhase}")
     public List<FifaPlayerWithRecord> getPlayersWithRecord(@PathVariable("recordType") String recordType, @PathVariable("competition") String competition,  @PathVariable("competitionPhase") String competitionPhase){
+
+        // todo send object here
         List<FifaPlayerWithRecord> players = new ArrayList<>();
         String competitionPhase1 = null;
         String competitionPhase2 = null;
@@ -138,6 +116,7 @@ public class FifaPlayerController {
             competitionPhase2 = MyUtils.PLAY_OFFS_FINAL_LIKE_VALUE;
         }
 
+        // TODO FIX THIS
         switch (recordType) {
             case MyUtils.PLAYER_MOST_GOALS_SINGLE_GAME:
                 players = fifaPlayerDBRepository.getPlayersWithMostGoals(competition, MyUtils.RECORD_TYPE_GOAL);

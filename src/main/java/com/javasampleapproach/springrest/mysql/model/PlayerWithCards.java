@@ -10,7 +10,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FifaPlayer {
+public class PlayerWithCards {
 
     private String name;
     private Integer cardsTotal = 0;

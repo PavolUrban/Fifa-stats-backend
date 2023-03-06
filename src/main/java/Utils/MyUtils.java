@@ -34,9 +34,6 @@ public class MyUtils {
 	public static final String SEMIFINALS = "Semifinals";
 	public static final String FINAL = "Final";
 
-	public static String CARD_TYPE_YELLOW = "yellow";
-	public static String CARD_TYPE_RED = "red";
-
 	public static List<String> seasonsWithGoalscorersWithoutMinutes= Arrays.asList("FIFA07","FIFA09","FIFA11","FIFA13");
 	public static List<String> championsLeagueStagesList = Arrays.asList(GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, ROUND_OF_16, QUARTERFINALS, SEMIFINALS, FINAL);
 	public static List<String> europeanLeagueStagesList =  Arrays.asList(GROUP_A, GROUP_B, GROUP_C, GROUP_D, GROUP_E, GROUP_F, GROUP_G, GROUP_H, GROUP_I, GROUP_J, GROUP_K, GROUP_L, ROUND_OF_32, ROUND_OF_16, QUARTERFINALS, SEMIFINALS, FINAL);
@@ -71,5 +68,5 @@ public class MyUtils {
 	public static final String PLAY_OFFS_ROUND_LIKE_VALUE = "Round";
 	public static final String PLAY_OFFS_FINAL_LIKE_VALUE = "Final";
 
-	public static final int drawResultId = -1;
+	public static final int DRAW_RESULT_ID = -1;
 }

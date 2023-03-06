@@ -23,7 +23,7 @@ public class Matches {
 	private long id;
 
 	@Column(name = "hometeam")
-	private String hometeam; // TODO delete this once it will be removed from the DB
+	private String hometeam; // TODO delete this once it will be removed from the DB !!! used in some queries
 
 	@Column(name = "awayteam")
 	private String awayteam; // TODO delete this once it will be removed from the DB

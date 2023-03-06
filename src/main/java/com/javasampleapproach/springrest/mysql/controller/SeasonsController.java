@@ -12,13 +12,12 @@ import java.util.stream.Collectors;
 
 import Utils.HelperMethods;
 import Utils.MyUtils;
-import Utils.NewestGoalscorersCalculator;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.H2HPlayers;
 import com.javasampleapproach.springrest.mysql.model.OverallStats;
-import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
+import com.javasampleapproach.springrest.mysql.services.FifaPlayerService;
 import com.javasampleapproach.springrest.mysql.services.MatchesService;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ public class SeasonsController {
 	// do not import repos here, same for controllers!
 
 	@Autowired
-	FifaPlayerDBRepository fifaPlayerDBRepository;
+	FifaPlayerService fifaPlayerService;
 
 	@Autowired
 	RecordsInMatchesRepository recordsInMatchesRepository;
@@ -54,7 +53,6 @@ public class SeasonsController {
 	public Object getAllPhasesForSeasonAndCompetition(@PathVariable("season") String season, @PathVariable("competition") String competition) {
 		Map<String, Object> finalTablesWithStats = new HashMap<>();
 		Map<String, List<TableTeam>> groupsWithTeams = new HashMap<>();
-		NewestGoalscorersCalculator ngc = new NewestGoalscorersCalculator(fifaPlayerDBRepository);
 
 		List<Team> allTeams = teamService.getAllTeams();
 
@@ -78,7 +76,7 @@ public class SeasonsController {
 
 			// goalscorers per group
 			List<RecordsInMatches> allGoalsInCurrentGroup = recordsInMatchesRepository.getRecordsByCompetition(groupName, season, competition, null,"G", "Penalty");
-			groupGoalscorers.put(groupName, ngc.getGoalscorers(allGoalsInCurrentGroup));
+			groupGoalscorers.put(groupName, fifaPlayerService.getGoalscorers(allGoalsInCurrentGroup));
 
 			//player stats PavolJay vs Kotlik
 			Map<String, Integer> winsByPlayersInCurrentGroup = new HashMap<>();
@@ -103,7 +101,7 @@ public class SeasonsController {
 				int sumConcededAway = allMatchesByTeam.stream().filter(o -> o.getIdAwayTeam() == teamId).mapToInt(o -> o.getScorehome()).sum();
 				
 				long wins = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == teamId).count();
-				long draws = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == MyUtils.drawResultId).count();
+				long draws = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == MyUtils.DRAW_RESULT_ID).count();
 				long losses = allMatchesByTeam.size()- wins - draws;
 
 				tableTeam.setTeamname(teamService.getTeamNameById(allTeams, teamId));
@@ -180,13 +178,13 @@ public class SeasonsController {
 
 		// Goalscorers
 		List<RecordsInMatches> topGoalscorersGroupStage = recordsInMatchesRepository.getGroupStageRecordsBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("totalGoalscorersGroupStage", ngc.getGoalscorers(topGoalscorersGroupStage));
+		finalTablesWithStats.put("totalGoalscorersGroupStage", fifaPlayerService.getGoalscorers(topGoalscorersGroupStage));
 
 		List<RecordsInMatches> topGoalscorersPlayOff = recordsInMatchesRepository.getPlayOffsRecordsBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("totalGoalscorersPlayOffs",  ngc.getGoalscorers(topGoalscorersPlayOff));
+		finalTablesWithStats.put("totalGoalscorersPlayOffs",  fifaPlayerService.getGoalscorers(topGoalscorersPlayOff));
 
 		List<RecordsInMatches> topGoalscorersAllPhases = recordsInMatchesRepository.getTotalGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("totalGoalscorersAllPhases",  ngc.getGoalscorers(topGoalscorersAllPhases));
+		finalTablesWithStats.put("totalGoalscorersAllPhases",  fifaPlayerService.getGoalscorers(topGoalscorersAllPhases));
 
 		return finalTablesWithStats;
 	}

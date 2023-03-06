@@ -35,7 +35,7 @@ public class GlobalStatsController {
 	private String resultOfTeamMatchByTeam(Matches m, long teamId) {
 		String resultOfMatch = "unknown";
 
-		if(m.getWinnerId() == MyUtils.drawResultId)
+		if(m.getWinnerId() == MyUtils.DRAW_RESULT_ID)
 			resultOfMatch = "draw";
 		
 		else if(m.getWinnerId() == teamId)

@@ -33,19 +33,14 @@ public class HelperMethods {
         return winsByPlayers;
     }
 
-    // todo maybe move to some utils service?
     public static String whoIsWinnerOfMatch(Matches match) {
-        String winner;
-
-        if (match.getWinnerId() == drawResultId){
-            winner = RESULT_DRAW;
-        } else if ( (match.getIdHomeTeam() == match.getWinnerId() && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY) ) ||
+        if (match.getWinnerId() == DRAW_RESULT_ID){
+            return RESULT_DRAW;
+        } else if ((match.getIdHomeTeam() == match.getWinnerId() && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
                 (match.getIdAwayTeam() == match.getWinnerId() && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY) ) ) {
-            winner = PAVOL_JAY;
+            return PAVOL_JAY;
         } else {
-            winner = KOTLIK;
+            return KOTLIK;
         }
-
-        return winner;
     }
 }

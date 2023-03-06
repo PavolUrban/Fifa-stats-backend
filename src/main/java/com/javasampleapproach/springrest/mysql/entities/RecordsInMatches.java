@@ -11,52 +11,26 @@ import javax.persistence.*;
 @Table(name = "recordsinmatches")
 public class RecordsInMatches {
 
-    //rework this and use relations
-
+    //rework this and use relations, add constraints
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "playerid")
-    private long playerId;
-
-    @Column(name = "matchid")
+    @Column(name = "matchId")
     private int matchId;
 
-    @Column(name = "teamname")
-    private String teamName;
+    @Column(name = "playerId")
+    private long playerId;
 
-    @Column(name = "typeofrecord")
+    @Column(name = "playerTeamId")
+    private Integer playerTeamId; // for which team player played in match
+
+    @Column(name = "teamRecordId")
+    private Integer teamRecordId; // for which team player made a contribution (e.g. own goal he would score for opposition team)
+
+    @Column(name = "typeOfRecord")
     private String typeOfRecord;
 
-    @Column(name = "minuteofrecord")
+    @Column(name = "minuteOfRecord")
     private Integer minuteOfRecord;
-
-    @Column(name = "numberofgoalsforoldformat")
-    private Integer numberOfGoalsForOldFormat;
-
-    public RecordsInMatches(long playerId, int matchId, String teamName, String typeOfRecord, Integer minuteOfRecord, Integer numberOfGoalsForOldFormat){
-        this.playerId = playerId;
-        this.matchId = matchId;
-        this.teamName = teamName;
-        this.typeOfRecord = typeOfRecord;
-        this.minuteOfRecord = minuteOfRecord;
-        this.numberOfGoalsForOldFormat = numberOfGoalsForOldFormat;
-    }
-
-    public RecordsInMatches(long playerId, int matchId, String teamName, String typeOfRecord, int numberOfGoalsForOldFormat){
-        this.playerId = playerId;
-        this.matchId = matchId;
-        this.teamName = teamName;
-        this.typeOfRecord = typeOfRecord;
-        this.numberOfGoalsForOldFormat = numberOfGoalsForOldFormat;
-    }
-
-    public RecordsInMatches(long playerId, int matchId, String teamName, int minuteOfRecord, String typeOfRecord){
-        this.playerId = playerId;
-        this.matchId = matchId;
-        this.teamName = teamName;
-        this.typeOfRecord = typeOfRecord;
-        this.minuteOfRecord = minuteOfRecord;
-    }
 }

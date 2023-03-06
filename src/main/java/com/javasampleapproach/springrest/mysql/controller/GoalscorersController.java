@@ -1,15 +1,18 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import Utils.NewestGoalscorersCalculator;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.Goalscorer;
-import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
+import com.javasampleapproach.springrest.mysql.model.records_in_matches.RecordsInMatchesRequest;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
+import com.javasampleapproach.springrest.mysql.services.FifaPlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-
-import java.util.*;
+import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -21,25 +24,15 @@ public class GoalscorersController {
     // todo idea to future - this should be stored somewhere and only after refresh or something it would be recalculated
 
     @Autowired
-    FifaPlayerDBRepository fifaPlayerDBRepository;
+    FifaPlayerService fifaPlayerService;
 
     @Autowired
     RecordsInMatchesRepository recordsInMatchesRepository;
 
-    @GetMapping("/getAllGoalScorers/{competition}/{teamname}")
-    public  List<Goalscorer> getAllGoalscorers(@PathVariable("competition") String competition, @PathVariable("teamname") String teamName)
-    {
-        if(teamName.equalsIgnoreCase("null")){
-            teamName = null;
-        }
-
-        if(competition.equalsIgnoreCase("Total")){
-            competition = null;
-        }
-
-        List<RecordsInMatches> allGoals = recordsInMatchesRepository.getRecordsByCompetition(null, null, competition, teamName,"G", "Penalty");
-
-        NewestGoalscorersCalculator ngc = new NewestGoalscorersCalculator(fifaPlayerDBRepository);
-        return ngc.getGoalscorers(allGoals);
+    // todo merge with getCards
+    @PostMapping("/getAllGoalScorers")
+    public List<Goalscorer> getAllGoalscorers(@RequestBody RecordsInMatchesRequest recordsInMatchesRequest) {
+        List<RecordsInMatches> allGoals = recordsInMatchesRepository.getRecordsByCompetition(null, null, recordsInMatchesRequest.getCompetition(), recordsInMatchesRequest.getTeamId(), "G", "Penalty");
+        return fifaPlayerService.getGoalscorers(allGoals);
     }
 }

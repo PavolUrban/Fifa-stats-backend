@@ -1,12 +1,13 @@
 package com.javasampleapproach.springrest.mysql.services;
 
+import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.GoalDistributionModel;
+import com.javasampleapproach.springrest.mysql.model.NewRecordToSave;
 import com.javasampleapproach.springrest.mysql.model.TimeRangeElement;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -16,17 +17,17 @@ public class RecordsInMatchesService {
     @Autowired
     RecordsInMatchesRepository recordsInMatchesRepository;
 
-    public GoalDistributionModel getGoalDistributionForTeam(@PathVariable("teamName") String teamName) {
-        List<RecordsInMatches> records = recordsInMatchesRepository.getScoredAndConcededGoalsByTeam(teamName);
+    public GoalDistributionModel getGoalDistributionForTeam(Integer teamId) {
+        List<RecordsInMatches> records = recordsInMatchesRepository.getScoredAndConcededGoalsByTeam(teamId);
         GoalDistributionModel gdm = new GoalDistributionModel();
         records.forEach(record-> {
 
             // old fifa check - no minutes
-            if(record.getNumberOfGoalsForOldFormat() != null) {
-                if(record.getTeamName().equalsIgnoreCase(teamName)){
-                    gdm.setScoredGoalsUnknownTime(gdm.getScoredGoalsUnknownTime() + record.getNumberOfGoalsForOldFormat());
+            if(record.getMinuteOfRecord() == null) {
+                if (record.getTeamRecordId().equals(teamId)){
+                    gdm.setScoredGoalsUnknownTime(gdm.getScoredGoalsUnknownTime() + 1);
                 } else {
-                    gdm.setConcededGoalsUnknownTime(gdm.getConcededGoalsUnknownTime() + record.getNumberOfGoalsForOldFormat());
+                    gdm.setConcededGoalsUnknownTime(gdm.getConcededGoalsUnknownTime() + 1);
                 }
             } else {
                 TimeRangeElement tre;
@@ -37,7 +38,7 @@ public class RecordsInMatchesService {
                     tre = gdm.getAllRanges().stream().filter(range -> record.getMinuteOfRecord() <= range.getUpBorder() && record.getMinuteOfRecord() >= range.getLowBorder()).findFirst().orElse(null);
                 }
 
-                if(record.getTeamName().equalsIgnoreCase(teamName)){
+                if(record.getTeamRecordId().equals(teamId)){
                     tre.setNumberOfGoals(tre.getNumberOfGoals() + 1);
                 } else {
                     tre.setNumberOfConcededGoals(tre.getNumberOfConcededGoals() + 1);
@@ -56,5 +57,14 @@ public class RecordsInMatchesService {
 
     public List<RecordsInMatches> findByMatchIdOrderByMinuteOfRecord(int matchId) {
         return recordsInMatchesRepository.findByMatchIdOrderByMinuteOfRecord(matchId);
+    }
+
+    // todo recordtypes use as array
+    public List<RecordsInMatches> getRecordsByCompetition(String competition, Integer teamId, String recordType1, String recordType2){
+        return recordsInMatchesRepository.getRecordsByCompetition(null, null, competition, teamId, MyUtils.RECORD_TYPE_YELLOW_CARD, MyUtils.RECORD_TYPE_RED_CARD);
+    }
+
+    public void saveNewRecord(RecordsInMatches newRecordToSave){
+        recordsInMatchesRepository.save(newRecordToSave);
     }
 }

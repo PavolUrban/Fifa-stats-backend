@@ -1,13 +1,13 @@
 package com.javasampleapproach.springrest.mysql.model;
 
-public interface PlayerStatsInSeason {
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-        String getTypeOfRecord();
-
-        Integer getNumberOfGoalsForOldFormat();
-
-        String getTeamName();
-
-        String getSeason();
-
+@Data
+@AllArgsConstructor
+public class  PlayerStatsInSeason {
+        private String typeOfRecord;
+        private Integer playerTeamId;
+        private String season;
+        private String teamName;
 }

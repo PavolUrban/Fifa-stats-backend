@@ -22,8 +22,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static Utils.MyUtils.RECORD_TYPE_GOAL;
-import static Utils.MyUtils.RESULT_DRAW;
-import static Utils.MyUtils.drawResultId;
 
 @Service
 public class MatchesService {
@@ -228,7 +226,7 @@ public class MatchesService {
         return null;
     }
 
-    // check if I need homeandAwayteam
+    // todo this method needs to be significatly improved and simplified
     public MatchDetail getMatchDetails(Long matchId, String hometeam, String awayteam) {
         MatchDetail md = new MatchDetail();
         List<RecordsInMatches> rims = recordsInMatchesService.findByMatchIdOrderByMinuteOfRecord(matchId.intValue());
@@ -244,8 +242,7 @@ public class MatchesService {
                 String playerName = players.stream().filter(player -> player.getId() == hr.getPlayerId()).map(p -> p.getPlayerName()).findFirst().orElse(null);
                 med.setPlayerName(playerName);
                 med.setRecordType(hr.getTypeOfRecord());
-                med.setTeamName(hr.getTeamName());
-                med.setRecordCount(hr.getTypeOfRecord().equalsIgnoreCase(RECORD_TYPE_GOAL) ? hr.getNumberOfGoalsForOldFormat() : 1);
+                med.setTeamRecordId(hr.getTeamRecordId());
                 md.getEventsWithoutTime().add(med);
             });
             md.setTypeOfFormat(MyUtils.OLD_FORMAT);
@@ -255,7 +252,7 @@ public class MatchesService {
                 String playerName = players.stream().filter(player -> player.getId() == hr.getPlayerId()).map(p -> p.getPlayerName()).findFirst().orElse(null);
                 med.setPlayerName(playerName);
                 med.setRecordType(hr.getTypeOfRecord());
-                med.setTeamName(hr.getTeamName());
+                med.setTeamRecordId(hr.getTeamRecordId());
                 med.setMinute(hr.getMinuteOfRecord());
                 med.setMinuteLabel(hr.getMinuteOfRecord() > 9 ? hr.getMinuteOfRecord().toString() + "'" : "0" + hr.getMinuteOfRecord() + "'");
                 addEventToProperHalfTime(md, hr, med);
@@ -373,7 +370,7 @@ public class MatchesService {
         if (match.getScorehome() > match.getScoreaway()) {
             match.setWinnerId(match.getIdHomeTeam());
         } else if (match.getScorehome() == match.getScoreaway()) {
-            match.setWinnerId(MyUtils.drawResultId);
+            match.setWinnerId(MyUtils.DRAW_RESULT_ID);
         } else {
             match.setWinnerId(match.getIdAwayTeam());
         }

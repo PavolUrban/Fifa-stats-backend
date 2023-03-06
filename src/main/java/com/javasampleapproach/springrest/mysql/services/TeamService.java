@@ -146,7 +146,7 @@ public class TeamService {
 
     private void setWDLGoalsAndSeasons(Matches m, TeamStats teamStats, long teamId) {
         // W-D-L setter
-        if (m.getWinnerId() == MyUtils.drawResultId) {
+        if (m.getWinnerId() == MyUtils.DRAW_RESULT_ID) {
             teamStats.incrementDraws(1);
         } else if (m.getWinnerId() == teamId) {
             teamStats.incrementWins(1);
