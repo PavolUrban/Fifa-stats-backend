@@ -52,10 +52,10 @@ public class GlobalStatsController {
 	private List<Integer> getGoals(Matches m, long teamId) {
 		List<Integer> teamStats = new ArrayList<>();
 		
-		if(m.getIdHomeTeam() == teamId) {
+		if(m.getHomeTeam().getId() == teamId) {
 			teamStats.add(m.getScorehome());
 			teamStats.add(m.getScoreaway());
-		} else if(m.getIdAwayTeam() == teamId) {
+		} else if(m.getAwayTeam().getId() == teamId) {
 			teamStats.add(m.getScoreaway());
 			teamStats.add(m.getScorehome());
 		}
@@ -126,25 +126,28 @@ public class GlobalStatsController {
 		
 		return allTeamsStats;
 	}
-	
+
+	// todo latest
 	@GetMapping("/getTopTeamStats")
 	public	List<TopTeam> getTopTeamStats() {
-		Iterable<Matches> matches = matchesService.getAllMatches();
-		Map<String, Map<String, Integer>> map = new HashMap<>();
+//		Iterable<Matches> matches = matchesService.getAllMatches();
+//		Map<String, Map<String, Integer>> map = new HashMap<>();
+//
+//		for(Matches m : matches) {
+//			Team homeTeam = teamService.findById(m.getIdHomeTeam()).orElse(null);
+//			doStuff(map, homeTeam ,m);
+//			Team awayTeam = teamService.findById(m.getIdAwayTeam()).orElse(null);
+//			doStuff(map, awayTeam ,m);
+//		}
+//
+//		Iterable<Team> teams = teamService.getAllTeamsIterable();
+//		List<TopTeam> topTeams = convertMapToListOfBestTeams(map, teams);
+//
+//		topTeams.sort((o1, o2) -> o2.getWins().compareTo(o1.getWins()));
+//
+//		return topTeams;
 
-		for(Matches m : matches) {
-			Team homeTeam = teamService.findById(m.getIdHomeTeam()).orElse(null);
-			doStuff(map, homeTeam ,m);
-			Team awayTeam = teamService.findById(m.getIdAwayTeam()).orElse(null);
-			doStuff(map, awayTeam ,m);
-		}
-		
-		Iterable<Team> teams = teamService.getAllTeamsIterable();
-		List<TopTeam> topTeams = convertMapToListOfBestTeams(map, teams);
-		
-		topTeams.sort((o1, o2) -> o2.getWins().compareTo(o1.getWins()));
-		
-		return topTeams;
+		return null;
 	}
 
 	@GetMapping("/winnersList/{competition}")
@@ -164,8 +167,8 @@ public class GlobalStatsController {
 		List<TeamForTrophyRoom> trophyRoom = new ArrayList<>();
 		List<Matches> finalMatches = matchesService.getMatchesByCompetitionPhase("Final");
 		finalMatches.forEach(match-> {
-			insertOrUpdateTrophyRoom(trophyRoom, match.getIdHomeTeam(), match);
-			insertOrUpdateTrophyRoom(trophyRoom, match.getIdAwayTeam(), match);
+			insertOrUpdateTrophyRoom(trophyRoom, match.getHomeTeam().getId(), match);
+			insertOrUpdateTrophyRoom(trophyRoom, match.getAwayTeam().getId(), match);
 		});
 
 		trophyRoom.forEach(team-> {

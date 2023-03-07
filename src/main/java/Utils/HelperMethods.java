@@ -1,6 +1,8 @@
 package Utils;
 
 import com.javasampleapproach.springrest.mysql.entities.Matches;
+import com.javasampleapproach.springrest.mysql.model.MatchesDTO;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +35,24 @@ public class HelperMethods {
         return winsByPlayers;
     }
 
+    // todo latest fix this
     public static String whoIsWinnerOfMatch(Matches match) {
+        return PAVOL_JAY;
+//        if (match.getWinnerId() == DRAW_RESULT_ID){
+//            return RESULT_DRAW;
+//        } else if ((match.getIdHomeTeam() == match.getWinnerId() && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
+//                (match.getIdAwayTeam() == match.getWinnerId() && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY) ) ) {
+//            return PAVOL_JAY;
+//        } else {
+//            return KOTLIK;
+//        }
+    }
+
+    public static String getWinnerPlayer(Matches match) {
         if (match.getWinnerId() == DRAW_RESULT_ID){
             return RESULT_DRAW;
-        } else if ((match.getIdHomeTeam() == match.getWinnerId() && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
-                (match.getIdAwayTeam() == match.getWinnerId() && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY) ) ) {
+        } else if ((match.getHomeTeam().getId() == match.getWinnerId() && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
+                (match.getAwayTeam().getId() == match.getWinnerId() && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY) ) ) {
             return PAVOL_JAY;
         } else {
             return KOTLIK;

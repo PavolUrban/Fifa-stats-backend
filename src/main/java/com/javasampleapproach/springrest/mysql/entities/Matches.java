@@ -1,16 +1,27 @@
 package com.javasampleapproach.springrest.mysql.entities;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+import java.util.Set;
+
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "matches")
@@ -21,12 +32,6 @@ public class Matches {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private long id;
-
-	@Column(name = "hometeam")
-	private String hometeam; // TODO delete this once it will be removed from the DB !!! used in some queries
-
-	@Column(name = "awayteam")
-	private String awayteam; // TODO delete this once it will be removed from the DB
 
 	@Column(name = "scorehome")
 	private int scorehome;
@@ -52,45 +57,19 @@ public class Matches {
 	@Column(name = "competitionphase")
 	private String competitionPhase;
 
-	@Column(name = "idhometeam")
-	private long idHomeTeam;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "idhometeam", referencedColumnName = "id")
+	private Team homeTeam;
 
-	@Column(name = "idawayteam")
-	private long idAwayTeam;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "idawayteam", referencedColumnName = "id")
+	private Team awayTeam;
 
 	@Column(name = "winnerid")
 	private long winnerId;
 
+	@OneToMany(fetch = FetchType.EAGER, mappedBy="match")
+	private Set<RecordsInMatches> recordsInMatches;
 
 	private String winnerPlayer;
-
-
-// TODO both constructors probably can be deleted
-
-	public Matches(String hometeam, String awayTeam, int scoreHome, int scoreAway, String playerH, String playerA, String season, String competition, String competitionPhase)
-	{
-		this.hometeam = hometeam;
-		this.awayteam = awayTeam;
-		this.scorehome = scoreHome;
-		this.scoreaway = scoreAway;
-		this.playerH = playerH;
-		this.playerA = playerA;
-		this.season = season;
-		this.competition = competition;
-		this.competitionPhase = competitionPhase;
-	}
-
-	public Matches(Matches matchWithoutId){
-		this.hometeam = matchWithoutId.getHometeam();
-		this.awayteam = matchWithoutId.getAwayteam();
-		this.scorehome = matchWithoutId.getScorehome();
-		this.scoreaway = matchWithoutId.getScoreaway();
-		this.playerH = matchWithoutId.getPlayerH();
-		this.playerA = matchWithoutId.getPlayerA();
-		this.season = matchWithoutId.getSeason();
-		this.competition = matchWithoutId.getCompetition();
-		this.competitionPhase = matchWithoutId.getCompetitionPhase();
-	}
-
-
 }

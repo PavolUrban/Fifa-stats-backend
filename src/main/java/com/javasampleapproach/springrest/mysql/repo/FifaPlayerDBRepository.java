@@ -26,6 +26,16 @@ public interface FifaPlayerDBRepository  extends CrudRepository<FifaPlayerDB, Lo
             "ORDER BY recordEventCount DESC", nativeQuery = true)
     List<FifaPlayerWithRecord> getPlayersWithMostGoals(String competition, String typeOfRecord);
 
+
+//    @Query(value =
+//            "SELECT rim.playerId, fp.playerName, COUNT(rim.playerId) AS recordEventCount, rim.matchId, m.hometeam, CONCAT(m.scoreHome, ':', m.scoreAway) AS score, m.awayTeam, rim.teamName, m.season " +
+//                    "FROM RecordsInMatches rim JOIN FifaPlayer fp ON rim.playerId = fp.id JOIN Matches m ON rim.matchId = m.id " +
+//                    "WHERE (:competition is null or m.competition = :competition) AND rim.typeOfRecord IN(:typeOfRecord) " +
+//                    "GROUP BY rim.matchId, rim.playerId, rim.typeOfRecord " +
+//                    "ORDER BY recordEventCount DESC")
+//    List<FifaPlayerWithRecord> getPlayersWithMostGoalsInSingleGame(String competition, List<String> typeOfRecord);
+
+
     @Query(value = 
             "SELECT rim.playerId, fp.playerName,rim.numberOfGoalsForOldFormat AS recordEventCount, rim.matchID, m.hometeam, CONCAT(m.scoreHome, ':', m.scoreAway) AS score, m.awayTeam, rim.teamName, m.season  " +
             "FROM RecordsInMatches rim " +

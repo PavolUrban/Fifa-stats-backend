@@ -3,6 +3,7 @@ package com.javasampleapproach.springrest.mysql.services;
 import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
+import com.javasampleapproach.springrest.mysql.model.TeamDto;
 import com.javasampleapproach.springrest.mysql.model.TeamStats;
 import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamService {
@@ -50,6 +52,7 @@ public class TeamService {
 
     // TODO simplify this and unify with getAllTeamsIterable
     public List<Team> getAllTeams(){
+        // todo do not return team object
         List<Team> allTeams = new ArrayList<>();
         teamRepository.findAll().forEach(allTeams::add);
         return allTeams;
@@ -59,26 +62,34 @@ public class TeamService {
         return teamRepository.findAll();
     }
 
-    // todo Check and re-work
-    public List<Team> getAllTeams(@PathVariable("recalculate") boolean recalculate) {
-        List<Team> teams = new ArrayList<>();
+    // todo Check and re-work add mapper
+    public List<TeamDto> getAllTeams(@PathVariable("recalculate") boolean recalculate) {
 
-        teamRepository.findAll().forEach(teams::add);
+        List<TeamDto> teamstest = new ArrayList<>();
 
-        System.out.println("recalculate je nastavene na " +recalculate);
+        teamRepository.findAll().forEach(team -> {
+            TeamDto tdo = new TeamDto();
+            tdo.setTeamName(team.getTeamName());
+            tdo.setCountry(team.getCountry());
+            tdo.setFirstSeasonCL(team.getFirstSeasonCL());
+            tdo.setFirstSeasonEL(team.getFirstSeasonEL());
+            teamstest.add(tdo);
+        });
 
-        for(Team t : teams) {
-            if(recalculate) {
-                t.setFirstSeasonCL(matchesService.getFirstSeasonInCompetition(t.getTeamName(), MyUtils.CHAMPIONS_LEAGUE));
-                t.setFirstSeasonEL(matchesService.getFirstSeasonInCompetition(t.getTeamName(), MyUtils.EUROPEAN_LEAGUE));
-                teamRepository.save(t);
-            }
-            // check if this set can be omitted
-            t.setFirstSeasonCL(setLabelToNeverIfNull(t.getFirstSeasonCL()));
-            t.setFirstSeasonEL(setLabelToNeverIfNull(t.getFirstSeasonEL()));
-        }
+        // todo add option to recalculat
 
-        return teams;
+        //        for(Team t : teams) {
+        //            if(recalculate) {
+        //                t.setFirstSeasonCL(matchesService.getFirstSeasonInCompetition(t.getTeamName(), MyUtils.CHAMPIONS_LEAGUE));
+        //                t.setFirstSeasonEL(matchesService.getFirstSeasonInCompetition(t.getTeamName(), MyUtils.EUROPEAN_LEAGUE));
+        //                teamRepository.save(t);
+        //            }
+        //            // check if this set can be omitted
+        //            t.setFirstSeasonCL(setLabelToNeverIfNull(t.getFirstSeasonCL()));
+        //            t.setFirstSeasonEL(setLabelToNeverIfNull(t.getFirstSeasonEL()));
+        //        }
+
+        return teamstest;
     }
 
     // re-work with map
@@ -155,10 +166,10 @@ public class TeamService {
         }
 
         // GS and GC setter
-        if(m.getIdHomeTeam() == teamId) {
+        if(m.getHomeTeam().getId() == teamId) {
             teamStats.incrementGoalsScored(m.getScorehome());
             teamStats.incrementGoalsConceded(m.getScoreaway());
-        } else if(m.getIdAwayTeam() == teamId) {
+        } else if(m.getAwayTeam().getId() == teamId) {
             teamStats.incrementGoalsScored(m.getScoreaway());
             teamStats.incrementGoalsConceded(m.getScorehome());
         }

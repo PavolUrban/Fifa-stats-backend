@@ -15,11 +15,13 @@ import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.H2HPlayers;
+import com.javasampleapproach.springrest.mysql.model.MatchesDTO;
 import com.javasampleapproach.springrest.mysql.model.OverallStats;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import com.javasampleapproach.springrest.mysql.services.FifaPlayerService;
 import com.javasampleapproach.springrest.mysql.services.MatchesService;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,12 +51,15 @@ public class SeasonsController {
 	@Autowired
 	MatchesService matchesService;
 
+	@Autowired
+	ModelMapper modelMapper;
+
 	@GetMapping("/getAllPhases/{season}/{competition}")
 	public Object getAllPhasesForSeasonAndCompetition(@PathVariable("season") String season, @PathVariable("competition") String competition) {
 		Map<String, Object> finalTablesWithStats = new HashMap<>();
 		Map<String, List<TableTeam>> groupsWithTeams = new HashMap<>();
 
-		List<Team> allTeams = teamService.getAllTeams();
+		List<Team> allTeams = teamService.getAllTeams() ; // todo newest
 
 		/*  *********** GROUP STAGE *********** */
 		List<Matches> matchesGroupStage = matchesService.getAllMatchesBySeasonAndCompetitionGroupStage(season, competition);
@@ -64,14 +69,14 @@ public class SeasonsController {
 
 		Map<String, H2HPlayers> groupStatsForPlayers = new HashMap<>();
 		Map<String, Object> groupGoalscorers = new HashMap<>();
-		
+
 		for(String groupName : groupNames) {
-			
+
 			Set<Long> teamNamesInCurrentGroup = new HashSet<>();
 
 			matchesGroupStage.stream().filter(p ->  p.getCompetitionPhase().equalsIgnoreCase(groupName)).forEach(a->{
-				teamNamesInCurrentGroup.add(a.getIdHomeTeam());
-				teamNamesInCurrentGroup.add(a.getIdAwayTeam());
+				teamNamesInCurrentGroup.add(a.getHomeTeam().getId());
+				teamNamesInCurrentGroup.add(a.getAwayTeam().getId());
 			});
 
 			// goalscorers per group
@@ -83,23 +88,23 @@ public class SeasonsController {
 			winsByPlayersInCurrentGroup.put("Pavol Jay", 0);
 			winsByPlayersInCurrentGroup.put("Kotlik", 0);
 			winsByPlayersInCurrentGroup.put("Draws", 0);
-			
-			
+
+
 			List<TableTeam> allTeamsInCurrentGroup = new ArrayList();
 			for(Long teamId : teamNamesInCurrentGroup) {
 				TableTeam tableTeam = new TableTeam();
-				List<Matches> allMatchesByTeam = matchesGroupStage.stream().filter(s -> teamId == s.getIdHomeTeam() || teamId == s.getIdAwayTeam()).collect(Collectors.toList());
-			
+				List<Matches> allMatchesByTeam = matchesGroupStage.stream().filter(s -> teamId == s.getHomeTeam().getId() || teamId == s.getAwayTeam().getId()).collect(Collectors.toList());
+
 				Map<String, Integer> winsByPlayersByCurrentTeam = HelperMethods.setnumberOfPlayersWins(allMatchesByTeam);
 				winsByPlayersInCurrentGroup.put("Pavol Jay", winsByPlayersByCurrentTeam.get("Pavol Jay") + winsByPlayersInCurrentGroup.get("Pavol Jay"));
 				winsByPlayersInCurrentGroup.put("Kotlik", winsByPlayersByCurrentTeam.get("Kotlik") + winsByPlayersInCurrentGroup.get("Kotlik"));
 				winsByPlayersInCurrentGroup.put("Draws", winsByPlayersByCurrentTeam.get("Draws") + winsByPlayersInCurrentGroup.get("Draws"));
 
-				int sumScoredHome = allMatchesByTeam.stream().filter(o -> o.getIdHomeTeam() == teamId).mapToInt(o -> o.getScorehome()).sum();
-				int sumScoredAway = allMatchesByTeam.stream().filter(o -> o.getIdAwayTeam() == teamId).mapToInt(o -> o.getScoreaway()).sum();
-				int sumConcededHome = allMatchesByTeam.stream().filter(o -> o.getIdHomeTeam() == teamId).mapToInt(o -> o.getScoreaway()).sum();
-				int sumConcededAway = allMatchesByTeam.stream().filter(o -> o.getIdAwayTeam() == teamId).mapToInt(o -> o.getScorehome()).sum();
-				
+				int sumScoredHome = allMatchesByTeam.stream().filter(o -> o.getHomeTeam().getId() == teamId).mapToInt(o -> o.getScorehome()).sum();
+				int sumScoredAway = allMatchesByTeam.stream().filter(o -> o.getAwayTeam().getId() == teamId).mapToInt(o -> o.getScoreaway()).sum();
+				int sumConcededHome = allMatchesByTeam.stream().filter(o -> o.getHomeTeam().getId() == teamId).mapToInt(o -> o.getScoreaway()).sum();
+				int sumConcededAway = allMatchesByTeam.stream().filter(o -> o.getAwayTeam().getId() == teamId).mapToInt(o -> o.getScorehome()).sum();
+
 				long wins = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == teamId).count();
 				long draws = allMatchesByTeam.stream().filter(p-> p.getWinnerId() == MyUtils.DRAW_RESULT_ID).count();
 				long losses = allMatchesByTeam.size()- wins - draws;
@@ -117,8 +122,8 @@ public class SeasonsController {
 				//todo for this table TeamsOwnerBySeason is prepared - USE IT SOON!
 				long currentTeamMatchesByPavolJay =
 						allMatchesByTeam.stream()
-						.filter(match-> (match.getIdHomeTeam() == teamId && match.getPlayerH().equalsIgnoreCase(MyUtils.PAVOL_JAY)) ||
-										(match.getIdAwayTeam() == teamId && match.getPlayerA().equalsIgnoreCase(MyUtils.PAVOL_JAY))
+						.filter(match-> (match.getHomeTeam().getId() == teamId && match.getPlayerH().equalsIgnoreCase(MyUtils.PAVOL_JAY)) ||
+										(match.getAwayTeam().getId() == teamId && match.getPlayerA().equalsIgnoreCase(MyUtils.PAVOL_JAY))
 						).count();
 
 				double playedByPavolJayPercentage = currentTeamMatchesByPavolJay/ (allMatchesByTeam.size() * 1.0);
@@ -128,10 +133,10 @@ public class SeasonsController {
 				} else {
 					tableTeam.setOwnedByPlayer(MyUtils.KOTLIK);
 				}
-				
+
 				allTeamsInCurrentGroup.add(tableTeam);
 			}
-			
+
 			//players bilance
 			H2HPlayers h2h = new H2HPlayers();
 			h2h.setPavolJay(winsByPlayersInCurrentGroup.get("Pavol Jay")/2);
@@ -139,52 +144,53 @@ public class SeasonsController {
 			h2h.setDraws(winsByPlayersInCurrentGroup.get("Draws")/2);
 
 			groupStatsForPlayers.put(groupName, h2h);
-			
+
 			Collections.sort(allTeamsInCurrentGroup, (o1, o2) -> o2.getPoints().compareTo(o1.getPoints()));
-			
+
 			groupsWithTeams.put(groupName, allTeamsInCurrentGroup);
-		
+
 		}
-	
+
 		// PlayOffs
     	List<Matches> matchesPO = matchesService.getAllMatchesBySeasonAndCompetitionPlayOffs(season, competition);
 		Map<String, List<PlayOffMatch>> playOffs = getPlayOffs(matchesPO);
 
 		Matches finalMatch = matchesPO.stream().filter(m-> m.getCompetitionPhase().equalsIgnoreCase("Final")).findFirst().orElse(null);
+		MatchesDTO matchesDTO = modelMapper.map(finalMatch, MatchesDTO.class);
 
 		finalTablesWithStats.put("statsByGroups", groupStatsForPlayers);
 
 		finalTablesWithStats.put("groupStageTables", groupsWithTeams);
 		finalTablesWithStats.put("goalscorersPerGroup", groupGoalscorers);
 
-		finalTablesWithStats.put("playOffs", playOffs);
-		finalTablesWithStats.put("Final", finalMatch);
-
-		// Overall stats
-		int goalsPlayOffStage = matchesPO.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
-		int goalsGroupStage = matchesGroupStage.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
-		Map<String, Integer> playoffStats = HelperMethods.setnumberOfPlayersWins(matchesPO);
-		OverallStats overallStats = getOverallStats(matchesGroupStage.size(), matchesPO.size(), goalsGroupStage, goalsPlayOffStage, groupStatsForPlayers, playoffStats);
-		overallStats.setWinnerPlayer(finalMatch != null ? HelperMethods.whoIsWinnerOfMatch(finalMatch) : "unknown");
-
-
-
-		overallStats.setWinnerTeam(finalMatch != null ? teamService.getTeamNameById(allTeams, finalMatch.getWinnerId()) : "unknown");
-		setCardsForOverallStats(overallStats.getYellowCardsCount(), season, competition, "YC");
-		setCardsForOverallStats(overallStats.getRedCardsCount(), season, competition, "RC");
-
-
-		finalTablesWithStats.put("overallStats", overallStats);
-
-		// Goalscorers
-		List<RecordsInMatches> topGoalscorersGroupStage = recordsInMatchesRepository.getGroupStageRecordsBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("totalGoalscorersGroupStage", fifaPlayerService.getGoalscorers(topGoalscorersGroupStage));
-
-		List<RecordsInMatches> topGoalscorersPlayOff = recordsInMatchesRepository.getPlayOffsRecordsBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("totalGoalscorersPlayOffs",  fifaPlayerService.getGoalscorers(topGoalscorersPlayOff));
-
-		List<RecordsInMatches> topGoalscorersAllPhases = recordsInMatchesRepository.getTotalGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
-		finalTablesWithStats.put("totalGoalscorersAllPhases",  fifaPlayerService.getGoalscorers(topGoalscorersAllPhases));
+//		finalTablesWithStats.put("playOffs", playOffs);
+		finalTablesWithStats.put("Final", matchesDTO);
+//
+//		// Overall stats
+//		int goalsPlayOffStage = matchesPO.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
+//		int goalsGroupStage = matchesGroupStage.stream().mapToInt(m -> m.getScorehome() + m.getScoreaway()).sum();
+//		Map<String, Integer> playoffStats = HelperMethods.setnumberOfPlayersWins(matchesPO);
+//		OverallStats overallStats = getOverallStats(matchesGroupStage.size(), matchesPO.size(), goalsGroupStage, goalsPlayOffStage, groupStatsForPlayers, playoffStats);
+//		overallStats.setWinnerPlayer(finalMatch != null ? HelperMethods.whoIsWinnerOfMatch(finalMatch) : "unknown");
+//
+//
+//
+//		overallStats.setWinnerTeam(finalMatch != null ? teamService.getTeamNameById(allTeams, finalMatch.getWinnerId()) : "unknown");
+//		setCardsForOverallStats(overallStats.getYellowCardsCount(), season, competition, "YC");
+//		setCardsForOverallStats(overallStats.getRedCardsCount(), season, competition, "RC");
+//
+//
+//		finalTablesWithStats.put("overallStats", overallStats);
+//
+//		// Goalscorers
+//		List<RecordsInMatches> topGoalscorersGroupStage = recordsInMatchesRepository.getGroupStageRecordsBySeasonAndCompetition(season,competition,"G", "Penalty");
+//		finalTablesWithStats.put("totalGoalscorersGroupStage", fifaPlayerService.getGoalscorers(topGoalscorersGroupStage));
+//
+//		List<RecordsInMatches> topGoalscorersPlayOff = recordsInMatchesRepository.getPlayOffsRecordsBySeasonAndCompetition(season,competition,"G", "Penalty");
+//		finalTablesWithStats.put("totalGoalscorersPlayOffs",  fifaPlayerService.getGoalscorers(topGoalscorersPlayOff));
+//
+//		List<RecordsInMatches> topGoalscorersAllPhases = recordsInMatchesRepository.getTotalGoalscorersBySeasonAndCompetition(season,competition,"G", "Penalty");
+//		finalTablesWithStats.put("totalGoalscorersAllPhases",  fifaPlayerService.getGoalscorers(topGoalscorersAllPhases));
 
 		return finalTablesWithStats;
 	}
@@ -237,13 +243,14 @@ public class SeasonsController {
 	}
 
 
+	// todo latest fix this
 	private Map<String, List<PlayOffMatch>> getPlayOffs(List<Matches> matches)
 	{
-		Set<String> phases = new HashSet<String>();
-		matches.stream().filter(p ->  phases.add(p.getCompetitionPhase())).collect(Collectors.toList());
-		Map<String, List<PlayOffMatch>> matchesInAllPhases = new HashMap<String, List<PlayOffMatch>>();
+		Set<String> phases = new HashSet<>();
+		matches.forEach(p ->  phases.add(p.getCompetitionPhase()));
+		Map<String, List<PlayOffMatch>> matchesInAllPhases = new HashMap<>();
 
-		List<Team> allTeams = teamService.getAllTeams();
+
 
 		for(String phase: phases) {
 			List<Matches> matchesInCurrentPhase = new ArrayList<>();
@@ -266,18 +273,14 @@ public class SeasonsController {
 					match1.setWinnerPlayer(HelperMethods.whoIsWinnerOfMatch(match1));
 					match2.setWinnerPlayer(HelperMethods.whoIsWinnerOfMatch(match2));
 
-					ArrayList<Long> teamIds = new ArrayList<>(Arrays.asList(match1.getIdHomeTeam(), match1.getIdAwayTeam()));
-					long qualifiedTeamId = whoIsQualified(match1, match2);
-					long nonQualifiedTeamId = getNonQualified(teamIds, qualifiedTeamId);
-					String qualifiedPlayer = getQualifiedPlayer(qualifiedTeamId, match1);
 
-					String qualifiedTeamName = teamService.getTeamNameById(allTeams, qualifiedTeamId);
-					String nonQualifiedTeamName = teamService.getTeamNameById(allTeams, nonQualifiedTeamId);
+					String qualifiedTeamName = whoIsQualified(match1, match2);
+					//String qualifiedPlayer = getQualifiedPlayer(qualifiedTeamId, match1);
 
-					PlayOffMatch playOff = new PlayOffMatch(new ArrayList<>(Arrays.asList(match1, match2)), qualifiedTeamName, qualifiedTeamId, nonQualifiedTeamName, nonQualifiedTeamId, qualifiedPlayer);
+					PlayOffMatch playOff = new PlayOffMatch(qualifiedTeamName, "fakeNonQualifiedTeamName", "fakeQualifiedPlayer");
 					
-					playOff.setQualifiedTeamGoals(getPlayOffGoalsForTeam(playOff, qualifiedTeamId));
-					playOff.setNonQualifiedTeamGoals(getPlayOffGoalsForTeam(playOff, nonQualifiedTeamId));
+//					playOff.setQualifiedTeamGoals(getPlayOffGoalsForTeam(playOff, qualifiedTeamId));
+//					playOff.setNonQualifiedTeamGoals(getPlayOffGoalsForTeam(playOff, nonQualifiedTeamId));
 					
 					playOffMatches.add(playOff);
 					addedMatches = addedMatches + 2;
@@ -297,7 +300,7 @@ public class SeasonsController {
 	// since players can for the same team in both play off matches we can just check one of them to get proper result
 	private String getQualifiedPlayer(long qualifiedTeamId, Matches match){
 		String qualifiedPlayer;
-		if(match.getIdHomeTeam() == qualifiedTeamId){
+		if(match.getHomeTeam().getId() == qualifiedTeamId){
 			qualifiedPlayer = match.getPlayerH();
 		} else {
 			qualifiedPlayer = match.getPlayerA();
@@ -305,45 +308,40 @@ public class SeasonsController {
 
 		return qualifiedPlayer;
 	}
+
+	// todo latest fix this
+//	private int getPlayOffGoalsForTeam(PlayOffMatch pom, long teamIdToGetScore)
+//	{
+//		int score = 0;
+//		if (teamIdToGetScore == pom.getMatchesList().get(0).getHomeTeam().getId()) {
+//			score = pom.getMatchesList().get(0).getScorehome() + pom.getMatchesList().get(1).getScoreaway();
+//		} else if (teamIdToGetScore == pom.getMatchesList().get(0).getAwayTeam().getId()) {
+//			score = pom.getMatchesList().get(0).getScoreaway() + pom.getMatchesList().get(1).getScorehome();
+//		}
+//		return score;
+//	}
 	
-	private int getPlayOffGoalsForTeam(PlayOffMatch pom, long teamIdToGetScore)
-	{
-		int score = 0;
-		if (teamIdToGetScore == pom.getMatchesList().get(0).getIdHomeTeam()) {
-			score = pom.getMatchesList().get(0).getScorehome() + pom.getMatchesList().get(1).getScoreaway();
-		} else if (teamIdToGetScore == pom.getMatchesList().get(0).getIdAwayTeam()) {
-			score = pom.getMatchesList().get(0).getScoreaway() + pom.getMatchesList().get(1).getScorehome();
-		}
-		return score;
-	}
-	
-	private long getNonQualified(List<Long> teamIds, long qualifiedId) {
-		return teamIds.stream().filter(id -> id != qualifiedId).findFirst().orElse(-1L);
-	}
+//	private long getNonQualified(List<Long> teamIds, long qualifiedId) {
+//		return teamIds.stream().filter(id -> id != qualifiedId).findFirst().orElse(-1L);
+//	}
 	
 	//TODO check if this function works when two teams have equall scores from 2 matches!!!
-	private long whoIsQualified(Matches match1, Matches match2)
-	{
-		long qualifiedTeamId = -1;
-		
+	private String whoIsQualified(final Matches match1, final Matches match2) {
+		String qualifiedTeamName = "unknown";
 		long firstTeamGoals = match1.getScorehome() + match2.getScoreaway();
 		long secondTeamGoals = match2.getScorehome() + match1.getScoreaway() ;
 		
-		if(firstTeamGoals > secondTeamGoals)
-			qualifiedTeamId = match1.getIdHomeTeam();
-		
-		else if(secondTeamGoals > firstTeamGoals)
-			qualifiedTeamId = match2.getIdHomeTeam();
-		
-		else if(firstTeamGoals == secondTeamGoals)
-		{
-			if(match1.getScoreaway() > match2.getScoreaway())
-				qualifiedTeamId = match1.getIdAwayTeam();
-			
-			else
-				qualifiedTeamId = match2.getIdAwayTeam();
+		if(firstTeamGoals > secondTeamGoals) {
+			qualifiedTeamName = match1.getHomeTeam().getTeamName();
+		} else if(secondTeamGoals > firstTeamGoals) {
+			qualifiedTeamName = match2.getHomeTeam().getTeamName();
+		} else if(firstTeamGoals == secondTeamGoals) {
+			if(match1.getScoreaway() > match2.getScoreaway()) {
+				qualifiedTeamName = match1.getAwayTeam().getTeamName();
+			} else {
+				qualifiedTeamName = match2.getAwayTeam().getTeamName();
+			}
 		}
-		
-		return qualifiedTeamId;
+		return qualifiedTeamName;
 	}
 }

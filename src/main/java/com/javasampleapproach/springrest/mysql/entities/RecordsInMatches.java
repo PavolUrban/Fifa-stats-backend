@@ -1,11 +1,16 @@
 package com.javasampleapproach.springrest.mysql.entities;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "recordsinmatches")
@@ -16,17 +21,21 @@ public class RecordsInMatches {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Column(name = "matchId")
-    private int matchId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="matchId", nullable=false)
+    private Matches match;
 
-    @Column(name = "playerId")
-    private long playerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="playerId", nullable=false)
+    private FifaPlayerDB player;
 
     @Column(name = "playerTeamId")
     private Integer playerTeamId; // for which team player played in match
 
-    @Column(name = "teamRecordId")
-    private Integer teamRecordId; // for which team player made a contribution (e.g. own goal he would score for opposition team)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonBackReference
+    @JoinColumn(name="teamRecordId", nullable=false)
+    private Team team; // for which team player made a contribution (e.g. own goal he would score for opposition team)
 
     @Column(name = "typeOfRecord")
     private String typeOfRecord;

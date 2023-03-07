@@ -8,8 +8,10 @@ import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.MatchDetail;
 import com.javasampleapproach.springrest.mysql.model.MatchEventDetail;
+import com.javasampleapproach.springrest.mysql.model.MatchesDTO;
 import com.javasampleapproach.springrest.mysql.model.TeamGlobalStats;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static Utils.MyUtils.OLD_FORMAT;
 import static Utils.MyUtils.RECORD_TYPE_GOAL;
 
 @Service
@@ -41,46 +44,54 @@ public class MatchesService {
     @Autowired
     FifaPlayerService fifaPlayerService;
 
+    @Autowired
+    ModelMapper modelMapper;
+
+    // todo latest
     public List<Matches> getTeamMatchesById(long teamId){
-        return matchesRepository.getAllMatchesForTeam(teamId);
+        return null;//matchesRepository.getAllMatchesForTeam(teamId);
     }
 
+    // todo latest
     public String getFirstSeasonInCompetition(String teamName, String competition) {
-        return matchesRepository.firstSeasonInCompetition(teamName, competition);
+        //return matchesRepository.firstSeasonInCompetition(teamName, competition);
+        return null;
     }
 
+    // todo latest
     public Map<String, Object> getMatchesForCustomTeam(String teamName) {
-        long teamId = teamService.findByTeamName(teamName).getId();
-        List<Matches> matches = matchesRepository.findByIdHomeTeamOrIdAwayTeam(teamId, teamId);
-
-        Map<String, Object> result = new HashMap();
-        result.put("Round of 16", null);
-        result.put("quarterfinals", null);
-        result.put("semifinals", null);
-        result.put("finals", null);
-
-        List<Matches> roundOf16 = matches.stream().filter(o -> o.getCompetitionPhase().contains("Round of 16")).collect(Collectors.toList());
-        Iterable<Matches> quarterfinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Quarterfinals")).collect(Collectors.toList());
-        Iterable<Matches> semifinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Semifinals")).collect(Collectors.toList());
-        List<Matches> finals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Final")).sorted((x1, x2) -> x2.getSeason().compareTo(x1.getSeason())).collect(Collectors.toList());
-
-        TeamGlobalStats teamGlobalStats = new TeamGlobalStats();
-        teamGlobalStats.setFinalsPlayed(finals.size());
-
-        int winsInFinal = 0;
-        for (Matches finale : finals) {
-            if (finale.getWinnerId() == teamId)
-                winsInFinal++;
-        }
-
-        teamGlobalStats.setTotalWinsCL(winsInFinal);
-        teamGlobalStats.setFinalsPlayed(finals.size());
-
-
-        result.put("final", finals);
-        result.put("finalStats", teamGlobalStats);
-
-        return result;
+//        long teamId = teamService.findByTeamName(teamName).getId();
+//        List<Matches> matches = matchesRepository.findByIdHomeTeamOrIdAwayTeam(teamId, teamId);
+//
+//        Map<String, Object> result = new HashMap();
+//        result.put("Round of 16", null);
+//        result.put("quarterfinals", null);
+//        result.put("semifinals", null);
+//        result.put("finals", null);
+//
+//        List<Matches> roundOf16 = matches.stream().filter(o -> o.getCompetitionPhase().contains("Round of 16")).collect(Collectors.toList());
+//        Iterable<Matches> quarterfinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Quarterfinals")).collect(Collectors.toList());
+//        Iterable<Matches> semifinals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Semifinals")).collect(Collectors.toList());
+//        List<Matches> finals = matches.stream().filter(o -> o.getCompetitionPhase().contains("Final")).sorted((x1, x2) -> x2.getSeason().compareTo(x1.getSeason())).collect(Collectors.toList());
+//
+//        TeamGlobalStats teamGlobalStats = new TeamGlobalStats();
+//        teamGlobalStats.setFinalsPlayed(finals.size());
+//
+//        int winsInFinal = 0;
+//        for (Matches finale : finals) {
+//            if (finale.getWinnerId() == teamId)
+//                winsInFinal++;
+//        }
+//
+//        teamGlobalStats.setTotalWinsCL(winsInFinal);
+//        teamGlobalStats.setFinalsPlayed(finals.size());
+//
+//
+//        result.put("final", finals);
+//        result.put("finalStats", teamGlobalStats);
+//
+//        return result;
+        return null;
     }
 
     // todo merge empty filters
@@ -94,16 +105,22 @@ public class MatchesService {
         return matchesRepository.findBySeason(season);
     }
 
-    // todo merge with getAllMatchesBySeason
+    // todo latest
     public List<Matches> getMatchesForCustomTeamNew(String teamName, String season) {
-        List<Matches> matches = matchesRepository.findBySeasonAndHometeamOrSeasonAndAwayteam(season, teamName, season, teamName);
-        return setWinners(matches);
+       // List<Matches> matches = matchesRepository.findBySeasonAndHometeamOrSeasonAndAwayteam(season, teamName, season, teamName);
+        // return setWinners(matches);
+        return null;
     }
 
     // todo merge
-    public List<Matches> getCustomGroupMatches(String competition, String season, String competitionPhase) {
+    public List<MatchesDTO> getCustomGroupMatches(String competition, String season, String competitionPhase) {
         List<Matches> matches = matchesRepository.findByCompetitionAndSeasonAndCompetitionPhase(competition, season, competitionPhase);
-        return setWinners(matches);
+        List<MatchesDTO> matchesDTOList = new ArrayList<>();
+        matches.forEach(match -> {
+           MatchesDTO matchDto =  modelMapper.map(match, MatchesDTO.class);
+            matchesDTOList.add(matchDto);
+        });
+        return matchesDTOList;
     }
 
     // todo merge
@@ -148,15 +165,18 @@ public class MatchesService {
         if (competitionPhase.equalsIgnoreCase(MyUtils.ALL_PHASES)) {
             competitionPhase = null;
         }
+// TODO latest fix
+//        List<Matches> matches = matchesRepository.getMatchesWithCustomFilters(season, competition, competitionPhase);
 
-        List<Matches> matches = matchesRepository.getMatchesWithCustomFilters(season, competition, competitionPhase);
 
-        if (teamName == null || teamName.equalsIgnoreCase("null")) {
-            return matches;
-        } else {
-            List<Matches> matchesForSelectedTeam = matches.stream().filter(match -> match.getIdHomeTeam() == teamId || match.getIdAwayTeam() == teamId).collect(Collectors.toList());
-            return matchesForSelectedTeam;
-        }
+//        if (teamName == null || teamName.equalsIgnoreCase("null")) {
+//            return matches;
+//        } else {
+//            List<Matches> matchesForSelectedTeam = matches.stream().filter(match -> match.getIdHomeTeam() == teamId || match.getIdAwayTeam() == teamId).collect(Collectors.toList());
+//            return matchesForSelectedTeam;
+//        }
+
+        return null;
     }
 
     public List<Matches> getTopMatches(String recordType, String selectedPlayer, String selectedCompetition, String teamName) {
@@ -174,21 +194,22 @@ public class MatchesService {
         if(!teamName.equalsIgnoreCase(MyUtils.ALL)) {
             teamId = teamService.findByTeamName(teamName).getId();
         }
+// TODO latest
 
-        switch (recordType) {
-            case MyUtils.MOST_GOALS_IN_MATCH:
-                matches = matchesRepository.getMatchesWithMostGoals(selectedCompetition, teamId);
-                break;
-            case MyUtils.BIGGEST_AWAY_WINS:
-                matches = matchesRepository.getBiggestAwayWins(selectedPlayer, selectedCompetition, teamId);
-                break;
-            case MyUtils.BIGGEST_HOME_WINS:
-                matches = matchesRepository.getBiggestHomeWins(selectedPlayer, selectedCompetition, teamId);
-                break;
-            case MyUtils.BIGGEST_DRAWS:
-                matches = matchesRepository.getBiggestDraws(selectedCompetition, teamId);
-                break;
-        }
+//        switch (recordType) {
+//            case MyUtils.MOST_GOALS_IN_MATCH:
+//                matches = matchesRepository.getMatchesWithMostGoals(selectedCompetition, teamId);
+//                break;
+//            case MyUtils.BIGGEST_AWAY_WINS:
+//                matches = matchesRepository.getBiggestAwayWins(selectedPlayer, selectedCompetition, teamId);
+//                break;
+//            case MyUtils.BIGGEST_HOME_WINS:
+//                matches = matchesRepository.getBiggestHomeWins(selectedPlayer, selectedCompetition, teamId);
+//                break;
+//            case MyUtils.BIGGEST_DRAWS:
+//                matches = matchesRepository.getBiggestDraws(selectedCompetition, teamId);
+//                break;
+//        }
 
         return setWinners(matches);
     }
@@ -198,18 +219,18 @@ public class MatchesService {
     // todo zrejme zjednotit s updateexisting
     public Matches createMatch(Matches match) {
 
-        //todo opravit toto je workaround
-        Team homeTeam = teamService.findByTeamName(match.getHometeam());
-        Team awayTeam = teamService.findByTeamName(match.getAwayteam());
-        System.out.println(homeTeam);
-        match.setIdHomeTeam(homeTeam.getId());
-        match.setIdAwayTeam(awayTeam.getId());
-        System.out.println("toto chcem ulozit");
-        System.out.println(match);
-
-        setWinningTeam(match);
-
-        matchesRepository.save(match);
+        //todo latest fix max creation
+//        Team homeTeam = teamService.findByTeamName(match.getHometeam());
+//        Team awayTeam = teamService.findByTeamName(match.getAwayteam());
+//        System.out.println(homeTeam);
+//        match.setIdHomeTeam(homeTeam.getId());
+//        match.setIdAwayTeam(awayTeam.getId());
+//        System.out.println("toto chcem ulozit");
+//        System.out.println(match);
+//
+//        setWinningTeam(match);
+//
+//        matchesRepository.save(match);
 
         return null;
     }
@@ -226,42 +247,33 @@ public class MatchesService {
         return null;
     }
 
-    // todo this method needs to be significatly improved and simplified
-    public MatchDetail getMatchDetails(Long matchId, String hometeam, String awayteam) {
+    public MatchDetail getMatchDetails(Long matchId) {
+        Matches currentMatch= matchesRepository.findById(matchId).get();
         MatchDetail md = new MatchDetail();
-        List<RecordsInMatches> rims = recordsInMatchesService.findByMatchIdOrderByMinuteOfRecord(matchId.intValue());
-        Set<Long> ids = rims.stream().map(rim -> rim.getPlayerId()).collect(Collectors.toSet());
-        List<FifaPlayerDB> players = fifaPlayerService.findByIdIn(ids);
 
-        Matches m = matchesRepository.findById(matchId).orElse(null);
-
-        // old vs new format
-        if(MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(m.getSeason())){
-            rims.forEach(hr -> {
+        if (MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(currentMatch.getSeason())) {
+            currentMatch.getRecordsInMatches().forEach(recordInMatch -> {
                 MatchEventDetail med = new MatchEventDetail();
-                String playerName = players.stream().filter(player -> player.getId() == hr.getPlayerId()).map(p -> p.getPlayerName()).findFirst().orElse(null);
-                med.setPlayerName(playerName);
-                med.setRecordType(hr.getTypeOfRecord());
-                med.setTeamRecordId(hr.getTeamRecordId());
+                med.setPlayerName(recordInMatch.getPlayer().getPlayerName());
+                med.setRecordType(recordInMatch.getTypeOfRecord());
+                med.setTeamRecordId((int) recordInMatch.getTeam().getId());
                 md.getEventsWithoutTime().add(med);
             });
-            md.setTypeOfFormat(MyUtils.OLD_FORMAT);
+            md.setTypeOfFormat(OLD_FORMAT);
         } else {
-            rims.forEach(hr -> {
+            currentMatch.getRecordsInMatches().forEach(recordInMatch -> {
                 MatchEventDetail med = new MatchEventDetail();
-                String playerName = players.stream().filter(player -> player.getId() == hr.getPlayerId()).map(p -> p.getPlayerName()).findFirst().orElse(null);
-                med.setPlayerName(playerName);
-                med.setRecordType(hr.getTypeOfRecord());
-                med.setTeamRecordId(hr.getTeamRecordId());
-                med.setMinute(hr.getMinuteOfRecord());
-                med.setMinuteLabel(hr.getMinuteOfRecord() > 9 ? hr.getMinuteOfRecord().toString() + "'" : "0" + hr.getMinuteOfRecord() + "'");
-                addEventToProperHalfTime(md, hr, med);
+                med.setPlayerName(recordInMatch.getPlayer().getPlayerName());
+                med.setRecordType(recordInMatch.getTypeOfRecord());
+                med.setTeamRecordId((int) recordInMatch.getTeam().getId());
+                med.setMinute(recordInMatch.getMinuteOfRecord());
+                med.setMinuteLabel(recordInMatch.getMinuteOfRecord() > 9 ? recordInMatch.getMinuteOfRecord().toString() + "'" : "0" + recordInMatch.getMinuteOfRecord() + "'");
+                addEventToProperHalfTime(md, recordInMatch, med);
+                md.getEventsFirstHalf().sort(Comparator.comparing(MatchEventDetail::getMinute));
+                md.getEventsSecondHalf().sort(Comparator.comparing(MatchEventDetail::getMinute));
+                md.getEventsOverTime().sort(Comparator.comparing(MatchEventDetail::getMinute));
             });
-
             md.setTypeOfFormat(MyUtils.NEW_FORMAT);
-
-            //todo sort
-            //md.getEvents().sort(Comparator.comparing(MatchEventDetail::getMinute));
         }
 
         return md;
@@ -274,46 +286,47 @@ public class MatchesService {
 
     // todo rework-rename
     public Map<String, Object> getCustomGroupMatches(String firstTeam, String secondTeam) {
+// todo latest
+//        long firstTeamId = teamService.findByTeamName(firstTeam).getId();
+//        long secondTeamId = teamService.findByTeamName(secondTeam).getId();
+//
+//        List<Matches> finalList = new ArrayList<>();
+//        matchesRepository.findByIdHomeTeamAndIdAwayTeam(firstTeamId, secondTeamId).forEach(finalList::add);
+//        matchesRepository.findByIdHomeTeamAndIdAwayTeam(secondTeamId, firstTeamId).forEach(finalList::add);
+//        finalList.sort(Comparator.comparing(Matches::getSeason).thenComparing(Matches::getCompetitionPhase));
+//        List<Team> allTeams = teamService.getAllTeams();
+//
+//        Map<String, Object> response = new HashMap<>();
+//
+//        // todo use here something like bilance? it should be already used at other places
+//        Map<String, Integer> playersStats = new HashMap<>();
+//        playersStats.put(MyUtils.PAVOL_JAY, 0);
+//        playersStats.put(MyUtils.KOTLIK, 0);
+//        playersStats.put(MyUtils.RESULT_DRAW, 0);
+//
+//        Map<String, Integer> overallStats = new HashMap<>();
+//        overallStats.put(firstTeam, 0);
+//        overallStats.put(secondTeam, 0);
+//        overallStats.put(MyUtils.RESULT_DRAW, 0);
+//
+//        for (Matches match : finalList) {
+//            //players statistics
+//            String winner = HelperMethods.whoIsWinnerOfMatch(match);
+//            playersStats.put(winner, playersStats.get(winner) + 1);
+//
+//            //teams statistics
+//            String winnerTeamName = match.getWinnerId() == -1 ? MyUtils.RESULT_DRAW : teamService.getTeamNameById(allTeams, match.getWinnerId());
+//            overallStats.put(winnerTeamName, overallStats.get(winnerTeamName) + 1);
+//        }
+//
+//
+//        response.put("playersStats", convertMapToList(playersStats, MyUtils.PAVOL_JAY, MyUtils.KOTLIK));
+//        response.put("matches", finalList);
+//        response.put("overallStats", convertMapToList(overallStats, firstTeam, secondTeam));
 
-        long firstTeamId = teamService.findByTeamName(firstTeam).getId();
-        long secondTeamId = teamService.findByTeamName(secondTeam).getId();
 
-        List<Matches> finalList = new ArrayList<>();
-        matchesRepository.findByIdHomeTeamAndIdAwayTeam(firstTeamId, secondTeamId).forEach(finalList::add);
-        matchesRepository.findByIdHomeTeamAndIdAwayTeam(secondTeamId, firstTeamId).forEach(finalList::add);
-        finalList.sort(Comparator.comparing(Matches::getSeason).thenComparing(Matches::getCompetitionPhase));
-        List<Team> allTeams = teamService.getAllTeams();
-
-        Map<String, Object> response = new HashMap<>();
-
-        // todo use here something like bilance? it should be already used at other places
-        Map<String, Integer> playersStats = new HashMap<>();
-        playersStats.put(MyUtils.PAVOL_JAY, 0);
-        playersStats.put(MyUtils.KOTLIK, 0);
-        playersStats.put(MyUtils.RESULT_DRAW, 0);
-
-        Map<String, Integer> overallStats = new HashMap<>();
-        overallStats.put(firstTeam, 0);
-        overallStats.put(secondTeam, 0);
-        overallStats.put(MyUtils.RESULT_DRAW, 0);
-
-        for (Matches match : finalList) {
-            //players statistics
-            String winner = HelperMethods.whoIsWinnerOfMatch(match);
-            playersStats.put(winner, playersStats.get(winner) + 1);
-
-            //teams statistics
-            String winnerTeamName = match.getWinnerId() == -1 ? MyUtils.RESULT_DRAW : teamService.getTeamNameById(allTeams, match.getWinnerId());
-            overallStats.put(winnerTeamName, overallStats.get(winnerTeamName) + 1);
-        }
-
-
-        response.put("playersStats", convertMapToList(playersStats, MyUtils.PAVOL_JAY, MyUtils.KOTLIK));
-        response.put("matches", finalList);
-        response.put("overallStats", convertMapToList(overallStats, firstTeam, secondTeam));
-
-
-        return response;
+      //  return response;
+        return  null;
     }
 
     public Map<String, List<String>> getDataToCreateMatch() {
@@ -366,14 +379,16 @@ public class MatchesService {
         return name;
     }
 
+    // todo latest
     private void setWinningTeam(Matches match) {
-        if (match.getScorehome() > match.getScoreaway()) {
-            match.setWinnerId(match.getIdHomeTeam());
-        } else if (match.getScorehome() == match.getScoreaway()) {
-            match.setWinnerId(MyUtils.DRAW_RESULT_ID);
-        } else {
-            match.setWinnerId(match.getIdAwayTeam());
-        }
+//        if (match.getScorehome() > match.getScoreaway()) {
+//            match.setWinnerId(match.getIdHomeTeam());
+//        } else if (match.getScorehome() == match.getScoreaway()) {
+//            match.setWinnerId(MyUtils.DRAW_RESULT_ID);
+//        } else {
+//            match.setWinnerId(match.getIdAwayTeam());
+//        }
+//
     }
 
     private List<Integer> convertMapToList(Map<String, Integer> playersStats, String homePlayerOrTeam, String awayPlayerOrTeam) {
@@ -397,8 +412,4 @@ public class MatchesService {
         });
         return matches;
     }
-
-
-
-
 }

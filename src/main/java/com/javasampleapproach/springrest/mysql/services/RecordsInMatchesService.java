@@ -24,7 +24,7 @@ public class RecordsInMatchesService {
 
             // old fifa check - no minutes
             if(record.getMinuteOfRecord() == null) {
-                if (record.getTeamRecordId().equals(teamId)){
+                if (record.getTeam().getId() == teamId){
                     gdm.setScoredGoalsUnknownTime(gdm.getScoredGoalsUnknownTime() + 1);
                 } else {
                     gdm.setConcededGoalsUnknownTime(gdm.getConcededGoalsUnknownTime() + 1);
@@ -38,7 +38,7 @@ public class RecordsInMatchesService {
                     tre = gdm.getAllRanges().stream().filter(range -> record.getMinuteOfRecord() <= range.getUpBorder() && record.getMinuteOfRecord() >= range.getLowBorder()).findFirst().orElse(null);
                 }
 
-                if(record.getTeamRecordId().equals(teamId)){
+                if(record.getTeam().getId()==  teamId){
                     tre.setNumberOfGoals(tre.getNumberOfGoals() + 1);
                 } else {
                     tre.setNumberOfConcededGoals(tre.getNumberOfConcededGoals() + 1);

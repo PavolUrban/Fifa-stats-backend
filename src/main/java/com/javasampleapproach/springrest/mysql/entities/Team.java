@@ -2,12 +2,18 @@ package com.javasampleapproach.springrest.mysql.entities;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+import java.util.List;
+import java.util.Set;
+
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -30,4 +36,14 @@ public class Team {
 	
 	@Column(name = "country")
 	private String country;
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy="team")
+	@JsonManagedReference
+	private Set<RecordsInMatches> recordsInMatches;
+
+	@OneToMany(mappedBy="homeTeam", fetch = FetchType.LAZY)
+	private List<Matches> homeMatches;
+
+	@OneToMany(mappedBy="awayTeam", fetch = FetchType.LAZY)
+	private List<Matches> awayMatches;
 }

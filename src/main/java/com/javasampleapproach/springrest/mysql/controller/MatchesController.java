@@ -3,6 +3,7 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.model.MatchDetail;
+import com.javasampleapproach.springrest.mysql.model.MatchesDTO;
 import com.javasampleapproach.springrest.mysql.services.MatchesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -59,18 +60,20 @@ public class MatchesController {
 	}
 
 	//TODO urban toto primarne dorobit
-	@GetMapping(value = "/getMatchDetails/{matchId}/{hometeam}/{awayteam}")
-	public MatchDetail getMatchDetails(@PathVariable("matchId") Long matchId, @PathVariable("hometeam") String hometeam, @PathVariable("awayteam") String awayteam) {
-		return matchesService.getMatchDetails(matchId, hometeam, awayteam);
+	@GetMapping(value = "/getMatchDetails/{matchId}")
+	public MatchDetail getMatchDetails(@PathVariable("matchId") Long matchId) {
+		System.out.println("toto mi prislo " + matchId );
+		return matchesService.getMatchDetails(matchId);
 	}
 
-	@GetMapping(value = "/getMatchById/{matchId}")
-	public Matches getMatchById(@PathVariable("matchId") Long matchId) {
-		return matchesService.getMatchById(matchId);
-	}
+//	@GetMapping(value = "/getMatchById/{matchId}")
+//	public Matches getMatchById(@PathVariable("matchId") Long matchId) {
+//		return matchesService.getMatchById(matchId);
+//	}
 
 	@GetMapping("/getCustomGroupMatches/{competition}/{season}/{competitionPhase}")
-	public List<Matches> getCustomGroupMatches(@PathVariable("competition") String competition, @PathVariable("season") String season, @PathVariable("competitionPhase") String competitionPhase) {
+	public List<MatchesDTO> getCustomGroupMatches(@PathVariable("competition") String competition, @PathVariable("season") String season, @PathVariable("competitionPhase") String competitionPhase) {
+		// todo urban here
 		return matchesService.getCustomGroupMatches(competition, season, competitionPhase);
 	}
 

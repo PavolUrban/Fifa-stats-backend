@@ -2,6 +2,7 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 
 import com.javasampleapproach.springrest.mysql.entities.Team;
+import com.javasampleapproach.springrest.mysql.model.TeamDto;
 import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public class TeamController {
 	
 	// todo rename - no logo in the url
 	@GetMapping("/getAllTeamsWithLogo/{recalculate}")
-	public List<Team> getAllTeams(@PathVariable("recalculate") boolean recalculate) {
+	public List<TeamDto> getAllTeams(@PathVariable("recalculate") boolean recalculate) {
 		return teamService.getAllTeams(recalculate);
 	}
 
