@@ -1,5 +1,6 @@
 package com.javasampleapproach.springrest.mysql.model;
 
+import com.javasampleapproach.springrest.mysql.model.seasons.H2HPlayers;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

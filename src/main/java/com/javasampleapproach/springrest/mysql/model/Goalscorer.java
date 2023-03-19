@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Goalscorer {
+	private long playerId;
 	private String name;
 	private Integer totalGoalsCount;
 	private Map<String, Integer> goalsByTeams; // todo use in future

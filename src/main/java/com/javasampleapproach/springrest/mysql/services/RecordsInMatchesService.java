@@ -1,10 +1,13 @@
 package com.javasampleapproach.springrest.mysql.services;
 
 import Utils.MyUtils;
+import com.javasampleapproach.springrest.mysql.entities.FifaPlayerDB;
+import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
+import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.GoalDistributionModel;
-import com.javasampleapproach.springrest.mysql.model.NewRecordToSave;
 import com.javasampleapproach.springrest.mysql.model.TimeRangeElement;
+import com.javasampleapproach.springrest.mysql.model.records_in_matches.RecordsInMatchesDTO;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,15 @@ public class RecordsInMatchesService {
 
     @Autowired
     RecordsInMatchesRepository recordsInMatchesRepository;
+
+    @Autowired
+    MatchesService matchesService;
+
+    @Autowired
+    FifaPlayerService fifaPlayerService;
+
+    @Autowired
+    TeamService teamService;
 
     public GoalDistributionModel getGoalDistributionForTeam(Integer teamId) {
         List<RecordsInMatches> records = recordsInMatchesRepository.getScoredAndConcededGoalsByTeam(teamId);
@@ -60,11 +72,23 @@ public class RecordsInMatchesService {
     }
 
     // todo recordtypes use as array
-    public List<RecordsInMatches> getRecordsByCompetition(String competition, Integer teamId, String recordType1, String recordType2){
+    public List<RecordsInMatches> getRecordsByCompetition(String competition, Long teamId, String recordType1, String recordType2){
         return recordsInMatchesRepository.getRecordsByCompetition(null, null, competition, teamId, MyUtils.RECORD_TYPE_YELLOW_CARD, MyUtils.RECORD_TYPE_RED_CARD);
     }
 
-    public void saveNewRecord(RecordsInMatches newRecordToSave){
-        recordsInMatchesRepository.save(newRecordToSave);
+    public void saveNewRecord(RecordsInMatchesDTO newRecordDTO){
+        final Matches match = matchesService.findMatchById(newRecordDTO.getMatchId());
+        final Team playerTeam = teamService.findById(newRecordDTO.getPlayerTeamId());
+        final Team recordTeam = teamService.findById(newRecordDTO.getTeamRecordId());
+        final FifaPlayerDB player = fifaPlayerService.findPlayerById(newRecordDTO.getPlayerId());
+        final RecordsInMatches newRecord = new RecordsInMatches();
+        newRecord.setMatch(match);
+        newRecord.setPlayerTeam(playerTeam);
+        newRecord.setTeam(recordTeam);
+        newRecord.setPlayer(player);
+        newRecord.setTypeOfRecord(newRecordDTO.getTypeOfRecord());
+        newRecord.setMinuteOfRecord(newRecordDTO.getMinuteOfRecord());
+
+        recordsInMatchesRepository.save(newRecord);
     }
 }

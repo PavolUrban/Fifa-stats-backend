@@ -9,6 +9,7 @@ public class TeamDto {
 
     private long id;
     private String teamName;
+    private long teamId;
     private String firstSeasonCL;
     private String firstSeasonEL;
     private String country;

@@ -1,6 +1,5 @@
 package com.javasampleapproach.springrest.mysql.entities;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -10,15 +9,13 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Set;
+import java.util.List;
 
 @Getter
 @Setter
@@ -66,10 +63,10 @@ public class Matches {
 	private Team awayTeam;
 
 	@Column(name = "winnerid")
-	private long winnerId;
+	private long winnerId; // todo rework to teamId
 
-	@OneToMany(fetch = FetchType.EAGER, mappedBy="match")
-	private Set<RecordsInMatches> recordsInMatches;
+	@OneToMany(fetch = FetchType.LAZY, mappedBy="match")
+	private List<RecordsInMatches> recordsInMatches;
 
 	private String winnerPlayer;
 }

@@ -1,8 +1,7 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.GoalDistributionModel;
-import com.javasampleapproach.springrest.mysql.model.NewRecordToSave;
+import com.javasampleapproach.springrest.mysql.model.records_in_matches.RecordsInMatchesDTO;
 import com.javasampleapproach.springrest.mysql.services.RecordsInMatchesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -27,7 +26,7 @@ public class RecordsInMatchesController {
     }
 
     @PostMapping("/saveNewRecord")
-    public void saveNewRecordInMatch(@RequestBody RecordsInMatches newRecordToSave){
+    public void saveNewRecordInMatch(@RequestBody RecordsInMatchesDTO newRecordToSave){
         recordsInMatchesService.saveNewRecord(newRecordToSave);
     }
 }

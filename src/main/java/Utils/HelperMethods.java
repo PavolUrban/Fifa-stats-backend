@@ -1,7 +1,6 @@
 package Utils;
 
 import com.javasampleapproach.springrest.mysql.entities.Matches;
-import com.javasampleapproach.springrest.mysql.model.MatchesDTO;
 
 import java.util.HashMap;
 import java.util.List;

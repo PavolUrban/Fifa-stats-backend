@@ -2,7 +2,6 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 import Utils.HelperMethods;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
-import com.javasampleapproach.springrest.mysql.model.H2HPlayers;
 import com.javasampleapproach.springrest.mysql.model.OverallStats;
 import com.javasampleapproach.springrest.mysql.model.SeasonBySeason;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;

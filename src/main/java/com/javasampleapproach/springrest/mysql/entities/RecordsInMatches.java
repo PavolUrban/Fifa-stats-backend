@@ -29,8 +29,9 @@ public class RecordsInMatches {
     @JoinColumn(name="playerId", nullable=false)
     private FifaPlayerDB player;
 
-    @Column(name = "playerTeamId")
-    private Integer playerTeamId; // for which team player played in match
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "playerTeamId", nullable=false)
+    private Team playerTeam; // for which team player played in match
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference

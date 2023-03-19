@@ -186,8 +186,7 @@ public class GlobalStatsController {
 		TeamForTrophyRoom teamAlreadyInRoom = trophyRoom.stream().filter(team-> team.getTeamId() == teamId).findFirst().orElse(null);
 
 		if(teamAlreadyInRoom == null) {
-			// TODO improve this quick fix
-			Team team = teamService.findById(teamId).get();
+			Team team = teamService.findById(teamId);
 			TeamForTrophyRoom newTeam = new TeamForTrophyRoom(teamId);
 			newTeam.setTeamName(team.getTeamName());
 			addStatsForProperCompetition(newTeam, match);

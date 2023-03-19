@@ -12,6 +12,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class PlayerWithCards {
 
+    private long playerId;
     private String name;
     private Integer cardsTotal = 0;
     private int redCards = 0;

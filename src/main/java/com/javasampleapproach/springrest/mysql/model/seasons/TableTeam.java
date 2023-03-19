@@ -1,14 +1,12 @@
-package com.javasampleapproach.springrest.mysql.model;
+package com.javasampleapproach.springrest.mysql.model.seasons;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 public class TableTeam {
-
 	private String teamname;
-	private int matches;
+	private long teamId;
+	private int matches; // todo rename to matchesCount
 	private int wins;
 	private int draws;
 	private int losses;
@@ -19,4 +17,3 @@ public class TableTeam {
 	private int placeInGroup;
 	private String ownedByPlayer;
 }
-// checked - this is really used

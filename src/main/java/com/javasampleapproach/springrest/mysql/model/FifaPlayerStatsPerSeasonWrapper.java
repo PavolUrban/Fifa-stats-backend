@@ -1,20 +1,17 @@
 package com.javasampleapproach.springrest.mysql.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
-@AllArgsConstructor
-public class FifaPlayerDialogStats {
-    private String name;
 
-    //todo per competition
+@Data
+public class FifaPlayerStatsPerSeasonWrapper {
+    private String playerName;
     private List<FifaPlayerStatsPerSeason> playerStatsPerSeason;
 
-    public FifaPlayerDialogStats(){
+    public FifaPlayerStatsPerSeasonWrapper() {
         this.playerStatsPerSeason = new ArrayList<>();
     }
 }

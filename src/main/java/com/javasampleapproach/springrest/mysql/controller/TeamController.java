@@ -31,17 +31,15 @@ public class TeamController {
 	public List<String> getAllTeamNames() {
 		return teamService.getAllTeamNames();
 	}
-	
-	// todo rename - no logo in the url
-	@GetMapping("/getAllTeamsWithLogo/{recalculate}")
+
+	@GetMapping("/getAllTeams/{recalculate}")
 	public List<TeamDto> getAllTeams(@PathVariable("recalculate") boolean recalculate) {
 		return teamService.getAllTeams(recalculate);
 	}
 
-	// TODO replace teamname by Id
-	@GetMapping("/getTeamStats/{teamname}")
-	public TeamStatsWithMatches getTeamStats(@PathVariable("teamname") String teamName) {
-		return teamService.getTeamStats(teamName);
+	@GetMapping("/getTeamStats/{teamId}")
+	public TeamStatsWithMatches getTeamStats(@PathVariable("teamId") long teamId) {
+		return teamService.getTeamStats(teamId);
 	}
 
 	@GetMapping("/getGlobalTeamStats")

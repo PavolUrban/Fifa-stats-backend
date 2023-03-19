@@ -32,8 +32,6 @@ public class FifaPlayerDB {
     @Column(name = "additionalinfo")
     private String additionalInfo;
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy="player")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy="player")
     private Set<RecordsInMatches> recordsInMatches;
-
-    //@EqualsAndHashCode(exclude = {"recordsInMatches"})
 }

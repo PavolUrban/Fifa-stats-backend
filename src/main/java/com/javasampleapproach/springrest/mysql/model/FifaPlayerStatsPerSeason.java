@@ -14,7 +14,7 @@ import java.util.Set;
 public class FifaPlayerStatsPerSeason {
     String seasonName;
     String teamname;
-    Integer teamId;
+    long teamId;
     int goalsCount = 0;
     int yellowCardsCount = 0;
     int redCardsCount = 0;

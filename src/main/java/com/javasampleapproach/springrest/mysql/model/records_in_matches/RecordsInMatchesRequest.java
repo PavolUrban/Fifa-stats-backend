@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class RecordsInMatchesRequest {
     String competition;
-    Integer teamId;
+    Long teamId;
 }

@@ -1,20 +1,18 @@
 package com.javasampleapproach.springrest.mysql.services;
 
 import Utils.MyUtils;
-import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.TeamDto;
 import com.javasampleapproach.springrest.mysql.model.TeamStats;
 import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
+import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
+import com.javasampleapproach.springrest.mysql.serviceV2.MatchesServiceV2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class TeamService {
@@ -23,18 +21,17 @@ public class TeamService {
     TeamRepository teamRepository;
 
     @Autowired
-    MatchesService matchesService;
+    MatchesServiceV2 matchesService;
 
-    public TeamStatsWithMatches getTeamStats(@PathVariable("teamname") String teamName) {
-        long teamId = teamRepository.findByTeamName(teamName).getId();
-        List<Matches> matches = matchesService.getTeamMatchesById(teamId);
-
-        TeamStatsWithMatches teamStats = new TeamStatsWithMatches();
-        teamStats.setTeamName(teamName);
+    public TeamStatsWithMatches getTeamStats(final long teamId) {
+        final Team currentTeam = findById(teamId);
+        final TeamStatsWithMatches teamStats = new TeamStatsWithMatches();
+        teamStats.setTeamName(currentTeam.getTeamName());
         teamStats.setTeamId(teamId);
-        teamStats.setMatches(matches);
+        final List<MatchesDTO> teamMatches = matchesService.getFilteredMatches(null, null, null, currentTeam.getId());
+        teamStats.setMatches(teamMatches);
 
-        for(Matches m : matches)  {
+        for(MatchesDTO m : teamMatches)  {
             if(m.getCompetition().equalsIgnoreCase(MyUtils.CHAMPIONS_LEAGUE)){
                 setWDLGoalsAndSeasons(m, teamStats.getTeamStatsCL(), teamId);
             } else {
@@ -58,14 +55,11 @@ public class TeamService {
         return allTeams;
     }
 
-    public Iterable<Team> getAllTeamsIterable() {
-        return teamRepository.findAll();
-    }
 
     // todo Check and re-work add mapper
-    public List<TeamDto> getAllTeams(@PathVariable("recalculate") boolean recalculate) {
+    public List<TeamDto> getAllTeams(boolean recalculate) {
 
-        List<TeamDto> teamstest = new ArrayList<>();
+        List<TeamDto> allTeams = new ArrayList<>();
 
         teamRepository.findAll().forEach(team -> {
             TeamDto tdo = new TeamDto();
@@ -73,7 +67,8 @@ public class TeamService {
             tdo.setCountry(team.getCountry());
             tdo.setFirstSeasonCL(team.getFirstSeasonCL());
             tdo.setFirstSeasonEL(team.getFirstSeasonEL());
-            teamstest.add(tdo);
+            tdo.setTeamId(team.getId());
+            allTeams.add(tdo);
         });
 
         // todo add option to recalculat
@@ -89,7 +84,7 @@ public class TeamService {
         //            t.setFirstSeasonEL(setLabelToNeverIfNull(t.getFirstSeasonEL()));
         //        }
 
-        return teamstest;
+        return allTeams;
     }
 
     // re-work with map
@@ -128,8 +123,9 @@ public class TeamService {
         return teamRepository.findByTeamName(teamName);
     }
 
-    public Optional<Team> findById(Long teamId) {
-        return teamRepository.findById(teamId);
+    // todo handle null
+    public Team findById(Long teamId) {
+        return teamRepository.findById(teamId).get();
     }
 
     private String setLabelToNeverIfNull(String firstSeasonInCompetition){
@@ -155,7 +151,7 @@ public class TeamService {
         bilance.add(statsCL.getLosses() + statsEL.getLosses());
     }
 
-    private void setWDLGoalsAndSeasons(Matches m, TeamStats teamStats, long teamId) {
+    private void setWDLGoalsAndSeasons(MatchesDTO m, TeamStats teamStats, long teamId) {
         // W-D-L setter
         if (m.getWinnerId() == MyUtils.DRAW_RESULT_ID) {
             teamStats.incrementDraws(1);
@@ -166,10 +162,10 @@ public class TeamService {
         }
 
         // GS and GC setter
-        if(m.getHomeTeam().getId() == teamId) {
+        if(m.getIdHomeTeam() == teamId) {
             teamStats.incrementGoalsScored(m.getScorehome());
             teamStats.incrementGoalsConceded(m.getScoreaway());
-        } else if(m.getAwayTeam().getId() == teamId) {
+        } else if(m.getIdAwayTeam() == teamId) {
             teamStats.incrementGoalsScored(m.getScoreaway());
             teamStats.incrementGoalsConceded(m.getScorehome());
         }

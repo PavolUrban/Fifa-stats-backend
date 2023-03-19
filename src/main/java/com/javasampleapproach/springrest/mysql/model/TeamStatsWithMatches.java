@@ -3,7 +3,7 @@ package com.javasampleapproach.springrest.mysql.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.javasampleapproach.springrest.mysql.entities.Matches;
+import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
 import lombok.Data;
 
 @Data
@@ -11,7 +11,7 @@ public class TeamStatsWithMatches {
 
 	private String teamName;
 	private long teamId;
-	private List<Matches> matches;
+	private List<MatchesDTO> matches;
 	private TeamStats teamStatsCL;
 	private TeamStats teamStatsEL;
 	private TeamStats teamStatsTotal;
