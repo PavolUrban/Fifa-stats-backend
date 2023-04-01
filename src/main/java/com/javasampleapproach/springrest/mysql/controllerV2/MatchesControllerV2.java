@@ -64,4 +64,6 @@ public class MatchesControllerV2 {
     // fastest goal
     // fastest red card
     // something like for each team on its page - add fifa10 - quaterfinal, fifa11 - group stage ...
+    // something like percentage of goals by player vs team in season - how important player was
+    // best results of kotlik teams, e.g. most wins in group stage, play off, season , most points, most goals etc.
 }

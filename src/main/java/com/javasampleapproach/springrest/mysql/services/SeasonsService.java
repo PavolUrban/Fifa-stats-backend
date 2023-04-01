@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static Utils.MyUtils.ALL_COMPETITION_PHASES;
@@ -153,8 +154,8 @@ public class SeasonsService {
 
     // todo calculate tables here
     private GroupStage getGroupStage(final List<Matches> allGroupStageMatches) {
-        final Map<String, List<Matches>> matchesPerGroup = allGroupStageMatches.stream()
-                .collect(groupingBy(Matches::getCompetitionPhase));
+        final Map<String, List<Matches>> matchesPerGroup = new TreeMap<>(allGroupStageMatches.stream()
+                .collect(groupingBy(Matches::getCompetitionPhase)));
 
         final GroupStage groupStage = new GroupStage();
 

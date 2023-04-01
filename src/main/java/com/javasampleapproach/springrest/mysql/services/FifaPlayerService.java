@@ -152,13 +152,14 @@ public class FifaPlayerService {
             goalscorer.setTotalGoalsCount(0);
             goalscorer.setPlayerId(player.getId());
 
-            Set<String> teamsPlayerScoredFor = new HashSet<>();
+            Set<String> teamsPlayerScoredFor = recordsRelatedToPlayer.stream().map(records -> records.getPlayerTeam().getTeamName()).collect(Collectors.toSet());
 
-            // todo simplify this get distinct list of teams
-            recordsRelatedToPlayer.forEach(record->{
-                Team team = teamService.findById(record.getTeam().getId());
-                teamsPlayerScoredFor.add(team.getTeamName());
-            });
+
+//            // todo simplify this get distinct list of teams
+//            recordsRelatedToPlayer.forEach(record->{
+//                Team team = teamService.findById(record.getTeam().getId());
+//                teamsPlayerScoredFor.add(team.getTeamName());
+//            });
 
             goalscorer.setTotalGoalsCount(recordsRelatedToPlayer.size());
             goalscorer.setTeamPlayerScoredFor(teamsPlayerScoredFor.stream().findAny().orElse(null));
