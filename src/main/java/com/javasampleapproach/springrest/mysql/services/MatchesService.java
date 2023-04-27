@@ -112,7 +112,7 @@ public class MatchesService {
 
     private List<Matches> setWinners(List<Matches> matches) {
         matches.forEach(match -> {
-            match.setWinnerPlayer(HelperMethods.whoIsWinnerOfMatch(match));
+            match.setWinnerPlayer(HelperMethods.getWinnerPlayer(match));
         });
         return matches;
     }

@@ -19,7 +19,7 @@ public class HelperMethods {
         winsByPlayers.put("Draws", 0);
 
         for(Matches m: matches) {
-            String winner = whoIsWinnerOfMatch(m);
+            String winner = getWinnerPlayer(m);
 
             if(winner.equalsIgnoreCase(RESULT_DRAW)) //draw
                 winsByPlayers.put("Draws", winsByPlayers.get("Draws") + 1);
@@ -34,18 +34,18 @@ public class HelperMethods {
         return winsByPlayers;
     }
 
-    // todo latest fix this
-    public static String whoIsWinnerOfMatch(Matches match) {
-        return PAVOL_JAY;
-//        if (match.getWinnerId() == DRAW_RESULT_ID){
-//            return RESULT_DRAW;
-//        } else if ((match.getIdHomeTeam() == match.getWinnerId() && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
-//                (match.getIdAwayTeam() == match.getWinnerId() && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY) ) ) {
-//            return PAVOL_JAY;
-//        } else {
-//            return KOTLIK;
-//        }
-    }
+//    // todo latest fix this
+//    public static String whoIsWinnerOfMatch(Matches match) {
+//        return PAVOL_JAY;
+////        if (match.getWinnerId() == DRAW_RESULT_ID){
+////            return RESULT_DRAW;
+////        } else if ((match.getIdHomeTeam() == match.getWinnerId() && match.getPlayerH().equalsIgnoreCase(PAVOL_JAY)) ||
+////                (match.getIdAwayTeam() == match.getWinnerId() && match.getPlayerA().equalsIgnoreCase(PAVOL_JAY) ) ) {
+////            return PAVOL_JAY;
+////        } else {
+////            return KOTLIK;
+////        }
+//    }
 
     public static String getWinnerPlayer(Matches match) {
         if (match.getWinnerId() == DRAW_RESULT_ID){
@@ -57,4 +57,6 @@ public class HelperMethods {
             return KOTLIK;
         }
     }
+
+
 }

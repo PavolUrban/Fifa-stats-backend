@@ -7,6 +7,8 @@ import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.TeamForTrophyRoom;
 import com.javasampleapproach.springrest.mysql.model.TitlesCount;
 import com.javasampleapproach.springrest.mysql.model.TopTeam;
+import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
+import com.javasampleapproach.springrest.mysql.serviceV2.MatchesServiceV2;
 import com.javasampleapproach.springrest.mysql.services.MatchesService;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +29,7 @@ import java.util.Map;
 public class GlobalStatsController {
 
 	@Autowired
-	MatchesService matchesService;
+	MatchesServiceV2 matchesService;
 
 	@Autowired
 	TeamService teamService;
@@ -151,24 +153,18 @@ public class GlobalStatsController {
 	}
 
 	@GetMapping("/winnersList/{competition}")
-	public List<Matches> getWinnersList(@PathVariable("competition") String competition){
-
-		List<Matches> finalMatches = matchesService.getMatchesByCompetitionPhaseAndSeason("Final", competition);
-		PlayersController pc = new PlayersController();
-		finalMatches.forEach(match -> {
-			match.setWinnerPlayer(HelperMethods.whoIsWinnerOfMatch(match));
-		});
-		return finalMatches;
+	public List<MatchesDTO> getWinnersList(@PathVariable("competition") String competition){
+		return matchesService.getFilteredMatches(competition,"Final", null, null);
 	}
 
 	@GetMapping("/teamTrophiesCount/allCompetitions")
 	public List<TeamForTrophyRoom> getTeamTrophiesCount(){
 
 		List<TeamForTrophyRoom> trophyRoom = new ArrayList<>();
-		List<Matches> finalMatches = matchesService.getMatchesByCompetitionPhase("Final");
+		List<MatchesDTO> finalMatches = matchesService.getFilteredMatches(null,"Final", null, null);
 		finalMatches.forEach(match-> {
-			insertOrUpdateTrophyRoom(trophyRoom, match.getHomeTeam().getId(), match);
-			insertOrUpdateTrophyRoom(trophyRoom, match.getAwayTeam().getId(), match);
+			insertOrUpdateTrophyRoom(trophyRoom, match.getIdHomeTeam(), match);
+			insertOrUpdateTrophyRoom(trophyRoom, match.getIdAwayTeam(), match);
 		});
 
 		trophyRoom.forEach(team-> {
@@ -182,7 +178,7 @@ public class GlobalStatsController {
 		return trophyRoom;
 	}
 
-	private void insertOrUpdateTrophyRoom (List<TeamForTrophyRoom> trophyRoom, long teamId, Matches match){
+	private void insertOrUpdateTrophyRoom (List<TeamForTrophyRoom> trophyRoom, long teamId, MatchesDTO match){
 		TeamForTrophyRoom teamAlreadyInRoom = trophyRoom.stream().filter(team-> team.getTeamId() == teamId).findFirst().orElse(null);
 
 		if(teamAlreadyInRoom == null) {
@@ -196,7 +192,7 @@ public class GlobalStatsController {
 		}
 	}
 
-	private void addStatsForProperCompetition(TeamForTrophyRoom team, Matches match){
+	private void addStatsForProperCompetition(TeamForTrophyRoom team, MatchesDTO match){
 		if(match.getCompetition().equalsIgnoreCase(MyUtils.CHAMPIONS_LEAGUE)){
 			if (match.getWinnerId() == team.getTeamId()) {
 				team.setWinCountCL(team.getWinCountCL() + 1);
@@ -214,7 +210,7 @@ public class GlobalStatsController {
 
 	@GetMapping("/trophyRoom")
 	public List<TitlesCount> getTrophyRoom(){
-		List<Matches> finalMatches = matchesService.getMatchesByCompetitionPhase("Final");
+		List<MatchesDTO> finalMatches = matchesService.getFilteredMatches(null,"Final", null, null);
 
 		TitlesCount tcPavol = new TitlesCount();
 		tcPavol.setPlayerName("Pavol Jay");
@@ -227,9 +223,9 @@ public class GlobalStatsController {
 		return Arrays.asList(tcKotlik, tcPavol);
 	}
 
-	private void calculateTitlesForPlayerPerCompetition(List<Matches> finalMatches, TitlesCount tcPavol, TitlesCount tcKotlik){
+	private void calculateTitlesForPlayerPerCompetition(List<MatchesDTO> finalMatches, TitlesCount tcPavol, TitlesCount tcKotlik){
 		finalMatches.forEach(match->{
-			if(HelperMethods.whoIsWinnerOfMatch(match).equalsIgnoreCase(MyUtils.PAVOL_JAY)){
+			if(match.getWinnerPlayer().equalsIgnoreCase(MyUtils.PAVOL_JAY)){
 				addTitleInProperCompetition(match, tcPavol);
 			} else {
 				addTitleInProperCompetition(match, tcKotlik);
@@ -237,7 +233,7 @@ public class GlobalStatsController {
 		});
 	}
 
-	private void addTitleInProperCompetition(Matches match, TitlesCount tc){
+	private void addTitleInProperCompetition(MatchesDTO match, TitlesCount tc){
 		if(match.getCompetition().equalsIgnoreCase("CL")){
 			tc.setTitlesCountCL(tc.getTitlesCountCL() + 1);
 		} else {

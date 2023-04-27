@@ -2,6 +2,7 @@ package com.javasampleapproach.springrest.mysql.services;
 
 import Utils.HelperMethods;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
+import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.PlayerStats;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,17 @@ public class PlayerService {
     @Autowired
     MatchesService matchesService;
 
+//    public Map<String, PlayerStats> getGlobalStatsV2(){
+//        final List<Matches> matches = matchesService.getAllMatches();
+//
+//        matches.forEach(match-> {
+//            final List<RecordsInMatches> recordsInMatches = match.getRecordsInMatches();
+//
+//        });
+//
+//        return null;
+//    }
+
     public Map<String, PlayerStats> getGlobalStats() {
 
         Map<String, PlayerStats> stats = new HashMap<>();
@@ -37,7 +49,7 @@ public class PlayerService {
         PlayerStats kotlik = new PlayerStats();
 
         for (Matches m : matches) {
-            String winnerName = HelperMethods.whoIsWinnerOfMatch(m);
+            String winnerName = HelperMethods.getWinnerPlayer(m);
             winnersCount.put(winnerName, winnersCount.get(winnerName) + 1);
 
             List<Integer> goalsScoredANdConceeeded = getGoalsScoredAndConceded(m);
