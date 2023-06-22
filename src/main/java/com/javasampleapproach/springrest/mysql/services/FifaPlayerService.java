@@ -7,8 +7,8 @@ import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.FifaPlayerStatsPerSeason;
 import com.javasampleapproach.springrest.mysql.model.FifaPlayerStatsPerSeasonWrapper;
 import com.javasampleapproach.springrest.mysql.model.FifaPlayerWithRecord;
-import com.javasampleapproach.springrest.mysql.model.PlayerWithCards;
 import com.javasampleapproach.springrest.mysql.model.Goalscorer;
+import com.javasampleapproach.springrest.mysql.model.PlayerWithCards;
 import com.javasampleapproach.springrest.mysql.model.fifa_player.FifaPlayerCoreDTO;
 import com.javasampleapproach.springrest.mysql.model.individual_records.IndividualRecordsRequest;
 import com.javasampleapproach.springrest.mysql.repo.FifaPlayerDBRepository;
@@ -17,11 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,9 +35,6 @@ public class FifaPlayerService {
 
     @Autowired
     RecordsInMatchesService recordsInMatchesService;
-
-    @Autowired
-    TeamService teamService;
 
     @Autowired
     ModelMapper modelMapper;
@@ -107,78 +104,49 @@ public class FifaPlayerService {
 
     // todo extract common functionality with getGoalscorers - check if this function is use everywhere and classes do not implement custom functionality for it
     public List<PlayerWithCards> getCards(final String competition, final Long teamId){
-        List<RecordsInMatches> allCards = recordsInMatchesService.getRecordsByCompetition(competition, teamId, MyUtils.RECORD_TYPE_RED_CARD, MyUtils.RECORD_TYPE_YELLOW_CARD);
-        List<Long> allIds = allCards.stream().map(card -> card.getPlayer().getId()).collect(Collectors.toList());
-        Set<Long> distinctIDs = new HashSet<>(allIds);
-        Iterable<FifaPlayerDB> allPlayers = findByIdIn(distinctIDs);
+        final List<RecordsInMatches> allCards = recordsInMatchesService.getRecordsByCompetition(null, null, competition, teamId, Arrays.asList(MyUtils.RECORD_TYPE_YELLOW_CARD, MyUtils.RECORD_TYPE_RED_CARD));
 
-        List<PlayerWithCards> allPlayersWithCard = new ArrayList<>();
+        final Map<FifaPlayerDB, List<RecordsInMatches>> matchesByPlayers = groupMatchesByPlayer(allCards);
 
-        allPlayers.forEach(player->{
-            List<RecordsInMatches> recordsRelatedToPlayer = allCards.stream().filter(goals-> goals.getPlayer().getId() == player.getId()).collect(Collectors.toList());
-            PlayerWithCards playerWithCard = new PlayerWithCards();
-            playerWithCard.setName(player.getPlayerName());
-            playerWithCard.setPlayerId(player.getId());
+        return matchesByPlayers.entrySet().stream()
+                .map(matchesByPlayer -> {
+                    final FifaPlayerDB player = matchesByPlayer.getKey();
+                    final List<RecordsInMatches> matches = matchesByPlayer.getValue();
+                    final PlayerWithCards playerWithCard = new PlayerWithCards();
+                    playerWithCard.setName(player.getPlayerName());
+                    playerWithCard.setPlayerId(player.getId());
 
-            recordsRelatedToPlayer.forEach(record->{
-                if(record.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_YELLOW_CARD)){
-                    playerWithCard.setYellowCards(playerWithCard.getYellowCards() + 1);
-                } else if(record.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_RED_CARD)){
-                    playerWithCard.setRedCards(playerWithCard.getRedCards() + 1);
-                }
-                playerWithCard.setCardsTotal(playerWithCard.getCardsTotal() + 1);
-            });
+                    matches.forEach(record->{
+                        if(record.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_YELLOW_CARD)){
+                            playerWithCard.setYellowCards(playerWithCard.getYellowCards() + 1);
+                        } else if(record.getTypeOfRecord().equalsIgnoreCase(MyUtils.RECORD_TYPE_RED_CARD)){
+                            playerWithCard.setRedCards(playerWithCard.getRedCards() + 1);
+                        }
+                        playerWithCard.setCardsTotal(playerWithCard.getCardsTotal() + 1);
+                    });
 
-            allPlayersWithCard.add(playerWithCard);
-        });
-
-
-        allPlayersWithCard.sort((o1, o2) -> o2.getCardsTotal().compareTo(o1.getCardsTotal()));
-
-
-        return allPlayersWithCard;
+                    return playerWithCard;
+                })
+                .collect(Collectors.toList())
+                .stream()
+                .sorted((o1, o2) -> o2.getCardsTotal().compareTo(o1.getCardsTotal()))
+                .collect(Collectors.toList());
     }
 
-    public List<Goalscorer> getGoalscorers(List<RecordsInMatches> allGoals){
-        List<Long> allIds = allGoals.stream().map(goal -> goal.getPlayer().getId()).collect(Collectors.toList());
-        Set<Long> distinctIDs = new HashSet<>(allIds);
-        Iterable<FifaPlayerDB> allPlayers = fifaPlayerDBRepository.findByIdIn(distinctIDs);
+    public List<Goalscorer> getGoalscorers(final List<RecordsInMatches> allGoals){
+        final Map<FifaPlayerDB, List<RecordsInMatches>> matchesByPlayers = groupMatchesByPlayer(allGoals);
 
-        List<Goalscorer> allGoalscorers = new ArrayList<>();
-        allPlayers.forEach(player->{
-            List<RecordsInMatches> recordsRelatedToPlayer = allGoals.stream().filter(goals-> goals.getPlayer().getId() == player.getId()).collect(Collectors.toList());
-            Goalscorer goalscorer = new Goalscorer();
-            goalscorer.setName(player.getPlayerName());
-            goalscorer.setTotalGoalsCount(0);
-            goalscorer.setPlayerId(player.getId());
-
-            Set<String> teamsPlayerScoredFor = recordsRelatedToPlayer.stream().map(records -> records.getPlayerTeam().getTeamName()).collect(Collectors.toSet());
-
-
-//            // todo simplify this get distinct list of teams
-//            recordsRelatedToPlayer.forEach(record->{
-//                Team team = teamService.findById(record.getTeam().getId());
-//                teamsPlayerScoredFor.add(team.getTeamName());
-//            });
-
-            goalscorer.setTotalGoalsCount(recordsRelatedToPlayer.size());
-            goalscorer.setTeamPlayerScoredFor(teamsPlayerScoredFor.stream().findAny().orElse(null));
-            goalscorer.setNumberOfTeamsPlayerScoredFor(teamsPlayerScoredFor.size());
-            allGoalscorers.add(goalscorer);
-        });
-
-
-        allGoalscorers.sort((o1, o2) -> o2.getTotalGoalsCount().compareTo(o1.getTotalGoalsCount()));
-
-
-        return allGoalscorers;
+        return matchesByPlayers.entrySet().stream()
+                .map(FifaPlayerService::mapEntryToGoalscorer)
+                .sorted(Comparator.comparingInt(Goalscorer::getTotalGoalsCount).reversed())
+                .collect(Collectors.toList());
     }
 
     public FifaPlayerDB findPlayerById(final long id) {
         return fifaPlayerDBRepository.findById(id).get();
     }
 
-    public List<FifaPlayerWithRecord> getPlayersWithRecord(IndividualRecordsRequest recordsRequest){
+    public List<FifaPlayerWithRecord> getPlayersWithRecord(final IndividualRecordsRequest recordsRequest){
 
         // todo send object here
 //        List<FifaPlayerWithRecord> players = new ArrayList<>();
@@ -195,6 +163,8 @@ public class FifaPlayerService {
 //            competitionPhase1 = MyUtils.PLAY_OFFS_ROUND_LIKE_VALUE;
 //            competitionPhase2 = MyUtils.PLAY_OFFS_FINAL_LIKE_VALUE;
 //        }
+//
+//        recordsInMatchesService.getRecordsByCompetition(null, null, recordsRequest.getCompetition(),, "G", "Penalty");
 //
 //        // TODO FIX THIS
 //        switch (recordsRequest.getRecordType()) {
@@ -217,9 +187,31 @@ public class FifaPlayerService {
 //        Collections.sort(players, Comparator.comparing(FifaPlayerWithRecord::getRecordEventCount).reversed());
 //
 //        return players.stream().limit(100).collect(Collectors.toList());
-
-
-
+//
+//
+//
         return null;
+    }
+
+    private Map<FifaPlayerDB, List<RecordsInMatches>> groupMatchesByPlayer(final List<RecordsInMatches> allRecords) {
+        return allRecords
+                .stream()
+                .collect(groupingBy(RecordsInMatches::getPlayer));
+    }
+
+    private static Goalscorer mapEntryToGoalscorer(final Map.Entry<FifaPlayerDB, List<RecordsInMatches>> entry) {
+        final FifaPlayerDB player = entry.getKey();
+        final List<RecordsInMatches> matches = entry.getValue();
+        final Set<String> teamsPlayerScoredFor = matches.stream()
+                .map(records -> records.getPlayerTeam().getTeamName())
+                .collect(Collectors.toSet());
+
+        return Goalscorer.builder()
+                .name(player.getPlayerName())
+                .playerId(player.getId())
+                .totalGoalsCount(matches.size())
+                .teamPlayerScoredFor(teamsPlayerScoredFor.stream().findFirst().orElse(null))// todo as list
+                .numberOfTeamsPlayerScoredFor(teamsPlayerScoredFor.size())
+                .build();
     }
 }

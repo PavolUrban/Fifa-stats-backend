@@ -12,6 +12,7 @@ import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -71,9 +72,9 @@ public class RecordsInMatchesService {
         return recordsInMatchesRepository.findByMatchIdOrderByMinuteOfRecord(matchId);
     }
 
-    // todo recordtypes use as array
-    public List<RecordsInMatches> getRecordsByCompetition(String competition, Long teamId, String recordType1, String recordType2){
-        return recordsInMatchesRepository.getRecordsByCompetition(null, null, competition, teamId, MyUtils.RECORD_TYPE_YELLOW_CARD, MyUtils.RECORD_TYPE_RED_CARD);
+    // todo recordtypes use as array, send record type as param
+    public List<RecordsInMatches> getRecordsByCompetition(final String competitionPhase, final String season,final String competition,final Long teamId, final List<String> recordTypes){
+        return recordsInMatchesRepository.getRecordsByCompetition(competitionPhase, season, competition, teamId, recordTypes);
     }
 
     public void saveNewRecord(RecordsInMatchesDTO newRecordDTO){

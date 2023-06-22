@@ -1,10 +1,12 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
+import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.model.Goalscorer;
 import com.javasampleapproach.springrest.mysql.model.records_in_matches.RecordsInMatchesRequest;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import com.javasampleapproach.springrest.mysql.services.FifaPlayerService;
+import com.javasampleapproach.springrest.mysql.services.RecordsInMatchesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Arrays;
 import java.util.List;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -27,12 +30,14 @@ public class GoalscorersController {
     FifaPlayerService fifaPlayerService;
 
     @Autowired
-    RecordsInMatchesRepository recordsInMatchesRepository;
+    RecordsInMatchesService recordsInMatchesService;
 
     // todo merge with getCards
     @PostMapping("/getAllGoalScorers")
     public List<Goalscorer> getAllGoalscorers(@RequestBody RecordsInMatchesRequest recordsInMatchesRequest) {
-        List<RecordsInMatches> allGoals = recordsInMatchesRepository.getRecordsByCompetition(null, null, recordsInMatchesRequest.getCompetition(), recordsInMatchesRequest.getTeamId(), "G", "Penalty");
+        List<RecordsInMatches> allGoals = recordsInMatchesService.getRecordsByCompetition(null, null, recordsInMatchesRequest.getCompetition(), recordsInMatchesRequest.getTeamId(), Arrays.asList(MyUtils.RECORD_TYPE_GOAL, MyUtils.RECORD_TYPE_PENALTY));
         return fifaPlayerService.getGoalscorers(allGoals);
     }
+
+
 }

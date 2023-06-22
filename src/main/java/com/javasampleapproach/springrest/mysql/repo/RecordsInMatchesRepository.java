@@ -18,9 +18,9 @@ public interface RecordsInMatchesRepository extends CrudRepository<RecordsInMatc
             "SELECT rec " +
             "FROM RecordsInMatches rec " +
             "JOIN Matches m ON m.id = rec.match.id " +
-            "WHERE (:competitionPhase is null or m.competitionPhase = :competitionPhase) AND (:season is null or m.season = :season) AND (:competition is null or m.competition = :competition) AND (:teamId is null or rec.team.id = :teamId) AND (rec.typeOfRecord = :typeOfRecord1 OR rec.typeOfRecord = :typeOfRecord2 )"
+            "WHERE (:competitionPhase is null or m.competitionPhase = :competitionPhase) AND (:season is null or m.season = :season) AND (:competition is null or m.competition = :competition) AND (:teamId is null or rec.team.id = :teamId) AND (rec.typeOfRecord IN :typeOfRecord)"
     )
-    List<RecordsInMatches> getRecordsByCompetition(@Param("competitionPhase") String competitionPhase, @Param("season") String season, @Param("competition") String competition, @Param("teamId") Long teamId, @Param("typeOfRecord1") String typeOfRecord1, @Param("typeOfRecord2") String typeOfRecord2);
+    List<RecordsInMatches> getRecordsByCompetition(@Param("competitionPhase") String competitionPhase, @Param("season") String season, @Param("competition") String competition, @Param("teamId") Long teamId, @Param("typeOfRecord") List<String> typeOfRecord);
 
     @Query(value =
                     "SELECT rec " +

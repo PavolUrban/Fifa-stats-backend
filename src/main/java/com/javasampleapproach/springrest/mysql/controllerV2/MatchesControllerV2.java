@@ -50,7 +50,8 @@ public class MatchesControllerV2 {
         return matchesService.getTopMatches(topMatchesRequest);
     }
 
-    // TODO urban
+    // TODO urban latest
+    // in season overview add teams with most wins, losses, draws, goals scored and conceeded
     // globalstatscontroller use services, cleanup
     // add h22 and other missing stuff from default Matches controller
     // add not only biggest A/H wins but biggest total wins
@@ -68,4 +69,6 @@ public class MatchesControllerV2 {
     // something like for each team on its page - add fifa10 - quaterfinal, fifa11 - group stage ...
     // something like percentage of goals by player vs team in season - how important player was
     // best results of kotlik teams, e.g. most wins in group stage, play off, season , most points, most goals etc.
+
+    // best teams by players e.g. kotlik has most wins with chelsea, scored most goals with blabla etc
 }

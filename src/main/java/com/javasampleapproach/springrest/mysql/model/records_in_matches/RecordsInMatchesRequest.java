@@ -7,3 +7,5 @@ public class RecordsInMatchesRequest {
     String competition;
     Long teamId;
 }
+
+// todo rename to matchesEvents or somethign like that, including db
