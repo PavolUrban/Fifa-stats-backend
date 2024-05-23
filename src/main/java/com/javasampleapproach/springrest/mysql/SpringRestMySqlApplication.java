@@ -13,6 +13,14 @@ public class SpringRestMySqlApplication {
 		return new ModelMapper();
 	}
 
+
+	// most hattricks per player
+	// most penalty goals per player
+	// penalty goals for each team
+	// hattricks per team
+	// goly obrancov, zaloznikov, utocnikov
+	// vlastne goly
+	// zobrazenie zapasov hraca v ktorych dal gol, dostal kartu, vlastny gol atd
 	public static void main(String[] args) {
 		SpringApplication.run(SpringRestMySqlApplication.class, args);
 	}
