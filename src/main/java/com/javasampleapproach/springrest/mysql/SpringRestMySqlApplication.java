@@ -21,6 +21,7 @@ public class SpringRestMySqlApplication {
 	// goly obrancov, zaloznikov, utocnikov
 	// vlastne goly
 	// zobrazenie zapasov hraca v ktorych dal gol, dostal kartu, vlastny gol atd
+	// longest unbeaten run
 	public static void main(String[] args) {
 		SpringApplication.run(SpringRestMySqlApplication.class, args);
 	}
