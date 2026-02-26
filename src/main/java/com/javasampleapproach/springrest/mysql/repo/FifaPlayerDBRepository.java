@@ -25,10 +25,12 @@ public interface FifaPlayerDBRepository  extends CrudRepository<FifaPlayerDB, Lo
             "JOIN team home ON home.id = m.idHomeTeam " +
             "JOIN team away ON away.id = m.idAwayTeam " +
             "JOIN team playersTeam ON playersTeam.id = rim.player_team_id "+
-            "WHERE (:competition is null or m.competition = :competition) AND rim.type_Of_Record = :typeOfRecord " +
-            "GROUP BY rim.match_Id, rim.player_Id, rim.type_Of_Record, teamname " +
+            "WHERE (:competition is null or m.competition = :competition) AND (rim.type_Of_Record = 'G' OR rim.type_of_record = 'Penalty') " +
+            "GROUP BY rim.match_Id, rim.player_Id, teamname " +
             "ORDER BY recordEventCount DESC", nativeQuery = true)
-    List<FifaPlayerWithRecord> getPlayersWithMostGoals(String competition, String typeOfRecord);
+    List<FifaPlayerWithRecord> getPlayersWithMostGoals(String competition);
+
+
 
 //    @Query(value =
 //            "SELECT rim.playerId, fp.playerName, COUNT(rim.playerId) AS recordEventCount, rim.matchId, m.hometeam, CONCAT(m.scoreHome, ':', m.scoreAway) AS score, m.awayTeam, rim.teamName, m.season " +
@@ -39,15 +41,20 @@ public interface FifaPlayerDBRepository  extends CrudRepository<FifaPlayerDB, Lo
 //    List<FifaPlayerWithRecord> getPlayersWithMostGoalsInSingleGame(String competition, List<String> typeOfRecord);
 
 
+    // TODO SPOCITAT AJ PENALTOVE GOLY
+    // TODO pocet golov z penalt kotlik vs ja
+    // TODO pocet ZK, CK kotlik vs ja
     @Query(value = 
-            "SELECT rim.playerId, fp.playerName, COUNT(rim.playerID) AS recordEventCount, rim.teamName, m.season " +
+            "SELECT rim.player_Id, fp.playerName, COUNT(rim.player_Id) AS recordEventCount, playersTeam.teamname AS teamname, m.season " +
             "FROM RecordsInMatches rim " +
-            "JOIN FifaPlayer fp ON fp.id = rim.playerId " +
-            "JOIN Matches m ON m.id = rim.matchId " +
-            "WHERE rim.matchId IN (SELECT id FROM Matches WHERE season = :season) AND typeOfRecord = 'G' AND (:competition is null or m.competition = :competition) AND ( (:competitionPhase1 is null or m.competitionPhase LIKE %:competitionPhase1%) OR  (:competitionPhase2 is null or m.competitionPhase LIKE %:competitionPhase2%)) " +
-            "GROUP BY rim.playerID ORDER BY recordEventCount DESC " +
+            "JOIN FifaPlayer fp ON fp.id = rim.player_Id " +
+            "JOIN Matches m ON m.id = rim.match_Id " +
+            "JOIN team playersTeam ON playersTeam.id = rim.player_team_id " +
+            "WHERE (type_Of_Record = 'G' OR type_of_record = 'Penalty') AND (:competition is null or m.competition = :competition) AND ( (:competitionPhase1 is null or m.competitionPhase LIKE %:competitionPhase1%) OR  (:competitionPhase2 is null or m.competitionPhase LIKE %:competitionPhase2%)) " +
+            "GROUP BY rim.player_Id, fp.playerName, playersTeam.teamname, m.season ORDER BY recordEventCount DESC " +
             "LIMIT 25", nativeQuery = true)
-    List<FifaPlayerWithRecord> getPlayersWithMostGoalsInSeasonNewFormat(String season, String competition, String competitionPhase1, String competitionPhase2);
+    List<FifaPlayerWithRecord> getPlayersWithMostGoalsInSeasonNewFormat( String competition, String competitionPhase1, String competitionPhase2);
+
 
     @Query(value =
             "SELECT rim.playerId, fp.playerName, SUM(rim.numberOfGoalsForOldFormat) AS recordEventCount, rim.teamName, m.season " +

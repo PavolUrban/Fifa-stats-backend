@@ -166,24 +166,12 @@ public class FifaPlayerService {
         // TODO FIX THIS
         switch (recordsRequest.getRecordType()) {
             case MyUtils.PLAYER_MOST_GOALS_SINGLE_GAME:
-                players = fifaPlayerDBRepository.getPlayersWithMostGoals(recordsRequest.getCompetition(), MyUtils.RECORD_TYPE_GOAL);
-                break;
+                return fifaPlayerDBRepository.getPlayersWithMostGoals(recordsRequest.getCompetition());
             case MyUtils.PLAYER_MOST_GOALS_SEASON:
-                List<String> seasons = seasonsService.getAvailableSeasonsList();
-                for (String season : seasons) {
-                    if(MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(season)){
-                        players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonOldFormat(season, recordsRequest.getCompetition(), competitionPhase1, competitionPhase2));
-                    } else {
-                        players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonNewFormat(season, recordsRequest.getCompetition(), competitionPhase1, competitionPhase2));
-                    }
-                }
-                break;
+                return fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonNewFormat(recordsRequest.getCompetition(), competitionPhase1, competitionPhase2);
         }
 
-        Collections.sort(players, Comparator.comparing(FifaPlayerWithRecord::getRecordEventCount).reversed());
-
-        return players.stream().limit(100).collect(Collectors.toList());
-
+        return null;
     }
 
     private Map<FifaPlayerDB, List<RecordsInMatches>> groupMatchesByPlayer(final List<RecordsInMatches> allRecords) {
