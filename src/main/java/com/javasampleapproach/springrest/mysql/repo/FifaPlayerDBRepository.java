@@ -19,13 +19,16 @@ public interface FifaPlayerDBRepository  extends CrudRepository<FifaPlayerDB, Lo
     List<FifaPlayerDB> findByIdIn(Set<Long> ids);
     
     @Query(value = 
-            "SELECT rim.playerId, fp.playerName, COUNT(rim.playerId) AS recordEventCount, rim.matchID, m.hometeam, CONCAT(m.scoreHome, ':', m.scoreAway) AS score, m.awayTeam, rim.teamName, m.season " +
-            "FROM RecordsInMatches rim JOIN FifaPlayer fp ON rim.playerId = fp.id JOIN Matches m ON rim.matchId = m.id " +
-            "WHERE (:competition is null or m.competition = :competition) AND rim.typeOfRecord = :typeOfRecord " +
-            "GROUP BY rim.matchId, rim.playerId, rim.typeOfRecord " +
+            "SELECT rim.player_Id, fp.playerName, COUNT(rim.player_Id) AS recordEventCount, rim.match_ID, home.teamname AS hometeam, CONCAT(m.scoreHome, ':', m.scoreAway) AS score, away.teamname AS awayteam, playersTeam.teamname AS teamname, m.season " +
+            "FROM RecordsInMatches rim JOIN FifaPlayer fp ON rim.player_Id = fp.id " +
+            "JOIN Matches m ON rim.match_ID = m.id " +
+            "JOIN team home ON home.id = m.idHomeTeam " +
+            "JOIN team away ON away.id = m.idAwayTeam " +
+            "JOIN team playersTeam ON playersTeam.id = rim.player_team_id "+
+            "WHERE (:competition is null or m.competition = :competition) AND rim.type_Of_Record = :typeOfRecord " +
+            "GROUP BY rim.match_Id, rim.player_Id, rim.type_Of_Record, teamname " +
             "ORDER BY recordEventCount DESC", nativeQuery = true)
     List<FifaPlayerWithRecord> getPlayersWithMostGoals(String competition, String typeOfRecord);
-
 
 //    @Query(value =
 //            "SELECT rim.playerId, fp.playerName, COUNT(rim.playerId) AS recordEventCount, rim.matchId, m.hometeam, CONCAT(m.scoreHome, ':', m.scoreAway) AS score, m.awayTeam, rim.teamName, m.season " +
@@ -35,15 +38,6 @@ public interface FifaPlayerDBRepository  extends CrudRepository<FifaPlayerDB, Lo
 //                    "ORDER BY recordEventCount DESC")
 //    List<FifaPlayerWithRecord> getPlayersWithMostGoalsInSingleGame(String competition, List<String> typeOfRecord);
 
-
-    @Query(value = 
-            "SELECT rim.playerId, fp.playerName,rim.numberOfGoalsForOldFormat AS recordEventCount, rim.matchID, m.hometeam, CONCAT(m.scoreHome, ':', m.scoreAway) AS score, m.awayTeam, rim.teamName, m.season  " +
-            "FROM RecordsInMatches rim " +
-            "JOIN FifaPlayer fp ON rim.playerId = fp.id " +
-            "JOIN Matches m ON rim.matchId = m.id " +
-            "WHERE rim.typeOfRecord='G' AND rim.numberOfGoalsForOldFormat > 0 " +
-            "ORDER BY recordEventCount DESC", nativeQuery = true)
-    List<FifaPlayerWithRecord> getPlayersWithMostGoalsOldFormat(String competition, String typeOfRecord);
 
     @Query(value = 
             "SELECT rim.playerId, fp.playerName, COUNT(rim.playerID) AS recordEventCount, rim.teamName, m.season " +

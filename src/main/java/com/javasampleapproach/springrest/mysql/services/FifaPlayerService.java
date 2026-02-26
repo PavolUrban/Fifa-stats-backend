@@ -16,13 +16,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -38,6 +32,9 @@ public class FifaPlayerService {
 
     @Autowired
     ModelMapper modelMapper;
+
+    @Autowired
+    SeasonsService seasonsService;
 
     public List<FifaPlayerCoreDTO> getPlayersByName(final String nameSubstring) {
         List<FifaPlayerDB> fifaPlayers = fifaPlayerDBRepository.findByPlayerNameContainingIgnoreCase(nameSubstring);
@@ -149,48 +146,44 @@ public class FifaPlayerService {
     public List<FifaPlayerWithRecord> getPlayersWithRecord(final IndividualRecordsRequest recordsRequest){
 
         // todo send object here
-//        List<FifaPlayerWithRecord> players = new ArrayList<>();
-//        String competitionPhase1 = null;
-//        String competitionPhase2 = null;
-//        if(recordsRequest.getCompetition().equalsIgnoreCase(MyUtils.ALL)) {
-//            recordsRequest.setCompetition(null);
-//        }
-//
-//        if(recordsRequest.getCompetitionPhase().equalsIgnoreCase(MyUtils.GROUP_STAGE)) {
-//            competitionPhase1 = MyUtils.GROUP_STAGE_LIKE_VALUE;
-//            competitionPhase2 = MyUtils.GROUP_STAGE_LIKE_VALUE;
-//        } else if (recordsRequest.getCompetitionPhase().equalsIgnoreCase(MyUtils.PLAY_OFFS_STAGE)) {
-//            competitionPhase1 = MyUtils.PLAY_OFFS_ROUND_LIKE_VALUE;
-//            competitionPhase2 = MyUtils.PLAY_OFFS_FINAL_LIKE_VALUE;
-//        }
-//
-//        recordsInMatchesService.getRecordsByCompetition(null, null, recordsRequest.getCompetition(),, "G", "Penalty");
-//
-//        // TODO FIX THIS
-//        switch (recordsRequest.getRecordType()) {
-//            case MyUtils.PLAYER_MOST_GOALS_SINGLE_GAME:
-//                players = fifaPlayerDBRepository.getPlayersWithMostGoals(recordsRequest.getCompetition(), MyUtils.RECORD_TYPE_GOAL);
-//                players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsOldFormat(recordsRequest.getCompetition(), MyUtils.RECORD_TYPE_GOAL));
-//                break;
-//            case MyUtils.PLAYER_MOST_GOALS_SEASON:
-//                List<String> seasons = seasonsService.getAvailableSeasonsList();
-//                for (String season : seasons) {
-//                    if(MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(season)){
-//                        players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonOldFormat(season, recordsRequest.getCompetition(), competitionPhase1, competitionPhase2));
-//                    } else {
-//                        players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonNewFormat(season, recordsRequest.getCompetition(), competitionPhase1, competitionPhase2));
-//                    }
-//                }
-//                break;
-//        }
-//
-//        Collections.sort(players, Comparator.comparing(FifaPlayerWithRecord::getRecordEventCount).reversed());
-//
-//        return players.stream().limit(100).collect(Collectors.toList());
-//
-//
-//
-        return null;
+        List<FifaPlayerWithRecord> players = new ArrayList<>();
+        String competitionPhase1 = null;
+        String competitionPhase2 = null;
+        if(recordsRequest.getCompetition().equalsIgnoreCase(MyUtils.ALL)) {
+            recordsRequest.setCompetition(null);
+        }
+
+        if(recordsRequest.getCompetitionPhase().equalsIgnoreCase(MyUtils.GROUP_STAGE)) {
+            competitionPhase1 = MyUtils.GROUP_STAGE_LIKE_VALUE;
+            competitionPhase2 = MyUtils.GROUP_STAGE_LIKE_VALUE;
+        } else if (recordsRequest.getCompetitionPhase().equalsIgnoreCase(MyUtils.PLAY_OFFS_STAGE)) {
+            competitionPhase1 = MyUtils.PLAY_OFFS_ROUND_LIKE_VALUE;
+            competitionPhase2 = MyUtils.PLAY_OFFS_FINAL_LIKE_VALUE;
+        }
+
+       // recordsInMatchesService.getRecordsByCompetition(null, null, recordsRequest.getCompetition(),, "G", "Penalty");
+
+        // TODO FIX THIS
+        switch (recordsRequest.getRecordType()) {
+            case MyUtils.PLAYER_MOST_GOALS_SINGLE_GAME:
+                players = fifaPlayerDBRepository.getPlayersWithMostGoals(recordsRequest.getCompetition(), MyUtils.RECORD_TYPE_GOAL);
+                break;
+            case MyUtils.PLAYER_MOST_GOALS_SEASON:
+                List<String> seasons = seasonsService.getAvailableSeasonsList();
+                for (String season : seasons) {
+                    if(MyUtils.seasonsWithGoalscorersWithoutMinutes.contains(season)){
+                        players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonOldFormat(season, recordsRequest.getCompetition(), competitionPhase1, competitionPhase2));
+                    } else {
+                        players.addAll(fifaPlayerDBRepository.getPlayersWithMostGoalsInSeasonNewFormat(season, recordsRequest.getCompetition(), competitionPhase1, competitionPhase2));
+                    }
+                }
+                break;
+        }
+
+        Collections.sort(players, Comparator.comparing(FifaPlayerWithRecord::getRecordEventCount).reversed());
+
+        return players.stream().limit(100).collect(Collectors.toList());
+
     }
 
     private Map<FifaPlayerDB, List<RecordsInMatches>> groupMatchesByPlayer(final List<RecordsInMatches> allRecords) {
