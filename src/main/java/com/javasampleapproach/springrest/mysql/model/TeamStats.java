@@ -3,6 +3,7 @@ package com.javasampleapproach.springrest.mysql.model;
 import lombok.Data;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -17,6 +18,16 @@ public class TeamStats {
     private int finalMatchesCount = 0;
     private int titlesCount = 0;
     private int runnersUpCount = 0;
+
+    public List<Integer> getBilance() {
+        return bilance;
+    }
+
+    public void setBilance(List<Integer> bilance) {
+        this.bilance = bilance;
+    }
+
+    private List<Integer> bilance;
 
     private Set<String> seasonsList = new HashSet<>();
 

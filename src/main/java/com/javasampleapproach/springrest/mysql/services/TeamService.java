@@ -6,6 +6,8 @@ import com.javasampleapproach.springrest.mysql.model.TeamDto;
 import com.javasampleapproach.springrest.mysql.model.TeamStats;
 import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
 import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
+import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamStatsV2;
+import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
 import com.javasampleapproach.springrest.mysql.serviceV2.MatchesServiceV2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ public class TeamService {
 
     @Autowired
     MatchesServiceV2 matchesService;
+
+    @Autowired
+    RecordsInMatchesRepository recordsInMatchesRepository;
 
     public TeamStatsWithMatches getTeamStats(final long teamId) {
         final Team currentTeam = findById(teamId);
@@ -45,6 +50,35 @@ public class TeamService {
         teamStats.calculateTeamStatsTotal();
 
         return teamStats;
+    }
+
+    public TeamStatsV2 getTeamStatsByCompetition(final long teamId, String competition) {
+        final Team currentTeam = findById(teamId);
+
+
+        final String competitionFilter = competition.equalsIgnoreCase("ALL") ? null : competition; // if ALL is passed, we want to get all matches, so we set competition filter to null
+        final List<MatchesDTO> teamMatches = matchesService.getFilteredMatches(competitionFilter, null, null, currentTeam.getId());
+
+
+        final long yellowCards = recordsInMatchesRepository.getRecordCountByCompetition(null, null, competitionFilter, teamId, List.of(MyUtils.RECORD_TYPE_YELLOW_CARD));
+        final long redCards = recordsInMatchesRepository.getRecordCountByCompetition(null, null, competitionFilter, teamId, List.of(MyUtils.RECORD_TYPE_RED_CARD));
+        final long penaltyGoals = recordsInMatchesRepository.getRecordCountByCompetition(null, null, competitionFilter, teamId, List.of(MyUtils.RECORD_TYPE_PENALTY));
+
+
+        final List<MatchesDTO> draws = teamMatches.stream().filter(m-> m.getWinnerId() == MyUtils.DRAW_RESULT_ID).toList();
+        final List<MatchesDTO> wins = teamMatches.stream().filter(m-> m.getWinnerId() == teamId).toList();
+
+
+        return TeamStatsV2.builder()
+                .wins(wins.size())
+                .losses(teamMatches.size() - wins.size() - draws.size())
+                .draws(draws.size()) // todo away/ home
+                .yellowCards(yellowCards)
+                .redCards(redCards)
+                .penaltyGoals(penaltyGoals)
+                .matchesCount(teamMatches.size())
+                .build();
+
     }
 
     // TODO simplify this and unify with getAllTeamsIterable

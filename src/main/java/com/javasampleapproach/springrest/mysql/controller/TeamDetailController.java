@@ -1,0 +1,25 @@
+package com.javasampleapproach.springrest.mysql.controller;
+
+
+import com.javasampleapproach.springrest.mysql.model.TeamStats;
+import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
+import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamStatsV2;
+import com.javasampleapproach.springrest.mysql.services.TeamService;
+import org.springframework.web.bind.annotation.*;
+
+@CrossOrigin(origins = "http://localhost:4200")
+@RestController
+@RequestMapping("/team-detail")
+public class TeamDetailController {
+
+    TeamService teamService;
+
+    TeamDetailController(TeamService teamService) {
+        this.teamService = teamService;
+    }
+
+    @GetMapping("/getTeamStats/{teamId}")
+    public TeamStatsV2 getTeamStats(@PathVariable("teamId") long teamId, @RequestParam("competition") String competition) {
+        return teamService.getTeamStatsByCompetition(teamId, competition);
+    }
+}

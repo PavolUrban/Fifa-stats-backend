@@ -42,6 +42,7 @@ public class TeamController {
 		return teamService.getTeamStats(teamId);
 	}
 
+
 	@GetMapping("/getGlobalTeamStats")
 	public List<Team> allGlobalTeamStats() {
 		return teamService.allGlobalTeamStats();

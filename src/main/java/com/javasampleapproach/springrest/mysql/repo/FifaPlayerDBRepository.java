@@ -64,4 +64,73 @@ public interface FifaPlayerDBRepository  extends CrudRepository<FifaPlayerDB, Lo
             "GROUP BY playerID " +
             "ORDER BY recordEventCount DESC LIMIT 25", nativeQuery = true)
     List<FifaPlayerWithRecord> getPlayersWithMostGoalsInSeasonOldFormat(String season, String competition, String competitionPhase1, String competitionPhase2);
+
+
+// Najviac kariet v zapase per team
+//    SELECT
+//    COUNT(rim.player_Id) AS totalGoalsInSeason,
+//    playersTeam.teamname AS teamname,
+//    m.id, m.season, home.teamname, CONCAT(m.scoreHome, ':', m.scoreAway) AS score, away.teamname, m.competition
+//    FROM RecordsInMatches rim
+//    JOIN FifaPlayer fp ON rim.player_Id = fp.id
+//    JOIN Matches m ON rim.match_Id = m.id
+//    JOIN team playersTeam ON playersTeam.id = rim.player_team_id
+//    JOIN team home ON home.id = m.idHomeTeam
+//    JOIN team away ON away.id = m.idAwayTeam
+//    WHERE rim.type_Of_Record = 'YC'  OR rim.type_of_record = 'RC'
+//    GROUP BY
+//    playersTeam.teamname,
+//    m.id
+//    ORDER BY totalGoalsInSeason DESC;
+
+//Najviac kariet v sezóne per team TODO per player
+//    SELECT
+//    COUNT(rim.player_Id) AS totalCardsInSeason,
+//    playersTeam.teamname AS teamname,
+//    m.season, m.competition
+//    FROM RecordsInMatches rim
+//    JOIN Matches m ON rim.match_Id = m.id
+//    JOIN team playersTeam ON playersTeam.id = rim.player_team_id
+//    WHERE rim.type_Of_Record IN ('YC', 'RC')
+//    GROUP BY
+//    playersTeam.teamname,
+//    m.season, m.competition
+//    ORDER BY totalCardsInSeason DESC;
+
+//
+//Nahviac golov v sezóne per team TODO per player
+//    SELECT
+//    COUNT(rim.player_Id) AS totalCardsInSeason,
+//    playersTeam.teamname AS teamname,
+//    m.season, m.competition
+//    FROM RecordsInMatches rim
+//    JOIN Matches m ON rim.match_Id = m.id
+//    JOIN team playersTeam ON playersTeam.id = rim.player_team_id
+//    WHERE rim.type_Of_Record IN ('G', 'Penalty', 'OG') AND m.competitionPhase LIKE 'GROUP%'
+//    GROUP BY
+//    playersTeam.teamname,
+//    m.season, m.competition
+//    ORDER BY totalCardsInSeason DESC;
+
+// Najmenej golov v sezone dostali - ZMEN NA DESC A MAS NAJVIAC DOSTALI
+//    SELECT
+//    defendingTeam.teamname AS teamname,
+//    m.season,
+//    m.competition,
+//    SUM(
+//            CASE
+//                    WHEN defendingTeam.id = m.idHomeTeam THEN m.scoreAway -- Ak hral Liverpool doma, pripočítaj góly hostí
+//                    WHEN defendingTeam.id = m.idAwayTeam THEN m.scoreHome -- Ak hral Liverpool vonku, pripočítaj góly domácich
+//                    ELSE 0
+//                    END
+//    ) AS totalGoalsConceded
+//    FROM Matches m
+//    JOIN team defendingTeam ON defendingTeam.id = m.idHomeTeam OR defendingTeam.id = m.idAwayTeam
+//    WHERE m.competitionPhase LIKE 'GROUP%'
+//    AND m.competition = 'CL'
+//    GROUP BY
+//    defendingTeam.teamname,
+//    m.season,
+//    m.competition
+//    ORDER BY totalGoalsConceded ASC;
 }
