@@ -2,6 +2,7 @@ package com.javasampleapproach.springrest.mysql.services;
 
 import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.Team;
+import com.javasampleapproach.springrest.mysql.entities.TeamSeasonStat;
 import com.javasampleapproach.springrest.mysql.model.TeamDto;
 import com.javasampleapproach.springrest.mysql.model.TeamStats;
 import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
@@ -10,12 +11,14 @@ import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamInfoV2;
 import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamStatsV2;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
+import com.javasampleapproach.springrest.mysql.repo.TeamSeasonStatRepository;
 import com.javasampleapproach.springrest.mysql.serviceV2.MatchesServiceV2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class TeamService {
@@ -28,6 +31,9 @@ public class TeamService {
 
     @Autowired
     RecordsInMatchesRepository recordsInMatchesRepository;
+
+    @Autowired
+    TeamSeasonStatRepository teamSeasonStatRepository;
 
     public TeamStatsWithMatches getTeamStats(final long teamId) {
         final Team currentTeam = findById(teamId);
@@ -53,33 +59,15 @@ public class TeamService {
         return teamStats;
     }
 
-    public TeamStatsV2 getTeamStatsByCompetition(final long teamId, String competition) {
-        final Team currentTeam = findById(teamId);
+    public TeamSeasonStat getTeamStatsByCompetition(final long teamId, String competition) {
+        final Optional<TeamSeasonStat> teamSeasonStat = teamSeasonStatRepository.findByTeamIdAndCompetition(teamId, competition);
 
-
-        final String competitionFilter = competition.equalsIgnoreCase("ALL") ? null : competition; // if ALL is passed, we want to get all matches, so we set competition filter to null
-        final List<MatchesDTO> teamMatches = matchesService.getFilteredMatches(competitionFilter, null, null, currentTeam.getId());
-
-
-        final long yellowCards = recordsInMatchesRepository.getRecordCountByCompetition(null, null, competitionFilter, teamId, List.of(MyUtils.RECORD_TYPE_YELLOW_CARD));
-        final long redCards = recordsInMatchesRepository.getRecordCountByCompetition(null, null, competitionFilter, teamId, List.of(MyUtils.RECORD_TYPE_RED_CARD));
-        final long penaltyGoals = recordsInMatchesRepository.getRecordCountByCompetition(null, null, competitionFilter, teamId, List.of(MyUtils.RECORD_TYPE_PENALTY));
-
-
-        final List<MatchesDTO> draws = teamMatches.stream().filter(m-> m.getWinnerId() == MyUtils.DRAW_RESULT_ID).toList();
-        final List<MatchesDTO> wins = teamMatches.stream().filter(m-> m.getWinnerId() == teamId).toList();
-
-
-        return TeamStatsV2.builder()
-                .wins(wins.size())
-                .losses(teamMatches.size() - wins.size() - draws.size())
-                .draws(draws.size()) // todo away/ home
-                .yellowCards(yellowCards)
-                .redCards(redCards)
-                .penaltyGoals(penaltyGoals)
-                .matchesCount(teamMatches.size())
-                .build();
-
+         if (teamSeasonStat.isPresent()) {
+             return teamSeasonStat.get();
+         } else {
+             // Handle the case when the team season stat is not found, e.g., throw an exception or return a default value
+             throw new RuntimeException("Team season stat not found for teamId: " + teamId + " and competition: " + competition);
+         }
     }
 
     public TeamInfoV2 getTeamInfoById(final long teamId) {
