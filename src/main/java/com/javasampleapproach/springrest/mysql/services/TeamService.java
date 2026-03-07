@@ -6,6 +6,7 @@ import com.javasampleapproach.springrest.mysql.model.TeamDto;
 import com.javasampleapproach.springrest.mysql.model.TeamStats;
 import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
 import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
+import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamInfoV2;
 import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamStatsV2;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.TeamRepository;
@@ -79,6 +80,25 @@ public class TeamService {
                 .matchesCount(teamMatches.size())
                 .build();
 
+    }
+
+    public TeamInfoV2 getTeamInfoById(final long teamId) {
+        final Team currentTeam = findById(teamId);
+
+        final List<MatchesDTO> finalCLMatches = matchesService.getFilteredMatches(MyUtils.CHAMPIONS_LEAGUE, MyUtils.FINAL, null, currentTeam.getId());
+        final List<MatchesDTO> finalELMatches = matchesService.getFilteredMatches(MyUtils.EUROPEAN_LEAGUE, MyUtils.FINAL, null, currentTeam.getId());
+
+        final int titlesCLCount = finalCLMatches.stream().filter(m -> m.getWinnerId() == teamId).toList().size();
+        final int titlesELCount = finalELMatches.stream().filter(m -> m.getWinnerId() == teamId).toList().size();
+
+        return TeamInfoV2.builder()
+                .teamName(currentTeam.getTeamName())
+                .country(currentTeam.getCountry())
+                .finalMatchesCLCount(finalCLMatches.size())
+                .finalMatchesELCount(finalELMatches.size())
+                .titlesCLCount(titlesCLCount)
+                .titlesELCount(titlesELCount)
+                .build();
     }
 
     // TODO simplify this and unify with getAllTeamsIterable

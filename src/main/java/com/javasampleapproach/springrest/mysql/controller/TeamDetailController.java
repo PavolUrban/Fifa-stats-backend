@@ -1,8 +1,7 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
 
-import com.javasampleapproach.springrest.mysql.model.TeamStats;
-import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
+import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamInfoV2;
 import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamStatsV2;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.web.bind.annotation.*;
@@ -21,5 +20,10 @@ public class TeamDetailController {
     @GetMapping("/getTeamStats/{teamId}")
     public TeamStatsV2 getTeamStats(@PathVariable("teamId") long teamId, @RequestParam("competition") String competition) {
         return teamService.getTeamStatsByCompetition(teamId, competition);
+    }
+
+    @GetMapping("/getTeamInfo/{teamId}")
+    public TeamInfoV2 getTeamStats(@PathVariable("teamId") long teamId) {
+        return teamService.getTeamInfoById(teamId);
     }
 }
