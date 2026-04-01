@@ -74,7 +74,9 @@ public class RecordsInMatchesService {
 
     // todo recordtypes use as array, send record type as param
     public List<RecordsInMatches> getRecordsByCompetition(final String competitionPhase, final String season,final String competition,final Long teamId, final List<String> recordTypes){
-        return recordsInMatchesRepository.getRecordsByCompetition(competitionPhase, season, competition, teamId, recordTypes);
+        final String competitionName = MyUtils.ALL.equalsIgnoreCase(competition) ? null : competition;
+
+        return recordsInMatchesRepository.getRecordsByCompetition(competitionPhase, season, competitionName, teamId, recordTypes);
     }
 
     public void saveNewRecord(RecordsInMatchesDTO newRecordDTO){

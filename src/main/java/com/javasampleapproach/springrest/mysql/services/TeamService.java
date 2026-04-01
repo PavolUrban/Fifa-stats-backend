@@ -62,12 +62,7 @@ public class TeamService {
     public TeamSeasonStat getTeamStatsByCompetition(final long teamId, String competition) {
         final Optional<TeamSeasonStat> teamSeasonStat = teamSeasonStatRepository.findByTeamIdAndCompetition(teamId, competition);
 
-         if (teamSeasonStat.isPresent()) {
-             return teamSeasonStat.get();
-         } else {
-             // Handle the case when the team season stat is not found, e.g., throw an exception or return a default value
-             throw new RuntimeException("Team season stat not found for teamId: " + teamId + " and competition: " + competition);
-         }
+        return teamSeasonStat.orElse(null);
     }
 
     public TeamInfoV2 getTeamInfoById(final long teamId) {
