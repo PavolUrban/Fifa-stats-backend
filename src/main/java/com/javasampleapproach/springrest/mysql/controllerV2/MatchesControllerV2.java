@@ -27,7 +27,7 @@ public class MatchesControllerV2 {
 
     @PostMapping("/getFilteredMatches")
     public List<MatchesDTO> getFilteredMatches(@RequestBody FilteredMatchesRequest request) {
-        return matchesService.getFilteredMatches(request.getCompetition(), request.getCompetitionPhase(), request.getSeason(), null);
+        return matchesService.getFilteredMatches(request.getCompetition(), request.getCompetitionPhase(), request.getSeason(), request.getTeamId());
     }
 
     @GetMapping(value = "/getMatchDetails/{matchId}")

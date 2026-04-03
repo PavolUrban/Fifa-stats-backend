@@ -41,7 +41,8 @@ public class MatchesServiceV2 {
     List<TopMatchesStrategy> topMatchesStrategies;
 
     public List<MatchesDTO> getFilteredMatches(String competition, String competitionPhase, String season, Long teamId) {
-        List<Matches> matches = matchesRepository.getFilteredMatches(competition, competitionPhase, season, teamId);
+        final String finalCompetition = MyUtils.ALL.equalsIgnoreCase(competition) ? null : competition;
+        List<Matches> matches = matchesRepository.getFilteredMatches(finalCompetition, competitionPhase, season, teamId);
         return mapToMatchesDTO(matches);
     }
 

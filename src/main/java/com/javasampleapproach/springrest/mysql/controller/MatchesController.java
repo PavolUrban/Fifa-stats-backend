@@ -6,13 +6,7 @@ import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
 import com.javasampleapproach.springrest.mysql.model.matches.TopMatchesRequest;
 import com.javasampleapproach.springrest.mysql.services.MatchesService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -36,6 +30,11 @@ public class MatchesController {
 	public Map<String, List<String>> getCompetitionPhasesAndSeasonsList() {
 		return matchesService.getCompetitionPhasesAndSeasonsList();
 	}
+
+//	@GetMapping
+//	public List<MatchesDTO> getMatches(@RequestParam("teamId") long teamId) {
+//
+//	}
 
 
 }

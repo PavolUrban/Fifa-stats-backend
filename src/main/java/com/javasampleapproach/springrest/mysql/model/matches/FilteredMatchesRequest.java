@@ -8,4 +8,5 @@ public class FilteredMatchesRequest {
     String competitionPhase;
     String season;
     String teamName;
+    Long teamId;
 }
