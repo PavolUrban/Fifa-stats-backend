@@ -81,6 +81,7 @@ public class TeamService {
                 .finalMatchesELCount(finalELMatches.size())
                 .titlesCLCount(titlesCLCount)
                 .titlesELCount(titlesELCount)
+                .id(currentTeam.getId())
                 .build();
     }
 

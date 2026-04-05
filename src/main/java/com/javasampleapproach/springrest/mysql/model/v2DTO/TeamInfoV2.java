@@ -14,6 +14,7 @@ public class TeamInfoV2 {
     public int finalMatchesELCount;
     public int titlesCLCount;
     public int titlesELCount;
+    public Long id;
     public String teamName;
     public String country;
 }
