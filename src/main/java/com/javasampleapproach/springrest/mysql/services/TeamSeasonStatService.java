@@ -27,8 +27,8 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
     private MatchesRepository matchRepository;
 
 
-    public Page<TeamSeasonStat> findByCompetition(String competition, Pageable pageable) {
-        return statRepository.findByCompetition(competition, pageable);
+    public List<TeamSeasonStat> findByCompetition(String competition) {
+        return statRepository.findByCompetition(competition);
     }
 
 

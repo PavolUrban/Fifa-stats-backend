@@ -26,7 +26,7 @@ public interface TeamSeasonStatRepository extends CrudRepository<TeamSeasonStat,
      */
     Optional<TeamSeasonStat> findByTeamIdAndCompetition(Long teamId, String competition);
 
-    Page<TeamSeasonStat> findByCompetition(String competition, Pageable pageable);
+    List<TeamSeasonStat> findByCompetition(String competition);
 
     /**
      * Vymaže všetky štatistiky pre konkrétnu sezónu a súťaž.
