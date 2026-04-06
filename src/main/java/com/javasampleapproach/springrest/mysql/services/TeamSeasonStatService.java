@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,10 +38,12 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
         // 1. Vymažeme kompletne všetky staré štatistiky (keďže robíme globálny prepočet)
         statRepository.deleteAll(); // Ak máš v repe vytvorené truncateTable(), použi to, je to rýchlejšie
 
-        // 2. Vytiahneme si ÚPLNE VŠETKY zápasy z databázy (historicky)
-        List<Matches> matches = (List<Matches>) matchRepository.findAll();
+        // 2. Vytiahneme si ÚPLNE VŠETKY zápasy z databázy zoradené chronologicky (pre formu)
+        List<Matches> matches = matchRepository.findAllChronological();
 
         Map<String, TeamSeasonStat> statsMap = new HashMap<>();
+        // Mapa výsledkov pre každý tím + súťaž (pre výpočet formy)
+        Map<String, List<String>> matchResultsMap = new HashMap<>();
 
         // Označenie pre našu "sezónu", keďže ide o historické štatistiky
         final String GLOBAL_SEASON_LABEL = "ALL_TIME";
@@ -71,6 +75,14 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
             // Pre hostí posielame awayTeamId
             applyMatchResult(awayStatComp, awayTeamId, winnerId, awayGoals, homeGoals, isFinal);
             applyMatchResult(awayStatAll, awayTeamId, winnerId, awayGoals, homeGoals, isFinal);
+
+            // --- Zaznamenáme výsledok pre výpočet formy (chronologické poradie zachované vďaka findAllByOrderByIdAsc) ---
+            String homeResult = determineResult(match.getWinnerId(), homeTeamId);
+            String awayResult = determineResult(match.getWinnerId(), awayTeamId);
+            recordResult(matchResultsMap, homeTeamId + "_" + comp, homeResult);
+            recordResult(matchResultsMap, homeTeamId + "_ALL", homeResult);
+            recordResult(matchResultsMap, awayTeamId + "_" + comp, awayResult);
+            recordResult(matchResultsMap, awayTeamId + "_ALL", awayResult);
         }
 
 
@@ -115,10 +127,14 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
             }
         }
 
-        // 5. Záverečný prepočet odvodených metrík (Points, Goal Difference) a uloženie
-        for (TeamSeasonStat stat : statsMap.values()) {
+        // 5. Záverečný prepočet odvodených metrík (Points, Goal Difference, Forma) a uloženie
+        for (Map.Entry<String, TeamSeasonStat> entry : statsMap.entrySet()) {
+            TeamSeasonStat stat = entry.getValue();
             stat.setPoints((stat.getWins() * 3) + stat.getDraws());
             stat.setGoalDifference(stat.getGoalsScored() - stat.getGoalsConceded());
+
+            List<String> results = matchResultsMap.getOrDefault(entry.getKey(), Collections.emptyList());
+            calculateFormStreaks(stat, results);
         }
 
         statRepository.saveAll(statsMap.values());
@@ -172,5 +188,68 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
         if (isFinal) {
             stat.setFinalsPlayed(stat.getFinalsPlayed() + 1);
         }
+    }
+
+    // -----------------------------------------------------------------------
+    // POMOCNÉ METÓDY PRE FORMU
+    // -----------------------------------------------------------------------
+
+    /**
+     * Vráti "W", "D" alebo "L" z pohľadu daného tímu.
+     */
+    private String determineResult(long winnerId, long teamId) {
+        if (winnerId == MyUtils.DRAW_RESULT_ID) return "D";
+        if (winnerId == teamId) return "W";
+        return "L";
+    }
+
+    /**
+     * Pridá výsledok do listu pre daný kľúč (teamId_comp).
+     */
+    private void recordResult(Map<String, List<String>> map, String key, String result) {
+        map.computeIfAbsent(key, k -> new ArrayList<>()).add(result);
+    }
+
+    /**
+     * Vypočíta 4 formy streaky z chronologického listu výsledkov ("W"/"D"/"L")
+     * a nastaví ich na stat objekt.
+     *
+     * Príklady:
+     *   [W, W, W]     → winStreak=3, unbeaten=3, lossStreak=0, withoutWin=0
+     *   [L, W, D, D]  → winStreak=0, unbeaten=3, lossStreak=0, withoutWin=2
+     *   [W, D, L, L]  → winStreak=0, unbeaten=0, lossStreak=2, withoutWin=3
+     *   [W, L, D]     → winStreak=0, unbeaten=0, lossStreak=0, withoutWin=2 (D,L bez výhry)
+     *                    + unbeaten=1 (len D) → záleží na kontexte; oba sú vypočítané
+     */
+    private void calculateFormStreaks(TeamSeasonStat stat, List<String> results) {
+        if (results.isEmpty()) return;
+
+        int winStreak = 0;
+        int unbeatenStreak = 0;
+        int lossStreak = 0;
+        int withoutWinStreak = 0;
+
+        // Ideme od indexu 0 – zápasy sú uložené newest-first (rovnaký sort ako getFilteredMatches)
+        for (int i = 0; i < results.size(); i++) {
+            if ("W".equals(results.get(i))) winStreak++;
+            else break;
+        }
+        for (int i = 0; i < results.size(); i++) {
+            if (!"L".equals(results.get(i))) unbeatenStreak++;  // W alebo D
+            else break;
+        }
+        for (int i = 0; i < results.size(); i++) {
+            if ("L".equals(results.get(i))) lossStreak++;
+            else break;
+        }
+        for (int i = 0; i < results.size(); i++) {
+            if (!"W".equals(results.get(i))) withoutWinStreak++; // L alebo D
+            else break;
+        }
+
+        stat.setCurrentWinStreak(winStreak);
+        stat.setCurrentUnbeatenStreak(unbeatenStreak);
+        stat.setCurrentLossStreak(lossStreak);
+        stat.setCurrentWithoutWinStreak(withoutWinStreak);
     }
 }

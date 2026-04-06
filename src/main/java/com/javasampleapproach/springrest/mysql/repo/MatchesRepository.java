@@ -20,7 +20,8 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 			"when competitionphase = 'Round of 16' then 4 " +
 			"when competitionphase = 'Round of 32' then 5 " +
 			"else 6 " +
-			"end asc")
+			"end asc, " +
+			"m.id DESC")
 	List<Matches> getFilteredMatches(@Param("competition") String competition, @Param("competitionPhase") String competitionPhase, @Param("season") String season, @Param("teamId") Long teamId);
 
 	@Query("SELECT m FROM Matches m WHERE m.season = ?1 AND m.competition= ?2 AND m.competitionPhase LIKE 'GROUP%' ORDER BY competitionPhase, id DESC")
@@ -126,6 +127,20 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 	List<Matches> findByCompetitionPhaseAndCompetitionOrderBySeason(String competitionPhase, String competition);
 
 	List<Matches> findByCompetition(String competition);
+
+    /** Všetky zápasy zoradené ako v getFilteredMatches (sezóna DESC, finále prvé, id DESC ako tiebreaker) – pre výpočet formy. */
+    @Query(value =
+            "SELECT * FROM matches m " +
+            "ORDER BY m.season DESC, " +
+            "CASE WHEN m.competitionphase = 'Final'         THEN 1 " +
+            "     WHEN m.competitionphase = 'Semifinals'    THEN 2 " +
+            "     WHEN m.competitionphase = 'Quarterfinals' THEN 3 " +
+            "     WHEN m.competitionphase = 'Round of 16'   THEN 4 " +
+            "     WHEN m.competitionphase = 'Round of 32'   THEN 5 " +
+            "     ELSE 6 END ASC, " +
+            "m.id DESC",
+            nativeQuery = true)
+    List<Matches> findAllChronological();
 
 //	@Query("SELECT m FROM Matches m where (:season is null or m.season = :season) and (:competition is null or m.competition = :competition) and (:competitionPhase is null or m.competitionPhase = :competitionPhase) " +
 //			"ORDER BY SEASON DESC "+

@@ -3,7 +3,6 @@ package com.javasampleapproach.springrest.mysql.controller;
 
 import com.javasampleapproach.springrest.mysql.entities.TeamSeasonStat;
 import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamInfoV2;
-import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamStatsV2;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.web.bind.annotation.*;
 

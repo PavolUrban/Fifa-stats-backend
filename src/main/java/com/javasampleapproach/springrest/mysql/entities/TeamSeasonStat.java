@@ -92,4 +92,22 @@ public class TeamSeasonStat {
 
     @Column(name = "finals_won")
     private int finalsWon;
+
+    // --- 7. AKTUÁLNA FORMA ---
+
+    /** Počet po sebe idúcich výhier od posledného zápasu. */
+    @Column(name = "current_win_streak", columnDefinition = "INT DEFAULT 0")
+    private Integer currentWinStreak;
+
+    /** Počet po sebe idúcich zápasov bez prehry (výhry + remízy). */
+    @Column(name = "current_unbeaten_streak", columnDefinition = "INT DEFAULT 0")
+    private Integer currentUnbeatenStreak;
+
+    /** Počet po sebe idúcich prehier od posledného zápasu. */
+    @Column(name = "current_loss_streak", columnDefinition = "INT DEFAULT 0")
+    private Integer currentLossStreak;
+
+    /** Počet po sebe idúcich zápasov bez výhry (prehry + remízy). */
+    @Column(name = "current_without_win_streak", columnDefinition = "INT DEFAULT 0")
+    private Integer currentWithoutWinStreak;
 }
