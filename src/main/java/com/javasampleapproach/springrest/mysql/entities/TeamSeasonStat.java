@@ -110,4 +110,19 @@ public class TeamSeasonStat {
     /** Počet po sebe idúcich zápasov bez výhry (prehry + remízy). */
     @Column(name = "current_without_win_streak", columnDefinition = "INT DEFAULT 0")
     private Integer currentWithoutWinStreak;
+
+//TODO urban stats
+    // potrebujem este avg goals scored/conceded
+    // potrebujem este per season toto poukladat - teraz mam len all
+    // chcem most goals scored in signle match
+    // chcem most goals conceded in single match
+    // kolko krat sa zucastnili v CL
+    // kolko krat sa zucastnili v EL
+    // kolko sezon v rade sa zucastnili
+    // kolko zapasov v rade skorovali
+    // kollko zapasov v rade neskorovali
+    // kolko uz chybaju v LM/EL - len ak sa niekedy zucastnili
+    // avg na pocty golov, kariet
+    // percenta na clean sheets
+    // kolko zapasov za nich hral kotlik /pavol jay ?? toto by chcelo asi komplikovanejsie lebo by trebalo aj rozlisit kto dal kolko golov atd
 }
