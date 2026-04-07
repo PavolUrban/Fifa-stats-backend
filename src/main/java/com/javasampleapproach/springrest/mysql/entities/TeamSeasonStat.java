@@ -111,18 +111,89 @@ public class TeamSeasonStat {
     @Column(name = "current_without_win_streak", columnDefinition = "INT DEFAULT 0")
     private Integer currentWithoutWinStreak;
 
-//TODO urban stats
-    // potrebujem este avg goals scored/conceded
+    // --- 8. HISTORICKY NAJDLHŠIE SÉRIE ---
+
+    /** Historicky najdlhšia séria výhier. */
+    @Column(name = "longest_win_streak", columnDefinition = "INT DEFAULT 0")
+    private int longestWinStreak;
+
+    /** Historicky najdlhšia séria bez prehry (výhry + remízy). */
+    @Column(name = "longest_unbeaten_streak", columnDefinition = "INT DEFAULT 0")
+    private int longestUnbeatenStreak;
+
+    /** Historicky najdlhšia séria prehier. */
+    @Column(name = "longest_loss_streak", columnDefinition = "INT DEFAULT 0")
+    private int longestLossStreak;
+
+    /** Historicky najdlhšia séria bez výhry (prehry + remízy). */
+    @Column(name = "longest_without_win_streak", columnDefinition = "INT DEFAULT 0")
+    private int longestWithoutWinStreak;
+
+    // --- 9. PRIEMERNÉ ŠTATISTIKY (na zápas) ---
+
+    @Column(name = "avg_wins", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgWins;
+
+    @Column(name = "avg_draws", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgDraws;
+
+    @Column(name = "avg_losses", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgLosses;
+
+    @Column(name = "avg_points", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgPoints;
+
+    @Column(name = "avg_goals_scored", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgGoalsScored;
+
+    @Column(name = "avg_goals_conceded", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgGoalsConceded;
+
+    @Column(name = "avg_penalty_goals_scored", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgPenaltyGoalsScored;
+
+    @Column(name = "avg_yellow_cards", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgYellowCards;
+
+    @Column(name = "avg_red_cards", columnDefinition = "DOUBLE DEFAULT 0")
+    private double avgRedCards;
+
+    /** Percentuálny podiel zápasov s čistým kontom (0–100). */
+    @Column(name = "clean_sheets_percentage", columnDefinition = "DOUBLE DEFAULT 0")
+    private double cleanSheetsPercentage;
+
+    // --- 10. HRÁČI ---
+
+    /** Počet zápasov, ktoré za tento tím odohral Kotlik. */
+    @Column(name = "matches_by_kotlik", columnDefinition = "INT DEFAULT 0")
+    private int matchesByKotlik;
+
+    /** Počet zápasov, ktoré za tento tím odohral Pavol Jay. */
+    @Column(name = "matches_by_pavol_jay", columnDefinition = "INT DEFAULT 0")
+    private int matchesByPavolJay;
+
+    // --- 11. ÚČASŤ V SÚŤAŽI ---
+
+    /**
+     * Počet sezón (účastí) v danej súťaži.
+     * Pre CL/EL = počet distinct sezón v tej súťaži.
+     * Pre ALL = počet distinct sezón (CL+EL dokopy, sezóna počítaná raz).
+     */
+    @Column(name = "competition_appearances", columnDefinition = "INT DEFAULT 0")
+    private int competitionAppearances;
+
+    /**
+     * Aktuálna séria po sebe idúcich sezón bez prerušenia v danej súťaži
+     * (počítané od poslednej sezóny smerom do minulosti).
+     */
+    @Column(name = "consecutive_competition_appearances", columnDefinition = "INT DEFAULT 0")
+    private int consecutiveCompetitionAppearances;
+
+    //TODO urban stats
     // potrebujem este per season toto poukladat - teraz mam len all
-    // chcem most goals scored in signle match
+    // chcem most goals scored in single match
     // chcem most goals conceded in single match
-    // kolko krat sa zucastnili v CL
-    // kolko krat sa zucastnili v EL
-    // kolko sezon v rade sa zucastnili
     // kolko zapasov v rade skorovali
-    // kollko zapasov v rade neskorovali
+    // kolko zapasov v rade neskorovali
     // kolko uz chybaju v LM/EL - len ak sa niekedy zucastnili
-    // avg na pocty golov, kariet
-    // percenta na clean sheets
-    // kolko zapasov za nich hral kotlik /pavol jay ?? toto by chcelo asi komplikovanejsie lebo by trebalo aj rozlisit kto dal kolko golov atd
 }

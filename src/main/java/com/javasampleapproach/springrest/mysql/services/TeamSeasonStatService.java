@@ -15,11 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
+
+    private static final String KOTLIK_NAME    = "Kotlik";
+    private static final String PAVOL_JAY_NAME = "Pavol Jay";
 
     @Autowired
     private TeamSeasonStatRepository statRepository;
@@ -44,6 +50,11 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
         Map<String, TeamSeasonStat> statsMap = new HashMap<>();
         // Mapa výsledkov pre každý tím + súťaž (pre výpočet formy)
         Map<String, List<String>> matchResultsMap = new HashMap<>();
+        // Mapa hráčov
+        Map<String, Integer> kotlikMatchesMap    = new HashMap<>();
+        Map<String, Integer> pavolJayMatchesMap  = new HashMap<>();
+        // Mapa sezón (pre competition appearances)
+        Map<String, Set<String>> seasonsMap = new HashMap<>();
 
         // Označenie pre našu "sezónu", keďže ide o historické štatistiky
         final String GLOBAL_SEASON_LABEL = "ALL_TIME";
@@ -83,6 +94,31 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
             recordResult(matchResultsMap, homeTeamId + "_ALL", homeResult);
             recordResult(matchResultsMap, awayTeamId + "_" + comp, awayResult);
             recordResult(matchResultsMap, awayTeamId + "_ALL", awayResult);
+
+            // --- Sledujeme hráčov ---
+            String playerH = match.getPlayerH();
+            String playerA = match.getPlayerA();
+            if (KOTLIK_NAME.equals(playerH)) {
+                kotlikMatchesMap.merge(homeTeamId + "_" + comp, 1, Integer::sum);
+                kotlikMatchesMap.merge(homeTeamId + "_ALL",      1, Integer::sum);
+            } else if (PAVOL_JAY_NAME.equals(playerH)) {
+                pavolJayMatchesMap.merge(homeTeamId + "_" + comp, 1, Integer::sum);
+                pavolJayMatchesMap.merge(homeTeamId + "_ALL",      1, Integer::sum);
+            }
+            if (KOTLIK_NAME.equals(playerA)) {
+                kotlikMatchesMap.merge(awayTeamId + "_" + comp, 1, Integer::sum);
+                kotlikMatchesMap.merge(awayTeamId + "_ALL",      1, Integer::sum);
+            } else if (PAVOL_JAY_NAME.equals(playerA)) {
+                pavolJayMatchesMap.merge(awayTeamId + "_" + comp, 1, Integer::sum);
+                pavolJayMatchesMap.merge(awayTeamId + "_ALL",      1, Integer::sum);
+            }
+
+            // --- Sledujeme sezóny (pre competition appearances) ---
+            String season = match.getSeason();
+            seasonsMap.computeIfAbsent(homeTeamId + "_" + comp, k -> new HashSet<>()).add(season);
+            seasonsMap.computeIfAbsent(homeTeamId + "_ALL",      k -> new HashSet<>()).add(season);
+            seasonsMap.computeIfAbsent(awayTeamId + "_" + comp, k -> new HashSet<>()).add(season);
+            seasonsMap.computeIfAbsent(awayTeamId + "_ALL",      k -> new HashSet<>()).add(season);
         }
 
 
@@ -127,14 +163,41 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
             }
         }
 
-        // 5. Záverečný prepočet odvodených metrík (Points, Goal Difference, Forma) a uloženie
+        // 5. Záverečný prepočet odvodených metrík a uloženie
         for (Map.Entry<String, TeamSeasonStat> entry : statsMap.entrySet()) {
+            String key = entry.getKey();
             TeamSeasonStat stat = entry.getValue();
+
             stat.setPoints((stat.getWins() * 3) + stat.getDraws());
             stat.setGoalDifference(stat.getGoalsScored() - stat.getGoalsConceded());
 
-            List<String> results = matchResultsMap.getOrDefault(entry.getKey(), Collections.emptyList());
+            // Forma (current streaks + longest streaks)
+            List<String> results = matchResultsMap.getOrDefault(key, Collections.emptyList());
             calculateFormStreaks(stat, results);
+
+            // Hráči
+            stat.setMatchesByKotlik(kotlikMatchesMap.getOrDefault(key, 0));
+            stat.setMatchesByPavolJay(pavolJayMatchesMap.getOrDefault(key, 0));
+
+            // Competition appearances
+            Set<String> appearanceSeasons = seasonsMap.getOrDefault(key, Collections.emptySet());
+            stat.setCompetitionAppearances(appearanceSeasons.size());
+            stat.setConsecutiveCompetitionAppearances(calculateConsecutiveAppearances(appearanceSeasons));
+
+            // Priemerné štatistiky (na zápas)
+            int mp = stat.getMatchesPlayed();
+            if (mp > 0) {
+                stat.setAvgWins((double) stat.getWins() / mp);
+                stat.setAvgDraws((double) stat.getDraws() / mp);
+                stat.setAvgLosses((double) stat.getLosses() / mp);
+                stat.setAvgPoints((double) stat.getPoints() / mp);
+                stat.setAvgGoalsScored((double) stat.getGoalsScored() / mp);
+                stat.setAvgGoalsConceded((double) stat.getGoalsConceded() / mp);
+                stat.setAvgPenaltyGoalsScored((double) stat.getPenaltyGoalsScored() / mp);
+                stat.setAvgYellowCards((double) stat.getYellowCards() / mp);
+                stat.setAvgRedCards((double) stat.getRedCards() / mp);
+                stat.setCleanSheetsPercentage((double) stat.getCleanSheets() / mp * 100.0);
+            }
         }
 
         statRepository.saveAll(statsMap.values());
@@ -211,25 +274,18 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
     }
 
     /**
-     * Vypočíta 4 formy streaky z chronologického listu výsledkov ("W"/"D"/"L")
-     * a nastaví ich na stat objekt.
-     *
-     * Príklady:
-     *   [W, W, W]     → winStreak=3, unbeaten=3, lossStreak=0, withoutWin=0
-     *   [L, W, D, D]  → winStreak=0, unbeaten=3, lossStreak=0, withoutWin=2
-     *   [W, D, L, L]  → winStreak=0, unbeaten=0, lossStreak=2, withoutWin=3
-     *   [W, L, D]     → winStreak=0, unbeaten=0, lossStreak=0, withoutWin=2 (D,L bez výhry)
-     *                    + unbeaten=1 (len D) → záleží na kontexte; oba sú vypočítané
+     * Vypočíta 4 aktuálne streaky (current) aj 4 historicky najdlhšie (longest)
+     * z chronologického listu výsledkov ("W"/"D"/"L") – poradie newest-first.
      */
     private void calculateFormStreaks(TeamSeasonStat stat, List<String> results) {
         if (results.isEmpty()) return;
 
+        // --- CURRENT STREAKS (od indexu 0 = najnovší zápas) ---
         int winStreak = 0;
         int unbeatenStreak = 0;
         int lossStreak = 0;
         int withoutWinStreak = 0;
 
-        // Ideme od indexu 0 – zápasy sú uložené newest-first (rovnaký sort ako getFilteredMatches)
         for (int i = 0; i < results.size(); i++) {
             if ("W".equals(results.get(i))) winStreak++;
             else break;
@@ -251,5 +307,51 @@ public class TeamSeasonStatService { // Môžeš si to premenovať, ak chceš
         stat.setCurrentUnbeatenStreak(unbeatenStreak);
         stat.setCurrentLossStreak(lossStreak);
         stat.setCurrentWithoutWinStreak(withoutWinStreak);
+
+        // --- LONGEST STREAKS (preskenujeme celý zoznam) ---
+        int longestWin = 0, longestUnbeaten = 0, longestLoss = 0, longestWithoutWin = 0;
+        int curWin = 0, curUnbeaten = 0, curLoss = 0, curWithoutWin = 0;
+
+        for (String r : results) {
+            if ("W".equals(r)) { curWin++;       longestWin       = Math.max(longestWin,       curWin);       } else { curWin = 0; }
+            if (!"L".equals(r)) { curUnbeaten++; longestUnbeaten  = Math.max(longestUnbeaten,  curUnbeaten);  } else { curUnbeaten = 0; }
+            if ("L".equals(r)) { curLoss++;      longestLoss      = Math.max(longestLoss,      curLoss);      } else { curLoss = 0; }
+            if (!"W".equals(r)) { curWithoutWin++; longestWithoutWin = Math.max(longestWithoutWin, curWithoutWin); } else { curWithoutWin = 0; }
+        }
+
+        stat.setLongestWinStreak(longestWin);
+        stat.setLongestUnbeatenStreak(longestUnbeaten);
+        stat.setLongestLossStreak(longestLoss);
+        stat.setLongestWithoutWinStreak(longestWithoutWin);
+    }
+
+    /**
+     * Z množiny sezón (formát "YYYY/YYYY") vypočíta aktuálnu sériu po sebe
+     * idúcich sezón bez prerušenia (počítané od poslednej sezóny dozadu).
+     */
+    private int calculateConsecutiveAppearances(Set<String> seasons) {
+        if (seasons.isEmpty()) return 0;
+
+        List<Integer> sortedYears = seasons.stream()
+                .map(s -> {
+                    try { return Integer.parseInt(s.substring(0, 4)); }
+                    catch (Exception e) { return -1; }
+                })
+                .filter(y -> y > 0)
+                .distinct()
+                .sorted(Collections.reverseOrder())
+                .collect(Collectors.toList());
+
+        if (sortedYears.isEmpty()) return 0;
+
+        int streak = 1;
+        for (int i = 1; i < sortedYears.size(); i++) {
+            if (sortedYears.get(i) == sortedYears.get(i - 1) - 1) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
     }
 }
