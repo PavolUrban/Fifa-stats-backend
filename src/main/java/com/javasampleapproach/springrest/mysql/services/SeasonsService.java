@@ -147,7 +147,49 @@ public class SeasonsService {
             allTeamsInCurrentGroup.add(tableTeam);
         }
 
-        allTeamsInCurrentGroup.sort((o1, o2) -> o2.getPoints().compareTo(o1.getPoints()));
+        allTeamsInCurrentGroup.sort((o1, o2) -> {
+            // 1. Body (zostupne)
+            int pointsCompare = o2.getPoints().compareTo(o1.getPoints());
+            if (pointsCompare != 0) return pointsCompare;
+
+            // 2. Vzajomne zapasy - body
+            List<Matches> h2hMatches = matchesInGroup.stream()
+                    .filter(m -> (m.getHomeTeam().getId() == o1.getTeamId() && m.getAwayTeam().getId() == o2.getTeamId()) ||
+                                 (m.getHomeTeam().getId() == o2.getTeamId() && m.getAwayTeam().getId() == o1.getTeamId()))
+                    .collect(Collectors.toList());
+
+            int h2hPointsO1 = 0, h2hPointsO2 = 0;
+            int h2hGoalsO1 = 0, h2hGoalsO2 = 0;
+            for (Matches m : h2hMatches) {
+                if (m.getWinnerId() == o1.getTeamId()) h2hPointsO1 += 3;
+                else if (m.getWinnerId() == o2.getTeamId()) h2hPointsO2 += 3;
+                else { h2hPointsO1++; h2hPointsO2++; }
+
+                if (m.getHomeTeam().getId() == o1.getTeamId()) {
+                    h2hGoalsO1 += m.getScorehome();
+                    h2hGoalsO2 += m.getScoreaway();
+                } else {
+                    h2hGoalsO1 += m.getScoreaway();
+                    h2hGoalsO2 += m.getScorehome();
+                }
+            }
+
+            int h2hPointsCompare = Integer.compare(h2hPointsO2, h2hPointsO1);
+            if (h2hPointsCompare != 0) return h2hPointsCompare;
+
+            // 3. Vzajomne zapasy - skore (gol rozdiel)
+            int h2hGDCompare = Integer.compare(h2hGoalsO2 - h2hGoalsO1, h2hGoalsO1 - h2hGoalsO2);
+            if (h2hGDCompare != 0) return h2hGDCompare;
+
+            // 4. Celkovy gol rozdiel v skupine
+            int overallGDO1 = o1.getGoalsScored() - o1.getGoalsConceded();
+            int overallGDO2 = o2.getGoalsScored() - o2.getGoalsConceded();
+            return Integer.compare(overallGDO2, overallGDO1);
+        });
+
+        for (int i = 0; i < allTeamsInCurrentGroup.size(); i++) {
+            allTeamsInCurrentGroup.get(i).setPlaceInGroup(i + 1);
+        }
 
         return allTeamsInCurrentGroup;
     }
