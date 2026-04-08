@@ -327,23 +327,30 @@ public class SeasonsService {
     private PlayOffDoubleMatch getPlayOffDoubleMatchData(final MatchesDTO match1, final MatchesDTO match2) {
         final PlayOffDoubleMatch playOffDoubleMatch = new PlayOffDoubleMatch();
         final List<String> teamNames = Arrays.asList(match1.getHomeTeam(), match1.getAwayTeam());
+        final List<Long> teamIds = Arrays.asList(match1.getIdHomeTeam(), match1.getIdAwayTeam());
         long firstTeamGoals = match1.getScorehome() + match2.getScoreaway();
         long secondTeamGoals = match2.getScorehome() + match1.getScoreaway() ;
 
         String qualifiedTeamName;
+        Long qualifiedTeamId;
         if(firstTeamGoals > secondTeamGoals) {
             qualifiedTeamName = match1.getHomeTeam();
+            qualifiedTeamId = match1.getIdHomeTeam();
         } else if(secondTeamGoals > firstTeamGoals) {
             qualifiedTeamName = match2.getHomeTeam();
+            qualifiedTeamId = match2.getIdHomeTeam();
         } else {
             if(match1.getScoreaway() > match2.getScoreaway()) {
                 qualifiedTeamName = match1.getAwayTeam();
+                qualifiedTeamId = match1.getIdAwayTeam();
             } else {
                 qualifiedTeamName = match2.getAwayTeam();
+                qualifiedTeamId = match2.getIdAwayTeam();
             }
         }
 
         final String nonQualifiedTeam = teamNames.stream().filter(name-> !name.equalsIgnoreCase(qualifiedTeamName)).findFirst().orElse(null);
+        final Long nonQualifiedTeamId = teamIds.stream().filter(id-> !id.equals(qualifiedTeamId)).findFirst().orElse(null);
         final String qualifiedPlayer = getQualifiedPlayer(qualifiedTeamName, match1);
         final int qualifiedTeamGoalsCount = getPlayOffGoalsForTeam(match1, match2, qualifiedTeamName);
         final int nonQualifiedTeamGoalsCount = getPlayOffGoalsForTeam(match1, match2, nonQualifiedTeam);
@@ -353,6 +360,8 @@ public class SeasonsService {
         playOffDoubleMatch.setQualifiedTeamGoals(qualifiedTeamGoalsCount);
         playOffDoubleMatch.setNonQualifiedTeamGoals(nonQualifiedTeamGoalsCount);
         playOffDoubleMatch.setHomeAwayMatch(Arrays.asList(match1, match2));
+        playOffDoubleMatch.setQualifiedTeamId(qualifiedTeamId);
+        playOffDoubleMatch.setNonQualifiedTeamId(nonQualifiedTeamId);
         return playOffDoubleMatch;
     }
 
