@@ -73,6 +73,13 @@ public class SeasonsService {
         final List<RecordsInMatches> allGoalsInSeason = getGoalscorerRecordsFromMatchesList(allMatchesInSeason);
         wholeSeason.setTopGoalsScorersTotal(fifaPlayerService.getGoalscorers(allGoalsInSeason));
 
+        final Matches finalMatch = playOffMatches.stream().filter(match-> match.getCompetitionPhase().equalsIgnoreCase(FINAL)).findFirst().orElse(null);
+        if (finalMatch != null) {
+            final MatchesDTO finalMatchDto = matchesServiceV2.mapToMatchDTO(finalMatch);
+            wholeSeason.setFinalMatch(finalMatchDto);
+        }
+
+
         return wholeSeason;
     }
 

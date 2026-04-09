@@ -107,27 +107,27 @@ public class MatchesServiceV2 {
     }
 
     public List<MatchesDTO> mapToMatchesDTO(List<Matches> matches) {
-        List<MatchesDTO> newMatches =  new ArrayList<>();
+        return matches.stream().map(this::mapToMatchDTO).toList();
+    }
 
-        matches.forEach(m-> {
-            MatchesDTO newMatch = new MatchesDTO();
-            newMatch.setId(m.getId());
-            newMatch.setHomeTeam(m.getHomeTeam().getTeamName());
-            newMatch.setIdHomeTeam(m.getHomeTeam().getId());
-            newMatch.setAwayTeam(m.getAwayTeam().getTeamName());
-            newMatch.setIdAwayTeam(m.getAwayTeam().getId());
-            newMatch.setScorehome(m.getScorehome());
-            newMatch.setScoreaway(m.getScoreaway());
-            newMatch.setSeason(m.getSeason());
-            newMatch.setPlayerH(m.getPlayerH());
-            newMatch.setPlayerA(m.getPlayerA());
-            newMatch.setCompetition(m.getCompetition());
-            newMatch.setCompetitionPhase(m.getCompetitionPhase());
-            newMatch.setWinnerId(m.getWinnerId());
-            newMatch.setWinnerPlayer(HelperMethods.getWinnerPlayer(m));
-            newMatches.add(newMatch);
-        });
-        return newMatches;
+    public MatchesDTO mapToMatchDTO(Matches m) {
+        MatchesDTO newMatch = new MatchesDTO();
+        newMatch.setId(m.getId());
+        newMatch.setHomeTeam(m.getHomeTeam().getTeamName());
+        newMatch.setIdHomeTeam(m.getHomeTeam().getId());
+        newMatch.setAwayTeam(m.getAwayTeam().getTeamName());
+        newMatch.setIdAwayTeam(m.getAwayTeam().getId());
+        newMatch.setScorehome(m.getScorehome());
+        newMatch.setScoreaway(m.getScoreaway());
+        newMatch.setSeason(m.getSeason());
+        newMatch.setPlayerH(m.getPlayerH());
+        newMatch.setPlayerA(m.getPlayerA());
+        newMatch.setCompetition(m.getCompetition());
+        newMatch.setCompetitionPhase(m.getCompetitionPhase());
+        newMatch.setWinnerId(m.getWinnerId());
+        newMatch.setWinnerPlayer(HelperMethods.getWinnerPlayer(m));
+
+        return newMatch;
     }
 
     public List<MatchesDTO> getTopMatches(final TopMatchesRequest topMatchesRequest) {
