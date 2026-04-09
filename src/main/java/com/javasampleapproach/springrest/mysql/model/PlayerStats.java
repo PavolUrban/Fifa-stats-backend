@@ -26,6 +26,8 @@ public class PlayerStats {
 	private int totalNumberOfCards = 0;
 	private int numberOfYellowCards = 0;
 	private int numberOfRedCards = 0;
+	private int penaltyGoals = 0;
+	private int ownGoals = 0;
 	private Map<Long, MatchesPerTeam> matchesPerTeam;
 	
 	public PlayerStats()

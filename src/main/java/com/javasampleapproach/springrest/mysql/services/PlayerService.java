@@ -14,12 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static Utils.MyUtils.KOTLIK;
 import static Utils.MyUtils.PAVOL_JAY;
 import static Utils.MyUtils.RESULT_DRAW;
+import static Utils.MyUtils.RECORD_TYPE_YELLOW_CARD;
+import static Utils.MyUtils.RECORD_TYPE_RED_CARD;
+import static Utils.MyUtils.RECORD_TYPE_PENALTY;
+import static Utils.MyUtils.RECORD_TYPE_OWN_GOAL;
 
 @Service
 public class PlayerService {
@@ -38,6 +44,7 @@ public class PlayerService {
 //        return null;
 //    }
 
+    @Transactional
     public Map<String, PlayerStats> getGlobalStats() {
 
         Map<String, PlayerStats> stats = new HashMap<>();
@@ -67,10 +74,18 @@ public class PlayerService {
 
             Team kotlikTeam = m.getPlayerH().equalsIgnoreCase(KOTLIK) ? m.getHomeTeam() : m.getAwayTeam();
             updateMatchesPerTeam(kotlik, kotlikTeam);
+
+            processRecordsForMatch(m, pavolJay, kotlik);
         }
 
         prepareStats(pavolJay, winnersCount, PAVOL_JAY, KOTLIK);
         prepareStats(kotlik, winnersCount, KOTLIK, PAVOL_JAY);
+
+        pavolJay.setTotalNumberOfCards(pavolJay.getNumberOfYellowCards() + pavolJay.getNumberOfRedCards());
+        kotlik.setTotalNumberOfCards(kotlik.getNumberOfYellowCards() + kotlik.getNumberOfRedCards());
+
+        pavolJay.setMatchesPerTeam(sortMatchesPerTeamByCount(pavolJay.getMatchesPerTeam()));
+        kotlik.setMatchesPerTeam(sortMatchesPerTeamByCount(kotlik.getMatchesPerTeam()));
 
         stats.put(PAVOL_JAY, pavolJay);
         stats.put(KOTLIK, kotlik);
@@ -105,6 +120,44 @@ public class PlayerService {
     private void setGoalsScoredAndConcededForPlayer(PlayerStats player, int goalsScored, int goalsConceded) {
         player.setGoalsScored(player.getGoalsScored() + goalsScored);
         player.setGoalsConceded(player.getGoalsConceded() + goalsConceded);
+    }
+
+    private void processRecordsForMatch(Matches match, PlayerStats pavolJay, PlayerStats kotlik) {
+        List<RecordsInMatches> records = match.getRecordsInMatches();
+        if (records == null) return;
+
+        long homeTeamId = match.getHomeTeam().getId();
+
+        for (RecordsInMatches record : records) {
+            if (record.getPlayerTeam() == null) continue;
+            long playerTeamId = record.getPlayerTeam().getId();
+
+            PlayerStats player = playerTeamId == homeTeamId
+                    ? (match.getPlayerH().equalsIgnoreCase(PAVOL_JAY) ? pavolJay : kotlik)
+                    : (match.getPlayerA().equalsIgnoreCase(PAVOL_JAY) ? pavolJay : kotlik);
+
+            String type = record.getTypeOfRecord();
+            if (RECORD_TYPE_YELLOW_CARD.equals(type)) {
+                player.setNumberOfYellowCards(player.getNumberOfYellowCards() + 1);
+            } else if (RECORD_TYPE_RED_CARD.equals(type)) {
+                player.setNumberOfRedCards(player.getNumberOfRedCards() + 1);
+            } else if (RECORD_TYPE_PENALTY.equals(type)) {
+                player.setPenaltyGoals(player.getPenaltyGoals() + 1);
+            } else if (RECORD_TYPE_OWN_GOAL.equals(type)) {
+                player.setOwnGoals(player.getOwnGoals() + 1);
+            }
+        }
+    }
+
+    private Map<Long, MatchesPerTeam> sortMatchesPerTeamByCount(Map<Long, MatchesPerTeam> map) {
+        return map.entrySet().stream()
+                .sorted((e1, e2) -> Integer.compare(e2.getValue().getCount(), e1.getValue().getCount()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new
+                ));
     }
 
     private void updateMatchesPerTeam(PlayerStats player, Team team) {
