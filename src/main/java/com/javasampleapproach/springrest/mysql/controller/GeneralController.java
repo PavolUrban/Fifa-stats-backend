@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.javasampleapproach.springrest.mysql.repo.SeasonsRepository;
 
-@CrossOrigin(origins = "http://localhost:4200")
+
 @RestController
 @RequestMapping("/general")
 public class GeneralController {

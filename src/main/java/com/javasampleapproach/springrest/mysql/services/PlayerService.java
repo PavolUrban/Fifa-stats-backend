@@ -3,9 +3,13 @@ package com.javasampleapproach.springrest.mysql.services;
 import Utils.HelperMethods;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
+import com.javasampleapproach.springrest.mysql.entities.Team;
+import com.javasampleapproach.springrest.mysql.model.MatchesPerTeam;
 import com.javasampleapproach.springrest.mysql.model.PlayerStats;
+import com.javasampleapproach.springrest.mysql.model.TeamDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +61,12 @@ public class PlayerService {
             int goalsConceded = goalsScoredANdConceeeded.get(1);
             setGoalsScoredAndConcededForPlayer(pavolJay, goalsScored, goalsConceded);
             setGoalsScoredAndConcededForPlayer(kotlik, goalsConceded, goalsScored);
+
+            Team pavolJayTeam = m.getPlayerH().equalsIgnoreCase(PAVOL_JAY) ? m.getHomeTeam() : m.getAwayTeam();
+            updateMatchesPerTeam(pavolJay, pavolJayTeam);
+
+            Team kotlikTeam = m.getPlayerH().equalsIgnoreCase(KOTLIK) ? m.getHomeTeam() : m.getAwayTeam();
+            updateMatchesPerTeam(kotlik, kotlikTeam);
         }
 
         prepareStats(pavolJay, winnersCount, PAVOL_JAY, KOTLIK);
@@ -95,5 +105,28 @@ public class PlayerService {
     private void setGoalsScoredAndConcededForPlayer(PlayerStats player, int goalsScored, int goalsConceded) {
         player.setGoalsScored(player.getGoalsScored() + goalsScored);
         player.setGoalsConceded(player.getGoalsConceded() + goalsConceded);
+    }
+
+    private void updateMatchesPerTeam(PlayerStats player, Team team) {
+        if (team == null) return;
+        long teamId = team.getId();
+        Map<Long, MatchesPerTeam> map = player.getMatchesPerTeam();
+        if (map.containsKey(teamId)) {
+            map.get(teamId).incrementCount();
+        } else {
+            TeamDto teamDto = toTeamDto(team);
+            map.put(teamId, new MatchesPerTeam(teamDto, 1));
+        }
+    }
+
+    private TeamDto toTeamDto(Team team) {
+        TeamDto dto = new TeamDto();
+        dto.setId(team.getId());
+        dto.setTeamName(team.getTeamName());
+        dto.setTeamId(team.getId());
+        dto.setFirstSeasonCL(team.getFirstSeasonCL());
+        dto.setFirstSeasonEL(team.getFirstSeasonEL());
+        dto.setCountry(team.getCountry());
+        return dto;
     }
 }

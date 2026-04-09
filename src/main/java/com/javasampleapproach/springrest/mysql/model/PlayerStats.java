@@ -1,7 +1,9 @@
 package com.javasampleapproach.springrest.mysql.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,6 +26,7 @@ public class PlayerStats {
 	private int totalNumberOfCards = 0;
 	private int numberOfYellowCards = 0;
 	private int numberOfRedCards = 0;
+	private Map<Long, MatchesPerTeam> matchesPerTeam;
 	
 	public PlayerStats()
 	{
@@ -35,5 +38,6 @@ public class PlayerStats {
 		this.numberOfCLTitles = 0;
 		this.numberOfELTitles = 0;
 		this.totalBilance = new ArrayList<>();
+		this.matchesPerTeam = new HashMap<>();
 	}
 }

@@ -6,7 +6,7 @@ import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamInfoV2;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:4200")
+
 @RestController
 @RequestMapping("/team-detail")
 public class TeamDetailController {

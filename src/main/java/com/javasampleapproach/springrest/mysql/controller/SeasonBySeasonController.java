@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import static Utils.MyUtils.KOTLIK;
 import static Utils.MyUtils.PAVOL_JAY;
 
-@CrossOrigin(origins = "http://localhost:4200")
+
 @RestController
 @RequestMapping("/seasonBySeason")
 public class SeasonBySeasonController {
