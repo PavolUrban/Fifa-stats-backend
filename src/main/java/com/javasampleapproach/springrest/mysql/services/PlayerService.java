@@ -4,9 +4,12 @@ import Utils.HelperMethods;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
+import com.javasampleapproach.springrest.mysql.model.GeneralFilterRequest;
 import com.javasampleapproach.springrest.mysql.model.MatchesPerTeam;
 import com.javasampleapproach.springrest.mysql.model.PlayerStats;
 import com.javasampleapproach.springrest.mysql.model.TeamDto;
+import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
+import com.javasampleapproach.springrest.mysql.serviceV2.MatchesServiceV2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +34,7 @@ import static Utils.MyUtils.RECORD_TYPE_OWN_GOAL;
 public class PlayerService {
 
     @Autowired
-    MatchesService matchesService;
+    MatchesServiceV2 matchesService;
 
 //    public Map<String, PlayerStats> getGlobalStatsV2(){
 //        final List<Matches> matches = matchesService.getAllMatches();
@@ -45,11 +48,11 @@ public class PlayerService {
 //    }
 
     @Transactional
-    public Map<String, PlayerStats> getGlobalStats() {
+    public Map<String, PlayerStats> getGlobalStats(GeneralFilterRequest request) {
 
         Map<String, PlayerStats> stats = new HashMap<>();
 
-        List<Matches> matches = matchesService.getAllMatches();
+        List<Matches> matches = matchesService.getFilteredMatches(request.getCompetition(), request.getCompetitionPhases(), request.getSeasons());
 
         Map<String, Integer> winnersCount = new HashMap<>();
         winnersCount.put(RESULT_DRAW, 0);

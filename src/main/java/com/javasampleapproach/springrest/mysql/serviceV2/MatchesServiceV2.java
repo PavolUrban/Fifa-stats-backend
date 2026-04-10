@@ -46,6 +46,15 @@ public class MatchesServiceV2 {
         return mapToMatchesDTO(matches);
     }
 
+    public List<Matches> getFilteredMatches(String competition, List<String> competitionPhases, List<String> seasons) {
+        final String finalCompetition = MyUtils.ALL.equalsIgnoreCase(competition) || "TOTAL".equalsIgnoreCase(competition) ? null : competition;
+        boolean noSeasonFilter = seasons == null || seasons.isEmpty();
+        boolean noPhaseFilter = competitionPhases == null || competitionPhases.isEmpty();
+        List<String> finalSeasons = noSeasonFilter ? List.of("") : seasons;
+        List<String> finalPhases = noPhaseFilter ? List.of("") : competitionPhases;
+        return matchesRepository.getFilteredMatches(finalCompetition, finalPhases, noPhaseFilter, finalSeasons, noSeasonFilter);
+    }
+
     public void createOrUpdateMatch(MatchesDTO matchDTO){
         Matches matches = getNewOrExistingMatch(matchDTO.getId());
         mapMatchesDTOtoMatches(matchDTO, matches);

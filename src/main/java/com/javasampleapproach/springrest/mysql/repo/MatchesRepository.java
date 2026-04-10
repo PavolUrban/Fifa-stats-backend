@@ -24,6 +24,19 @@ public interface MatchesRepository extends CrudRepository<Matches, Long>{
 			"m.id DESC")
 	List<Matches> getFilteredMatches(@Param("competition") String competition, @Param("competitionPhase") String competitionPhase, @Param("season") String season, @Param("teamId") Long teamId);
 
+	@Query("SELECT m FROM Matches m " +
+			"where (:noSeasonFilter = true or m.season IN :season) and (:competition is null or m.competition = :competition) and (:noPhaseFilter = true or m.competitionPhase IN :competitionPhase) " +
+			"ORDER BY SEASON DESC "+
+			", case when competitionphase = 'Final' then 1 " +
+			"when competitionphase = 'Semifinals' then 2 " +
+			"when competitionphase = 'Quarterfinals' then 3 " +
+			"when competitionphase = 'Round of 16' then 4 " +
+			"when competitionphase = 'Round of 32' then 5 " +
+			"else 6 " +
+			"end asc, " +
+			"m.id DESC")
+	List<Matches> getFilteredMatches(@Param("competition") String competition, @Param("competitionPhase") List<String> competitionPhase, @Param("noPhaseFilter") boolean noPhaseFilter, @Param("season") List<String> season, @Param("noSeasonFilter") boolean noSeasonFilter);
+
 	@Query("SELECT m FROM Matches m WHERE m.season = ?1 AND m.competition= ?2 AND m.competitionPhase LIKE 'GROUP%' ORDER BY competitionPhase, id DESC")
 	List<Matches> getAllMatchesBySeasonAndCompetitionGroupStage(String season, String competition);
 

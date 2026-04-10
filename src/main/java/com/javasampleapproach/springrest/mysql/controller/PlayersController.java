@@ -1,15 +1,15 @@
 package com.javasampleapproach.springrest.mysql.controller;
 
-import java.util.Map;
-
+import com.javasampleapproach.springrest.mysql.model.GeneralFilterRequest;
+import com.javasampleapproach.springrest.mysql.model.PlayerStats;
 import com.javasampleapproach.springrest.mysql.services.PlayerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.javasampleapproach.springrest.mysql.model.PlayerStats;
+import java.util.Map;
 
 
 @RestController
@@ -19,8 +19,8 @@ public class PlayersController {
 	@Autowired
 	PlayerService playerService;
 
-	@GetMapping("/getGlobalStats")
-	public Map<String, PlayerStats> getGlobalStats() {
-		return playerService.getGlobalStats();
+	@PostMapping("/getGlobalStats")
+	public Map<String, PlayerStats> getGlobalStats(@RequestBody GeneralFilterRequest request) {
+		return playerService.getGlobalStats(request);
 	}
 }
