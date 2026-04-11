@@ -3,15 +3,17 @@ package com.javasampleapproach.springrest.mysql.serviceV2;
 import Utils.HelperMethods;
 import Utils.MyUtils;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
+import com.javasampleapproach.springrest.mysql.entities.PlayerInMatch;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.MatchDetail;
 import com.javasampleapproach.springrest.mysql.model.MatchEventDetail;
-import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
-import com.javasampleapproach.springrest.mysql.model.matches.FilteredMatchesRequest;
-import com.javasampleapproach.springrest.mysql.model.matches.DataToCreateMatch;
-import com.javasampleapproach.springrest.mysql.model.matches.TopMatchesRequest;
+import com.javasampleapproach.springrest.mysql.model.lineup.LineupPlayerDTO;
+import com.javasampleapproach.springrest.mysql.model.lineup.PlayerRef;
+import com.javasampleapproach.springrest.mysql.model.lineup.TeamLineup;
+import com.javasampleapproach.springrest.mysql.model.matches.*;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
+import com.javasampleapproach.springrest.mysql.repo.PlayerInMatchRepository;
 import com.javasampleapproach.springrest.mysql.serviceV2.strategies.TopMatchesStrategy;
 import com.javasampleapproach.springrest.mysql.services.SeasonsService;
 import com.javasampleapproach.springrest.mysql.services.TeamService;
@@ -30,6 +32,9 @@ public class MatchesServiceV2 {
 
     @Autowired
     MatchesRepository matchesRepository;
+
+    @Autowired
+    PlayerInMatchRepository playerInMatchRepository;
 
     @Autowired
     SeasonsService seasonsService;
@@ -91,6 +96,10 @@ public class MatchesServiceV2 {
             md.setTypeOfFormat(MyUtils.NEW_FORMAT);
         }
 
+        List<PlayerInMatch> lineupPlayers = playerInMatchRepository.findByMatch_Id(matchId);
+        md.setHomeLineup(buildTeamLineup(currentMatch.getHomeTeam(), lineupPlayers));
+        md.setAwayLineup(buildTeamLineup(currentMatch.getAwayTeam(), lineupPlayers));
+
         return md;
     }
 
@@ -98,6 +107,13 @@ public class MatchesServiceV2 {
         DataToCreateMatch dataToCreateMatch = new DataToCreateMatch();
         dataToCreateMatch.setSeasonsList(seasonsService.getAvailableSeasonsList());
         dataToCreateMatch.setTeamNames(teamService.getAllTeamNames());
+        return dataToCreateMatch;
+    }
+
+    public DataToCreateMatchV2 getDataToCreateMatchV2() {
+        DataToCreateMatchV2 dataToCreateMatch = new DataToCreateMatchV2();
+        dataToCreateMatch.setSeasonsList(seasonsService.getAvailableSeasonsList());
+        dataToCreateMatch.setTeams(teamService.getTeamsToCreateDialog());
         return dataToCreateMatch;
     }
 
@@ -113,6 +129,46 @@ public class MatchesServiceV2 {
         } else {
             md.getEventsOverTime().add(med);
         }
+    }
+
+    private TeamLineup buildTeamLineup(Team team, List<PlayerInMatch> allPlayers) {
+        TeamLineup lineup = new TeamLineup();
+        lineup.setTeamId(team.getId());
+        lineup.setTeamName(team.getTeamName());
+
+        allPlayers.stream()
+                .filter(p -> p.getTeam().getId() == team.getId())
+                .forEach(p -> {
+                    LineupPlayerDTO dto = mapToLineupPlayerDTO(p);
+                    if (p.isStarter()) {
+                        lineup.getPlayers().add(dto);
+                    } else {
+                        lineup.getSubstitutes().add(dto);
+                    }
+                });
+
+        return lineup;
+    }
+
+    private LineupPlayerDTO mapToLineupPlayerDTO(PlayerInMatch p) {
+        LineupPlayerDTO dto = new LineupPlayerDTO();
+        dto.setPlayerId(p.getPlayer().getId());
+        dto.setPlayerName(p.getPlayer().getPlayerName());
+        dto.setJerseyNumber(p.getJerseyNumber());
+        dto.setRating(p.getRating());
+        dto.setPosition(p.getPosition());
+        dto.setSubstitutedAtMinute(p.getSubstitutionMinute());
+
+        if (p.isStarter() && p.getReplacedBy() != null) {
+            dto.setSubstituted(true);
+            dto.setReplacedBy(new PlayerRef(p.getReplacedBy().getId(), p.getReplacedBy().getPlayerName()));
+        }
+
+        if (!p.isStarter() && p.getReplacedPlayer() != null) {
+            dto.setReplacedPlayer(new PlayerRef(p.getReplacedPlayer().getId(), p.getReplacedPlayer().getPlayerName()));
+        }
+
+        return dto;
     }
 
     public List<MatchesDTO> mapToMatchesDTO(List<Matches> matches) {

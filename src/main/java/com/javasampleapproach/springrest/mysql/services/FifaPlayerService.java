@@ -187,12 +187,17 @@ public class FifaPlayerService {
                 .map(records -> records.getPlayerTeam().getTeamName())
                 .collect(Collectors.toSet());
 
+        final Set<Long> teamIdsPlayerScoredFor = matches.stream()
+                .map(records -> records.getPlayerTeam().getId())
+                .collect(Collectors.toSet());
+
         return Goalscorer.builder()
                 .name(player.getPlayerName())
                 .playerId(player.getId())
                 .totalGoalsCount(matches.size())
                 .teamPlayerScoredFor(teamsPlayerScoredFor.stream().findFirst().orElse(null))// todo as list
                 .numberOfTeamsPlayerScoredFor(teamsPlayerScoredFor.size())
+                .teamId(teamIdsPlayerScoredFor.stream().findFirst().orElse(null))
                 .build();
     }
 }

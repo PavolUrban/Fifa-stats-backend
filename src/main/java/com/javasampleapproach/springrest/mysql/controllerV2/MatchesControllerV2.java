@@ -1,10 +1,7 @@
 package com.javasampleapproach.springrest.mysql.controllerV2;
 
 import com.javasampleapproach.springrest.mysql.model.MatchDetail;
-import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
-import com.javasampleapproach.springrest.mysql.model.matches.FilteredMatchesRequest;
-import com.javasampleapproach.springrest.mysql.model.matches.DataToCreateMatch;
-import com.javasampleapproach.springrest.mysql.model.matches.TopMatchesRequest;
+import com.javasampleapproach.springrest.mysql.model.matches.*;
 import com.javasampleapproach.springrest.mysql.serviceV2.MatchesServiceV2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -39,6 +36,12 @@ public class MatchesControllerV2 {
     public DataToCreateMatch getDataToCreateMatch() {
         return matchesService.getDataToCreateMatch();
     }
+
+    @GetMapping("/getDataToCreateMatchV2")
+    public DataToCreateMatchV2 getDataToCreateMatchV2() {
+        return matchesService.getDataToCreateMatchV2();
+    }
+
 
     @PostMapping("/createOrUpdateMatch")
     public void createOrUpdateMatch(@RequestBody MatchesDTO match) {

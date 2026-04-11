@@ -7,6 +7,7 @@ import com.javasampleapproach.springrest.mysql.model.TeamDto;
 import com.javasampleapproach.springrest.mysql.model.TeamStats;
 import com.javasampleapproach.springrest.mysql.model.TeamStatsWithMatches;
 import com.javasampleapproach.springrest.mysql.model.matches.MatchesDTO;
+import com.javasampleapproach.springrest.mysql.model.matches.TeamDTOCreateDialog;
 import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamInfoV2;
 import com.javasampleapproach.springrest.mysql.model.v2DTO.TeamStatsV2;
 import com.javasampleapproach.springrest.mysql.repo.RecordsInMatchesRepository;
@@ -130,6 +131,12 @@ public class TeamService {
         List<String> teamNames = new ArrayList<>();
         teamRepository.findAll().forEach(p -> teamNames.add(p.getTeamName()));
         return teamNames;
+    }
+
+    public List<TeamDTOCreateDialog> getTeamsToCreateDialog() {
+        List<TeamDTOCreateDialog> teams = new ArrayList<>();
+        teamRepository.findAll().forEach(p -> teams.add(new TeamDTOCreateDialog(p.getTeamName(), p.getId())));
+        return teams;
     }
 
     public List<Team> allGlobalTeamStats() {

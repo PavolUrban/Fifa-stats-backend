@@ -15,4 +15,5 @@ public class Goalscorer {
 	private Integer totalGoalsCount = 0;
 	private int numberOfTeamsPlayerScoredFor;
 	private String teamPlayerScoredFor; // this will be as map in future - goalsByTeams
+	private Long teamId;
 }

@@ -1,5 +1,6 @@
 package com.javasampleapproach.springrest.mysql.model;
 
+import com.javasampleapproach.springrest.mysql.model.lineup.TeamLineup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,4 +18,6 @@ public class MatchDetail {
     List<MatchEventDetail> eventsSecondHalf = new ArrayList<>();
     List<MatchEventDetail> eventsOverTime = new ArrayList<>();
     List<MatchEventDetail> eventsWithoutTime = new ArrayList<>();
+    private TeamLineup homeLineup;
+    private TeamLineup awayLineup;
 }
