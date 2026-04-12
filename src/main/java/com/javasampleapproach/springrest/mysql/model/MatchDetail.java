@@ -20,4 +20,5 @@ public class MatchDetail {
     List<MatchEventDetail> eventsWithoutTime = new ArrayList<>();
     private TeamLineup homeLineup;
     private TeamLineup awayLineup;
+    private MatchStatsDTO matchStats;
 }

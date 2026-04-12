@@ -2,16 +2,19 @@ package com.javasampleapproach.springrest.mysql.serviceV2;
 
 import Utils.HelperMethods;
 import Utils.MyUtils;
+import com.javasampleapproach.springrest.mysql.entities.MatchStats;
 import com.javasampleapproach.springrest.mysql.entities.Matches;
 import com.javasampleapproach.springrest.mysql.entities.PlayerInMatch;
 import com.javasampleapproach.springrest.mysql.entities.RecordsInMatches;
 import com.javasampleapproach.springrest.mysql.entities.Team;
 import com.javasampleapproach.springrest.mysql.model.MatchDetail;
 import com.javasampleapproach.springrest.mysql.model.MatchEventDetail;
+import com.javasampleapproach.springrest.mysql.model.MatchStatsDTO;
 import com.javasampleapproach.springrest.mysql.model.lineup.LineupPlayerDTO;
 import com.javasampleapproach.springrest.mysql.model.lineup.PlayerRef;
 import com.javasampleapproach.springrest.mysql.model.lineup.TeamLineup;
 import com.javasampleapproach.springrest.mysql.model.matches.*;
+import com.javasampleapproach.springrest.mysql.repo.MatchStatsRepository;
 import com.javasampleapproach.springrest.mysql.repo.MatchesRepository;
 import com.javasampleapproach.springrest.mysql.repo.PlayerInMatchRepository;
 import com.javasampleapproach.springrest.mysql.serviceV2.strategies.TopMatchesStrategy;
@@ -35,6 +38,9 @@ public class MatchesServiceV2 {
 
     @Autowired
     PlayerInMatchRepository playerInMatchRepository;
+
+    @Autowired
+    MatchStatsRepository matchStatsRepository;
 
     @Autowired
     SeasonsService seasonsService;
@@ -100,6 +106,8 @@ public class MatchesServiceV2 {
         md.setHomeLineup(buildTeamLineup(currentMatch.getHomeTeam(), lineupPlayers));
         md.setAwayLineup(buildTeamLineup(currentMatch.getAwayTeam(), lineupPlayers));
 
+        matchStatsRepository.findByMatch_Id(matchId).ifPresent(stats -> md.setMatchStats(mapToMatchStatsDTO(stats)));
+
         return md;
     }
 
@@ -150,6 +158,23 @@ public class MatchesServiceV2 {
         return lineup;
     }
 
+    private MatchStatsDTO mapToMatchStatsDTO(MatchStats stats) {
+        MatchStatsDTO dto = new MatchStatsDTO();
+        dto.setMatchDate(stats.getMatchDate());
+        dto.setVenue(stats.getVenue());
+        dto.setTotalShotsHome(stats.getTotalShotsHome());
+        dto.setTotalShotsAway(stats.getTotalShotsAway());
+        dto.setShotsOnTargetHome(stats.getShotsOnTargetHome());
+        dto.setShotsOnTargetAway(stats.getShotsOnTargetAway());
+        dto.setPossessionHome(stats.getPossessionHome());
+        dto.setPossessionAway(stats.getPossessionAway());
+        dto.setFoulsHome(stats.getFoulsHome());
+        dto.setFoulsAway(stats.getFoulsAway());
+        dto.setExpectedGoalsHome(stats.getExpectedGoalsHome());
+        dto.setExpectedGoalsAway(stats.getExpectedGoalsAway());
+        return dto;
+    }
+
     private LineupPlayerDTO mapToLineupPlayerDTO(PlayerInMatch p) {
         LineupPlayerDTO dto = new LineupPlayerDTO();
         dto.setPlayerId(p.getPlayer().getId());
@@ -158,6 +183,7 @@ public class MatchesServiceV2 {
         dto.setRating(p.getRating());
         dto.setPosition(p.getPosition());
         dto.setSubstitutedAtMinute(p.getSubstitutionMinute());
+        dto.setCaptain(p.isCaptain());
 
         if (p.isStarter() && p.getReplacedBy() != null) {
             dto.setSubstituted(true);

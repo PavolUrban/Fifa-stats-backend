@@ -48,6 +48,10 @@ public class PlayerInMatch {
     @Column(name = "position")
     private String position;
 
+    /** Whether this player was the team captain in this match */
+    @Column(name = "is_captain", nullable = false)
+    private boolean captain;
+
     /** For starters only: the substitute player who replaced them. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "replaced_by_player_id")

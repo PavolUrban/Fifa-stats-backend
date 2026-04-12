@@ -30,5 +30,8 @@ public class LineupPlayerDTO {
 
     /** For substitutes: the starter they replaced */
     private PlayerRef replacedPlayer;
+
+    /** Whether this player was the team captain in this match */
+    private boolean isCaptain;
 }
 
